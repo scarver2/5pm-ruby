@@ -1,0 +1,354 @@
+{
+  "activity": {
+    "add": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "activity": "nsc:Activity"
+      },
+      "response": {
+        "activity": "nsc:Activity"
+      }
+    },
+    "update": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "activity": "nsc:Activity"
+      },
+      "response": {
+        "activity": "nsc:Activity"
+      }
+    },
+    "remove": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "status": "xsd:boolean"
+      }
+    },
+    "getList": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "filter": "nsc:ActivityListFilter",
+        "offset": "xsd:integer",
+        "count": "xsd:integer",
+        "withFiles": "xsd:boolean",
+        "withNames": "xsd:boolean"
+      },
+      "response": {
+        "list": "nsc:ActivityList"
+      }
+    },
+    "getFilesList": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "filter": "nsc:ActivityListFilter",
+        "offset": "xsd:integer",
+        "count": "xsd:integer"
+      },
+      "response": {
+        "list": "nsc:FileList"
+      }
+    },
+    "getById": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer",
+        "withNames": "xsd:boolean"
+      },
+      "response": {
+        "activity": "nsc:Activity"
+      }
+    },
+    "attachFiles": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "activityId": "xsd:integer",
+        "files": "nsc:FileList"
+      },
+      "response": {
+        "status": "xsd:boolean"
+      }
+    },
+    "removeFile": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "status": "xsd:boolean"
+      }
+    },
+    "downloadFile": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer",
+        "stream": "xsd:boolean"
+      },
+      "response": {
+        "file": "nsc:File"
+      }
+    }
+  },
+  "authentication": {
+    "signIn": {
+      "parameters": {
+        "login": "xsd:string",
+        "password": "xsd:string"
+      },
+      "response": {
+        "auth": "nsc:AuthToken"
+      }
+    },
+    "signOut": {
+      "parameters": {
+        "sessionId": "xsd:string"
+      },
+      "response": {
+        "signOutState": "xsd:boolean"
+      }
+    },
+    "getAuthorizedUser": {
+      "parameters": {
+        "sessionId": "xsd:string"
+      },
+      "response": {
+        "user": "nsc:User"
+      }
+    },
+    "nop": {
+      "parameters": {
+        "sessionId": "xsd:string"
+      },
+      "response": {
+        "nopState": "xsd:boolean"
+      }
+    },
+    "isSsl": {
+      "parameters": {},
+      "response": {
+        "isSsl": "xsd:boolean"
+      }
+    }
+  },
+  "projects": {
+    "add": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "project": "nsc:Project"
+      },
+      "response": {
+        "project": "nsc:Project"
+      }
+    },
+    "update": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "project": "nsc:Project"
+      },
+      "response": {
+        "project": "nsc:Project"
+      }
+    },
+    "remove": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "status": "xsd:boolean"
+      }
+    },
+    "getById": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "project": "nsc:Project"
+      }
+    },
+    "getAll": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "loadTeam": "xsd:boolean"
+      },
+      "response": {
+        "list": "nsc:ProjectList"
+      }
+    },
+    "getList": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "filter": "nsc:ProjectListFilter",
+        "offset": "xsd:integer",
+        "count": "xsd:integer",
+        "loadTeam": "xsd:boolean"
+      },
+      "response": {
+        "list": "nsc:ProjectList"
+      }
+    }
+  },
+  "projectsgroups": {
+    "add": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "group": "nsc:ProjectsGroup"
+      },
+      "response": {
+        "group": "nsc:ProjectsGroup"
+      }
+    },
+    "update": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "group": "nsc:ProjectsGroup"
+      },
+      "response": {
+        "group": "nsc:ProjectsGroup"
+      }
+    },
+    "remove": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "status": "xsd:boolean"
+      }
+    },
+    "getById": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "group": "nsc:ProjectsGroup"
+      }
+    },
+    "getAll": {
+      "parameters": {
+        "sessionId": "xsd:string"
+      },
+      "response": {
+        "list": "nsc:ProjectsGroupList"
+      }
+    }
+  },
+  "tasks": {
+    "add": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "task": "nsc:Task"
+      },
+      "response": {
+        "task": "nsc:Task"
+      }
+    },
+    "update": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "task": "nsc:Task"
+      },
+      "response": {
+        "task": "nsc:Task"
+      }
+    },
+    "remove": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "status": "xsd:boolean"
+      }
+    },
+    "getById": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "task": "nsc:Task"
+      }
+    },
+    "getList": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "filter": "nsc:TaskListFilter",
+        "offset": "xsd:integer",
+        "count": "xsd:integer",
+        "loadTeam": "xsd:boolean"
+      },
+      "response": {
+        "list": "nsc:TaskList"
+      }
+    }
+  },
+  "users": {
+    "add": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "user": "nsc:User"
+      },
+      "response": {
+        "user": "nsc:User"
+      }
+    },
+    "update": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "user": "nsc:User"
+      },
+      "response": {
+        "user": "nsc:User"
+      }
+    },
+    "remove": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "status": "xsd:boolean"
+      }
+    },
+    "getById": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "id": "xsd:integer"
+      },
+      "response": {
+        "user": "nsc:User"
+      }
+    },
+    "getByEmail": {
+      "parameters": {
+        "sessionId": "xsd:string",
+        "email": "xsd:string"
+      },
+      "response": {
+        "user": "nsc:User"
+      }
+    },
+    "getAll": {
+      "parameters": {
+        "sessionId": "xsd:string"
+      },
+      "response": {
+        "sessionId": "xsd:string",
+        "list": "nsc:UserList"
+      }
+    },
+    "getAuthorizedUser": {
+      "parameters": {
+        "sessionId": "xsd:string"
+      },
+      "response": {
+        "user": "nsc:User"
+      }
+    }
+  }
+}

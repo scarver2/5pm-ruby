@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="users"
+    targetNamespace="http://demo.5pmweb.com/api/v2/wsdl/users"
+        xmlns="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+        xmlns:xsdmy="http://demo.5pmweb.com/api/v2/wsdl/schema.xsd"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:tns="http://demo.5pmweb.com/api/v2/wsdl/users"
+        xmlns:nsc="http://demo.5pmweb.com/api/v2/wsdl/schema"
+        xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+        xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/">
+    <types>
+        <xsd:schema targetNamespace="http://demo.5pmweb.com/api/v2/wsdl/users" xmlns:nsc="http://demo.5pmweb.com/api/v2/wsdl/schema">
+            <xsd:import schemaLocation="schema.xsd" namespace="http://demo.5pmweb.com/api/v2/wsdl/schema"/>
+        </xsd:schema>
+    </types>
+    <!-- header message -->
+    <message name="header">
+        <part name="sessionId" element="nsc:sessionId" />
+    </message>
+
+    <!-- Soap operations request/response messages -->
+    <message name="addSoapRequest">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="addSoapResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="updateSoapRequest">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="updateSoapResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="removeSoapRequest">
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeSoapResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="getByIdSoapRequest">
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="getByIdSoapResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="getByEmailSoapRequest">
+        <part name="email" type="xsd:string"/>
+    </message>
+    <message name="getByEmailSoapResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="getAllSoapRequest">
+    </message>
+    <message name="getAllSoapResponse">
+        <part name="list" type="nsc:UserList"/>
+    </message>
+    <message name="getAuthorizedUserSoapRequest"/>
+    <message name="getAuthorizedUserSoapResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+
+    <!-- HttpGet operations request/response messages -->
+    <message name="addHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="addHttpGetResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="updateHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="updateHttpGetResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="removeHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeHttpGetResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="getByIdHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="getByIdHttpGetResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="getByEmailHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="email" type="xsd:string"/>
+    </message>
+    <message name="getByEmailHttpGetResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="getAllHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="getAllHttpGetResponse">
+        <part name="list" type="nsc:UserList"/>
+    </message>
+    <message name="getAuthorizedUserHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="getAuthorizedUserHttpGetResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+
+    <!-- HttpPost operations request/response messages -->
+    <message name="addHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="addHttpPostResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="updateHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="updateHttpPostResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="removeHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeHttpPostResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="getByIdHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="getByIdHttpPostResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="getByEmailHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="email" type="xsd:string"/>
+    </message>
+    <message name="getByEmailHttpPostResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+    <message name="getAllHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="getAllHttpPostResponse">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="list" type="nsc:UserList"/>
+    </message>
+    <message name="getAuthorizedUserHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="getAuthorizedUserHttpPostResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+
+
+    <!-- Soap port type -->
+    <portType name="UsersSoapPortType">
+        <operation name="add">
+            <input name="addSoapInput" message="tns:addSoapRequest"/>
+            <output name="addSoapOutput" message="tns:addSoapResponse"/>
+        </operation>
+        <operation name="update">
+            <input name="updateSoapInput" message="tns:updateSoapRequest"/>
+            <output name="updateSoapOutput" message="tns:updateSoapResponse"/>
+        </operation>
+        <operation name="remove">
+            <input name="removeSoapInput" message="tns:removeSoapRequest"/>
+            <output name="removeSoapOutput" message="tns:removeSoapResponse"/>
+        </operation>
+        <operation name="getById">
+            <input name="getByIdSoapInput" message="tns:getByIdSoapRequest"/>
+            <output name="getByIdSoapOutput" message="tns:getByIdSoapResponse"/>
+        </operation>
+        <operation name="getByEmail">
+            <input name="getByEmailSoapInput" message="tns:getByEmailSoapRequest"/>
+            <output name="getByEmailSoapOutput" message="tns:getByEmailSoapResponse"/>
+        </operation>
+        <operation name="getAll">
+            <input name="getAllSoapInput" message="tns:getAllSoapRequest"/>
+            <output name="getAllSoapOutput" message="tns:getAllSoapResponse"/>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <input name="getAuthorizedUserSoapInput" message="tns:getAuthorizedUserSoapRequest"/>
+            <output name="getAuthorizedUserSoapOutput" message="tns:getAuthorizedUserSoapResponse"/>
+        </operation>
+    </portType>
+
+    <!-- HttpGet port type -->
+    <portType name="UsersHttpGetPortType">
+        <operation name="add">
+            <input name="addHttpGetInput" message="tns:addHttpGetRequest"/>
+            <output name="addHttpGetOutput" message="tns:addHttpGetResponse"/>
+        </operation>
+        <operation name="update">
+            <input name="updateHttpGetInput" message="tns:updateHttpGetRequest"/>
+            <output name="updateHttpGetOutput" message="tns:updateHttpGetResponse"/>
+        </operation>
+        <operation name="remove">
+            <input name="removeHttpGetInput" message="tns:removeHttpGetRequest"/>
+            <output name="removeHttpGetOutput" message="tns:removeHttpGetResponse"/>
+        </operation>
+        <operation name="getById">
+            <input name="getByIdHttpGetInput" message="tns:getByIdHttpGetRequest"/>
+            <output name="getByIdHttpGetOutput" message="tns:getByIdHttpGetResponse"/>
+        </operation>
+        <operation name="getByEmail">
+            <input name="getByEmailHttpGetInput" message="tns:getByEmailHttpGetRequest"/>
+            <output name="getByEmailHttpGetOutput" message="tns:getByEmailHttpGetResponse"/>
+        </operation>
+        <operation name="getAll">
+            <input name="getAllHttpGetInput" message="tns:getAllHttpGetRequest"/>
+            <output name="getAllHttpGetOutput" message="tns:getAllHttpGetResponse"/>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <input name="getAuthorizedUserHttpGetInput" message="tns:getAuthorizedUserHttpGetRequest"/>
+            <output name="getAuthorizedUserHttpGetOutput" message="tns:getAuthorizedUserHttpGetResponse"/>
+        </operation>
+    </portType>
+
+    <!-- HttpPost port type -->
+    <portType name="UsersHttpPostPortType">
+        <operation name="add">
+            <input name="addHttpPostInput" message="tns:addHttpPostRequest"/>
+            <output name="addHttpPostOutput" message="tns:addHttpPostResponse"/>
+        </operation>
+        <operation name="update">
+            <input name="updateHttpPostInput" message="tns:updateHttpPostRequest"/>
+            <output name="updateHttpPostOutput" message="tns:updateHttpPostResponse"/>
+        </operation>
+        <operation name="remove">
+            <input name="removeHttpPostInput" message="tns:removeHttpPostRequest"/>
+            <output name="removeHttpPostOutput" message="tns:removeHttpPostResponse"/>
+        </operation>
+        <operation name="getById">
+            <input name="getByIdHttpPostInput" message="tns:getByIdHttpPostRequest"/>
+            <output name="getByIdHttpPostOutput" message="tns:getByIdHttpPostResponse"/>
+        </operation>
+        <operation name="getByEmail">
+            <input name="getByEmailHttpPostInput" message="tns:getByEmailHttpPostRequest"/>
+            <output name="getByEmailHttpPostOutput" message="tns:getByEmailHttpPostResponse"/>
+        </operation>
+        <operation name="getAll">
+            <input name="getAllHttpPostInput" message="tns:getAllHttpPostRequest"/>
+            <output name="getAllHttpPostOutput" message="tns:getAllHttpPostResponse"/>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <input name="getAuthorizedUserHttpPostInput" message="tns:getAuthorizedUserHttpPostRequest"/>
+            <output name="getAuthorizedUserHttpPostOutput" message="tns:getAuthorizedUserHttpPostResponse"/>
+        </operation>
+    </portType>
+
+
+    <!-- Soap port type binding -->
+    <binding name="UsersSoapPortTypeBinding" type="tns:UsersSoapPortType">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="add">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/users/add"/>
+            <input name="addSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+            </input>
+            <output name="addSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+            </output>
+        </operation>
+        <operation name="update">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/users/update"/>
+            <input name="updateSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+            </input>
+            <output name="updateSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+			</output>
+        </operation>
+        <operation name="remove">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/users/remove"/>
+            <input name="removeSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+            </input>
+            <output name="removeSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+			</output>
+        </operation>
+        <operation name="getById">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/users/getById"/>
+            <input name="getByIdSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+            </input>
+            <output name="getByIdSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+			</output>
+        </operation>
+        <operation name="getByEmail">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/users/getByEmail"/>
+            <input name="getByEmailSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+            </input>
+            <output name="getByEmailSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+			</output>
+        </operation>
+        <operation name="getAll">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/users/getAll"/>
+            <input name="getAllSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+            </input>
+            <output name="getAllSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+			</output>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/users/getAuthorizedUser"/>
+            <input name="getAuthorizedUserSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+            </input>
+            <output name="getAuthorizedUserSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/users"/>
+			</output>
+        </operation>
+    </binding>
+
+    <!-- HttpGet port type binding -->
+    <binding name="UsersHttpGetPortTypeBinding" type="tns:UsersHttpGetPortType">
+        <http:binding verb="GET"/>
+        <operation name="add">
+            <http:operation location="/add" />
+            <input name="addHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="addHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="update">
+            <http:operation location="/update" />
+            <input name="updateHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="updateHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="remove">
+            <http:operation location="/remove" />
+            <input name="removeHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="removeHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getById">
+            <http:operation location="/getById" />
+            <input name="getByIdHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getByIdHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getByEmail">
+            <http:operation location="/getByEmail" />
+            <input name="getByEmailHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getByEmailHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getAll">
+            <http:operation location="/getAll" />
+            <input name="getAllHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getAllHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <http:operation location="/getAuthorizedUser" />
+            <input name="getAuthorizedUserHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getAuthorizedUserHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+    </binding>
+
+    <!-- HttpPost port type binding -->
+    <binding name="UsersHttpPostPortTypeBinding" type="tns:UsersHttpPostPortType">
+        <http:binding verb="POST"/>
+        <operation name="add">
+            <http:operation location="/add" />
+            <input name="addHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="addHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="update">
+            <http:operation location="/update" />
+            <input name="updateHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="updateHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="remove">
+            <http:operation location="/remove" />
+            <input name="removeHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="removeHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getById">
+            <http:operation location="/getById" />
+            <input name="getByIdHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="getByIdHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getByEmail">
+            <http:operation location="/getByEmail" />
+            <input name="getByEmailHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="getByEmailHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getAll">
+            <http:operation location="/getAll" />
+            <input name="getAllHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="getAllHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <http:operation location="/getAuthorizedUser" />
+            <input name="getAuthorizedUserHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="getAuthorizedUserHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+    </binding>
+
+
+    <!-- users management service -->
+    <service name="UsersService">
+        <documentation>5pm users management service</documentation>
+        <port name="UsersSoapPort" binding="tns:UsersSoapPortTypeBinding">
+            <soap:address location="https://demo.5pmweb.com/api/v2/service/soap/users"/>
+        </port>
+        <port name="UsersHttpGetPort" binding="tns:UsersHttpGetPortTypeBinding">
+            <http:address location="https://demo.5pmweb.com/api/v2/service/get/users" />
+        </port>
+        <port name="UsersHttpPostPort" binding="tns:UsersHttpPostPortTypeBinding">
+            <http:address location="https://demo.5pmweb.com/api/v2/service/post/users" />
+        </port>
+    </service>
+</definitions>

@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="authentication"
+    targetNamespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"
+        xmlns="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+        xmlns:xsdmy="http://demo.5pmweb.com/api/v2/wsdl/schema.xsd"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:tns="http://demo.5pmweb.com/api/v2/wsdl/authentication"
+        xmlns:nsc="http://demo.5pmweb.com/api/v2/wsdl/schema"
+        xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+        xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/">
+    <types>
+        <xsd:schema targetNamespace="http://demo.5pmweb.com/api/v2/wsdl/authentication" xmlns:tns="http://demo.5pmweb.com/api/v2/wsdl/schema">
+            <xsd:import schemaLocation="schema.xsd?2016-10-6" namespace="http://demo.5pmweb.com/api/v2/wsdl/schema"/>
+        </xsd:schema>
+    </types>
+    <!-- header message -->
+    <message name="header">
+        <part name="sessionId" element="nsc:sessionId" />
+    </message>
+
+    <!-- Soap operations request/response messages -->
+    <message name="signInSoapRequest">
+        <part name="login" type="xsd:string"/>
+        <part name="password" type="xsd:string"/>
+    </message>
+    <message name="signInSoapResponse">
+        <part name="auth" type="nsc:AuthToken"/>
+    </message>
+
+    <message name="signOutSoapRequest"/>
+    <message name="signOutSoapResponse">
+        <part name="signOutState" type="xsd:boolean"/>
+    </message>
+
+    <message name="getAuthorizedUserSoapRequest"/>
+    <message name="getAuthorizedUserSoapResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+
+    <message name="nopSoapRequest"></message>
+    <message name="nopSoapResponse">
+        <part name="nopState" type="xsd:boolean"/>
+    </message>
+
+    <message name="isSslSoapRequest"></message>
+    <message name="isSslSoapResponse">
+        <part name="isSsl" type="xsd:boolean"/>
+    </message>
+
+        <!-- HttpGet operations request/response messages -->
+    <message name="signInHttpGetRequest">
+        <part name="login" type="xsd:string"/>
+        <part name="password" type="xsd:string"/>
+    </message>
+    <message name="signInHttpGetResponse">
+        <part name="auth" type="nsc:AuthToken"/>
+    </message>
+
+    <message name="signOutHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="signOutHttpGetResponse">
+        <part name="signOutState" type="xsd:boolean"/>
+    </message>
+
+    <message name="getAuthorizedUserHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="getAuthorizedUserHttpGetResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+
+    <message name="nopHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="nopHttpGetResponse">
+        <part name="nopState" type="xsd:boolean"/>
+    </message>
+
+    <message name="isSslHttpGetRequest"></message>
+    <message name="isSslHttpGetResponse">
+        <part name="isSsl" type="xsd:boolean"/>
+    </message>
+
+        <!-- HttpPost operations request/response messages -->
+    <message name="signInHttpPostRequest">
+        <part name="login" type="xsd:string"/>
+        <part name="password" type="xsd:string"/>
+    </message>
+    <message name="signInHttpPostResponse">
+        <part name="auth" type="nsc:AuthToken"/>
+    </message>
+
+    <message name="signOutHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="signOutHttpPostResponse">
+        <part name="signOutState" type="xsd:boolean"/>
+    </message>
+
+    <message name="getAuthorizedUserHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="getAuthorizedUserHttpPostResponse">
+        <part name="user" type="nsc:User"/>
+    </message>
+
+    <message name="nopHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+    </message>
+    <message name="nopHttpPostResponse">
+        <part name="nopState" type="xsd:boolean"/>
+    </message>
+
+    <message name="isSslHttpPostRequest"></message>
+    <message name="isSslHttpPostResponse">
+        <part name="isSsl" type="xsd:boolean"/>
+    </message>
+
+        <!-- Soap port type -->
+    <portType name="AuthenticationSoapPortType">
+        <operation name="signIn">
+            <input name="signInSoapInput" message="tns:signInSoapRequest"/>
+            <output name="signInSoapOutput" message="tns:signInSoapResponse"/>
+        </operation>
+        <operation name="signOut">
+            <input name="signOutSoapInput" message="tns:signOutSoapRequest"/>
+            <output name="signOutSoapOutput" message="tns:signOutSoapResponse"/>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <input name="getAuthorizedUserSoapInput" message="tns:getAuthorizedUserSoapRequest"/>
+            <output name="getAuthorizedUserSoapOutput" message="tns:getAuthorizedUserSoapResponse"/>
+        </operation>
+        <operation name="nop">
+            <input name="nopSoapInput" message="tns:nopSoapRequest"/>
+            <output name="nopSoapOutput" message="tns:nopSoapResponse"/>
+        </operation>
+        <operation name="isSsl">
+            <input name="isSslSoapInput" message="tns:isSslSoapRequest"/>
+            <output name="isSslSoapOutput" message="tns:isSslSoapResponse"/>
+        </operation>
+    </portType>
+
+    <!-- HttpGet port type -->
+    <portType name="AuthenticationHttpGetPortType">
+        <operation name="signIn">
+            <input name="signInHttpGetInput" message="tns:signInHttpGetRequest"/>
+            <output name="signInHttpGetOutput" message="tns:signInHttpGetResponse"/>
+        </operation>
+        <operation name="signOut">
+            <input name="signOutHttpGetInput" message="tns:signOutHttpGetRequest"/>
+            <output name="signOutHttpGetOutput" message="tns:signOutHttpGetResponse"/>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <input name="getAuthorizedUserHttpGetInput" message="tns:getAuthorizedUserHttpGetRequest"/>
+            <output name="getAuthorizedUserHttpGetOutput" message="tns:getAuthorizedUserHttpGetResponse"/>
+        </operation>
+        <operation name="nop">
+            <input name="nopHttpGetInput" message="tns:nopHttpGetRequest"/>
+            <output name="nopHttpGetOutput" message="tns:nopHttpGetResponse"/>
+        </operation>
+        <operation name="isSsl">
+            <input name="isSslHttpGetInput" message="tns:isSslHttpGetRequest"/>
+            <output name="isSslHttpGetOutput" message="tns:isSslHttpGetResponse"/>
+        </operation>
+    </portType>
+
+    <!-- HttpPost port type -->
+    <portType name="AuthenticationHttpPostPortType">
+        <operation name="signIn">
+            <input name="signInHttpPostInput" message="tns:signInHttpPostRequest"/>
+            <output name="signInHttpPostOutput" message="tns:signInHttpPostResponse"/>
+        </operation>
+        <operation name="signOut">
+            <input name="signOutHttpPostInput" message="tns:signOutHttpPostRequest"/>
+            <output name="signOutHttpPostOutput" message="tns:signOutHttpPostResponse"/>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <input name="getAuthorizedUserHttpPostInput" message="tns:getAuthorizedUserHttpPostRequest"/>
+            <output name="getAuthorizedUserHttpPostOutput" message="tns:getAuthorizedUserHttpPostResponse"/>
+        </operation>
+        <operation name="nop">
+            <input name="nopHttpPostInput" message="tns:nopHttpPostRequest"/>
+            <output name="nopHttpPostOutput" message="tns:nopHttpPostResponse"/>
+        </operation>
+        <operation name="isSsl">
+            <input name="isSslHttpPostInput" message="tns:isSslHttpPostRequest"/>
+            <output name="isSslHttpPostOutput" message="tns:isSslHttpPostResponse"/>
+        </operation>
+    </portType>
+
+
+    <!-- Soap port type binding -->
+    <binding name="AuthenticationSoapPortTypeBinding" type="tns:AuthenticationSoapPortType">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="signIn">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/authentication/signIn"/>
+            <input name="signInSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </input>
+            <output name="signInSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </output>
+        </operation>
+        <operation name="signOut">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/authentication/signOut"/>
+            <input name="signOutSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </input>
+            <output name="signOutSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </output>
+        </operation>
+        <operation name="getAuthorizedUser">
+			<soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/authentication/getAuthorizedUser"/>
+            <input name="getAuthorizedUserSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </input>
+            <output name="getAuthorizedUserSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+			</output>
+        </operation>
+        <operation name="nop">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/authentication/nop"/>
+            <input name="nopSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </input>
+            <output name="nopSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </output>
+        </operation>
+        <operation name="isSsl">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/authentication/isSsl"/>
+            <input name="isSslSoapInput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </input>
+            <output name="isSslSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/authentication"/>
+            </output>
+        </operation>
+    </binding>
+
+    <!-- HttpGet port type binding -->
+    <binding name="AuthenticationHttpGetPortTypeBinding" type="tns:AuthenticationHttpGetPortType">
+        <http:binding verb="GET"/>
+        <operation name="signIn">
+            <http:operation location="/signIn" />
+            <input name="signInHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="signInHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="signOut">
+            <http:operation location="/signOut" />
+            <input name="signOutHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="signOutHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <http:operation location="/getAuthorizedUser" />
+            <input name="getAuthorizedUserHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getAuthorizedUserHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="nop">
+            <http:operation location="/nop" />
+            <input name="nopHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="nopHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="isSsl">
+            <http:operation location="/isSsl" />
+            <input name="isSslHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="isSslHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+    </binding>
+
+    <!-- HttpPost port type binding -->
+    <binding name="AuthenticationHttpPostPortTypeBinding" type="tns:AuthenticationHttpPostPortType">
+        <http:binding verb="POST"/>
+        <operation name="signIn">
+            <http:operation location="/signIn" />
+            <input name="signInHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="signInHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="signOut">
+            <http:operation location="/signOut" />
+            <input name="signOutHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="signOutHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getAuthorizedUser">
+            <http:operation location="/getAuthorizedUser" />
+            <input name="getAuthorizedUserHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="getAuthorizedUserHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="nop">
+            <http:operation location="/nop" />
+            <input name="nopHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="nopHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="isSsl">
+            <http:operation location="/isSsl" />
+            <input name="isSslHttpPostInput">
+                <mime:content type="application/x-www-form-urlencoded" />
+            </input>
+            <output name="isSslHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+    </binding>
+
+
+    <!-- Authentication service -->
+    <service name="AuthenticationService">
+        <documentation>5pm authentication servcie</documentation>
+        <port name="AuthenticationSoapPort" binding="tns:AuthenticationSoapPortTypeBinding">
+            <soap:address location="https://demo.5pmweb.com/api/v2/service/soap/authentication"/>
+        </port>
+        <port name="AuthenticationHttpGetPort" binding="tns:AuthenticationHttpGetPortTypeBinding">
+            <http:address location="https://demo.5pmweb.com/api/v2/service/get/authentication" />
+        </port>
+        <port name="AuthenticationHttpPostPort" binding="tns:AuthenticationHttpPostPortTypeBinding">
+            <http:address location="https://demo.5pmweb.com/api/v2/service/post/authentication" />
+        </port>
+    </service>
+</definitions>
