@@ -118,8 +118,9 @@ module FivePM
         dispatched = true
         data = dispatch(service, action, part, wire_arguments)
         # A successful mutation must never look retryable if an audit sink fails.
+        result = response({ data: sanitize(data) })
         audit(request_id, name, "success")
-        response({ data: sanitize(data) })
+        result
       rescue FivePM::Error, ArgumentError, TypeError
         audit(request_id, name, mutation && dispatched ? "uncertain" : "failed")
         error("request_failed",

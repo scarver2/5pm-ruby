@@ -121,6 +121,17 @@ RSpec.describe FivePM::MCPAdapter::Server do
     expect(events.last.fetch(:outcome)).to eq("uncertain")
   end
 
+  it "audits serialization failures as uncertain without first reporting success" do
+    configured = described_class.new(client: client, allow_mutations: true, approver: ->(_proposal) { true },
+                                     audit: ->(event) { events << event })
+    expect(client).to receive(:projects).and_return(resource)
+    expect(resource).to receive(:create).with({ "name" => "Synthetic" }).once
+                                        .and_return("project" => { "id" => 1, "future" => Float::INFINITY })
+    result = call_tool(configured.server, "five_pm_create_projects", attributes: { name: "Synthetic" })
+    expect(result.dig("result", "isError")).to be(true)
+    expect(events.map { |event| event.fetch(:outcome) }).to eq(["uncertain"])
+  end
+
   it "keeps a successful mutation successful if the host audit sink fails" do
     configured = described_class.new(client: client, allow_mutations: true, approver: ->(_proposal) { true },
                                      audit: ->(_event) { raise "audit backend secret" })
