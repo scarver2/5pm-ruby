@@ -22,7 +22,7 @@ Initial implementation, 2026-10-28. Worktree: `sdk`, branch: `feat/api-v2-sdk`.
 
 ## Verified locally
 
-- Ruby 4.0.9: 79 passing examples, over 99% line coverage.
+- Ruby 4.0.9: 80 passing examples, over 99% line coverage.
 - RuboCop: no offenses.
 - Strict gem build: successful; package file inventory and MIT license verified.
 - Plain Ruby can load the SDK without development dependencies.
