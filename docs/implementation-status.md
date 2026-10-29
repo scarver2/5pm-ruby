@@ -20,9 +20,12 @@ Initial implementation, 2026-10-28. Worktree: `sdk`, branch: `feat/api-v2-sdk`.
 - Isolated package verification, read-only release gate and opt-in read-only sandbox preflight.
 - Reviewed scarver2/abbu and scarver2/printavo-ruby patterns; see implementation-guides.md.
 
+- Separate five_pm-mcp gem with official SDK, read-only stdio tools, opt-in host-confirmed mutations and redacted audit events.
+- Real synthetic stdio/executable tests and isolated installation verification for both gem artifacts.
+
 ## Verified locally
 
-- Ruby 4.0.9: 80 passing examples, over 99% line coverage.
+- Ruby 4.0.9: 93 passing examples, over 99% line coverage.
 - RuboCop: no offenses.
 - Strict gem build: successful; package file inventory and MIT license verified.
 - Plain Ruby can load the SDK without development dependencies.
@@ -39,7 +42,7 @@ No authenticated API calls or account mutations have been made.
 - Confirm typed response mapping against observed JSON envelopes and error shapes.
 - Verify pagination behavior, date/timezone semantics, attachments and rate-limit handling.
 - Keep the Ruby 3.2/3.3/3.4/4.0 hosted CI matrix passing (initial milestone passed all four).
-- Create the standalone MCP tracking issue from docs/mcp-plan.md when adapter work begins.
+- Complete live validation of the separately implemented MCP package tracked in issue #4.
 - Check RubyGems name availability before release; obtain explicit approval before publishing.
 
 The proposed change does not close issue #1; this is a reviewable initial milestone.

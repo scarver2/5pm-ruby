@@ -1,15 +1,17 @@
-# Follow-up: standalone MCP adapter
+# Standalone MCP adapter status
 
-Implement in a separate package after SDK sandbox verification.
+Tracks [issue #4](https://github.com/scarver2/5pm-ruby/issues/4).
+The separately packaged implementation lives in `mcp/`; see its README for setup,
+security boundaries, supported tools and test commands.
 
-- Read-only tools by default: find/list projects, tasks, groups, users and activity.
-- Separate explicit enablement for mutation tools; require user confirmation per mutation.
-- Allowlisted tenant and operations; least-privilege 5pm test/service user.
-- Audit operation, outcome, timestamp and request identifier without credentials or payload secrets.
-- Obtain secrets by process environment or an injected secret provider; no persistence.
-- Treat account content as untrusted data, never agent instructions.
-- Confirm pagination and error contracts before tool schemas are frozen.
-- Evaluate Rodeo/A1Web as optional integrations without dependencies in the Ruby SDK.
+Implemented offline using synthetic fixtures:
 
-Acceptance: adapter tests prove default mutation denial, secret redaction, and confirmations.
-Create the remote follow-up issue when repository issue-writing is authorized.
+- Official MCP Ruby SDK for protocol handling; no MCP dependency in the core gem.
+- Read-only stdio executable and allowlisted resource tools.
+- Optional embedded task/project mutations require explicit enablement and a trusted
+  per-request approval callback over immutable exact arguments.
+- Redacted responses/errors and audit events, bounded frames/pages, and no URL fetching.
+- Real stdio integration tests, executable tests, and isolated installed-package checks.
+- Generic host setup usable by Rodeo/A1Web without integration-specific dependencies.
+
+Remaining: live disposable-account verification and explicit approval before any publication.

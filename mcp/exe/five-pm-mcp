@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+require "five_pm/mcp"
+
+begin
+  client = FivePM::Client.new(host: ENV.fetch("FIVE_PM_HOST"), login: ENV.fetch("FIVE_PM_LOGIN"),
+                              password: ENV.fetch("FIVE_PM_PASSWORD"), response_mode: :typed)
+  # The executable always runs read-only. Hosts can embed the adapter with a trusted
+  # per-call approval callback if they intentionally enable mutation tools.
+  audit = ->(event) { $stderr.write("#{JSON.generate(event)}\n") }
+  FivePM::MCPAdapter::Server.new(client: client, audit: audit).open
+rescue FivePM::Error, KeyError
+  warn "5pm MCP configuration or connection failed; check injected environment variables."
+  exit 1
+ensure
+  begin
+    client&.sign_out
+  rescue FivePM::Error
+    # Do not expose server bodies or session values while closing a session.
+  end
+end

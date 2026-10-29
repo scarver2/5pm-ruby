@@ -14,3 +14,11 @@
 - Explicit user/authentication/attachment helpers and typed-model request round trips.
 - Fix Enumerable overriding typed list `to_h`.
 - Isolated packaging, read-only release gates and opt-in sandbox preflight.
+
+- Separate five_pm-mcp package with official MCP SDK protocol handling, default read-only
+  tools, per-request operator approval for embedded mutations and redacted audit events.
+- Real synthetic stdio/executable tests and isolated installation checks for both artifacts.
+
+- Review fixes: retain typed-list serialization in the base layer, include DNS lookup
+  in timeout handling, reject stale live-validation evidence after code changes, and
+  emit successful MCP audit outcomes only after result serialization succeeds.
