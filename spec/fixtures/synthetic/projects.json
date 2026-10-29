@@ -1,0 +1,11 @@
+{
+  "list": {
+    "items": [{
+      "id": "123", "name": "Synthetic project", "hidden": "false",
+      "startDate": "2026-10-28T09:30:00-05:00",
+      "endDate": "2026-11-01T17:00:00",
+      "team": {"items": [{"id": "7", "firstName": "Test", "canViewProfiles": "1", "futureUser": "retained"}], "count": "1", "total": "1"},
+      "futureProject": {"nested": [false, null, "unchanged"]}
+    }], "count": "1", "total": "12", "futureList": "retained"
+  }, "futureEnvelope": {"trace": "synthetic-trace"}
+}

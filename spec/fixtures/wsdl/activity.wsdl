@@ -1,0 +1,698 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="activity"
+    targetNamespace="http://demo.5pmweb.com/api/v2/wsdl/activity"
+        xmlns="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsdmy="http://demo.5pmweb.com/api/v2/wsdl/schema.xsd"
+        xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:tns="http://demo.5pmweb.com/api/v2/wsdl/activity"
+        xmlns:nsc="http://demo.5pmweb.com/api/v2/wsdl/schema"
+        xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+        xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/">
+    <types>
+        <xsd:schema targetNamespace="http://demo.5pmweb.com/api/v2/wsdl/activity" xmlns:tns="http://demo.5pmweb.com/api/v2/wsdl/schema">
+            <xsd:import schemaLocation="schema.xsd" namespace="http://demo.5pmweb.com/api/v2/wsdl/schema"/>
+        </xsd:schema>
+    </types>
+    <!-- header message -->
+    <message name="header">
+        <part name="sessionId" element="nsc:sessionId" />
+    </message>
+
+    <!-- Soap operations request/response messages -->
+    <message name="addSoapRequest">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="addSoapResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="updateSoapRequest">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="updateSoapResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="removeSoapRequest">
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeSoapResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="getListSoapRequest">
+        <part name="filter" type="nsc:ActivityListFilter"/>
+        <part name="offset" type="xsd:integer"/>
+        <part name="count" type="xsd:integer"/>
+        <part name="withFiles" type="xsd:boolean"/>
+        <part name="withNames" type="xsd:boolean"/>
+    </message>
+    <message name="getListSoapResponse">
+        <part name="list" type="nsc:ActivityList"/>
+    </message>
+    <message name="getFilesListSoapRequest">
+        <part name="filter" type="nsc:ActivityListFilter"/>
+        <part name="offset" type="xsd:integer"/>
+        <part name="count" type="xsd:integer"/>
+    </message>
+    <message name="getFilesListSoapResponse">
+        <part name="list" type="nsc:FileList"/>
+    </message>
+    <message name="getByIdSoapRequest">
+        <part name="id" type="xsd:integer"/>
+        <part name="withNames" type="xsd:boolean"/>
+    </message>
+    <message name="getByIdSoapResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="attachFilesSoapRequest">
+        <part name="activityId" type="xsd:integer"/>
+        <part name="files" type="nsc:FileList"/>
+    </message>
+    <message name="attachFilesSoapResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="removeFileSoapRequest">
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeFileSoapResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="downloadFileSoapRequest">
+        <part name="id" type="xsd:integer"/>
+        <part name="stream" type="xsd:boolean"/>
+    </message>
+    <message name="downloadFileSoapResponse">
+        <part name="file" type="nsc:File"/>
+    </message>
+    <message name="getResizeImgSoapRequest">
+        <part name="id" type="xsd:integer"/>
+        <part name="width" type="xsd:integer"/>
+        <part name="height" type="xsd:integer"/>
+    </message>
+    <message name="getResizeImgSoapResponse">
+        <part name="file" type="nsc:File"/>
+    </message>
+
+
+    <!-- HttpGet operations request/response messages -->
+    <message name="addHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="addHttpGetResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="updateHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="updateHttpGetResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="removeHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeHttpGetResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="getListHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="filter" type="nsc:ActivityListFilter"/>
+        <part name="offset" type="xsd:integer"/>
+        <part name="count" type="xsd:integer"/>
+        <part name="withFiles" type="xsd:boolean"/>
+        <part name="withNames" type="xsd:boolean"/>
+    </message>
+    <message name="getListHttpGetResponse">
+        <part name="list" type="nsc:ActivityList"/>
+    </message>
+    <message name="getFilesListHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="filter" type="nsc:ActivityListFilter"/>
+        <part name="offset" type="xsd:integer"/>
+        <part name="count" type="xsd:integer"/>
+    </message>
+    <message name="getFilesListHttpGetResponse">
+        <part name="list" type="nsc:FileList"/>
+    </message>
+    <message name="getByIdHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+        <part name="withNames" type="xsd:boolean"/>
+    </message>
+    <message name="getByIdHttpGetResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="attachFilesHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="activityId" type="xsd:integer"/>
+        <part name="files" type="nsc:FileList"/>
+    </message>
+    <message name="attachFilesHttpGetResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="removeFileHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeFileHttpGetResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="downloadFileHttpGetRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+        <part name="stream" type="xsd:boolean"/>
+    </message>
+    <message name="downloadFileHttpGetResponse">
+        <part name="file" type="nsc:File"/>
+    </message>
+    <message name="getResizeImgHttpGetRequest">
+        <part name="id" type="xsd:integer"/>
+        <part name="width" type="xsd:integer"/>
+        <part name="height" type="xsd:integer"/>
+    </message>
+    <message name="getResizeImgHttpGetResponse">
+        <part name="file" type="nsc:File"/>
+    </message>
+
+
+    <!-- HttpPost operations request/response messages -->
+    <message name="addHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="addHttpPostResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="updateHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="updateHttpPostResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="removeHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeHttpPostResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="getListHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="filter" type="nsc:ActivityListFilter"/>
+        <part name="offset" type="xsd:integer"/>
+        <part name="count" type="xsd:integer"/>
+        <part name="withFiles" type="xsd:boolean"/>
+        <part name="withNames" type="xsd:boolean"/>
+    </message>
+    <message name="getListHttpPostResponse">
+        <part name="list" type="nsc:ActivityList"/>
+    </message>
+    <message name="getFilesListHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="filter" type="nsc:ActivityListFilter"/>
+        <part name="offset" type="xsd:integer"/>
+        <part name="count" type="xsd:integer"/>
+    </message>
+    <message name="getFilesListHttpPostResponse">
+        <part name="list" type="nsc:FileList"/>
+    </message>
+    <message name="getByIdHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+        <part name="withNames" type="xsd:boolean"/>
+    </message>
+    <message name="getByIdHttpPostResponse">
+        <part name="activity" type="nsc:Activity"/>
+    </message>
+    <message name="attachFilesHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="activityId" type="xsd:integer"/>
+        <part name="files" type="nsc:FileList"/>
+    </message>
+    <message name="attachFilesHttpPostResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="removeFileHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+    </message>
+    <message name="removeFileHttpPostResponse">
+        <part name="status" type="xsd:boolean"/>
+    </message>
+    <message name="downloadFileHttpPostRequest">
+        <part name="sessionId" type="xsd:string"/>
+        <part name="id" type="xsd:integer"/>
+        <part name="stream" type="xsd:boolean"/>
+    </message>
+    <message name="downloadFileHttpPostResponse">
+        <part name="file" type="nsc:File"/>
+    </message>
+    <message name="getResizeImgHttpPostRequest">
+        <part name="id" type="xsd:integer"/>
+        <part name="width" type="xsd:integer"/>
+        <part name="height" type="xsd:integer"/>
+    </message>
+    <message name="getResizeImgHttpPostResponse">
+        <part name="file" type="nsc:File"/>
+    </message>
+
+
+    <!-- Soap port type -->
+    <portType name="ActivitySoapPortType">
+        <operation name="add">
+            <input name="addSoapInput" message="tns:addSoapRequest"/>
+            <output name="addSoapOutput" message="tns:addSoapResponse"/>
+        </operation>
+        <operation name="update">
+            <input name="updateSoapInput" message="tns:updateSoapRequest"/>
+            <output name="updateSoapOutput" message="tns:updateSoapResponse"/>
+        </operation>
+        <operation name="remove">
+            <input name="removeSoapInput" message="tns:removeSoapRequest"/>
+            <output name="removeSoapOutput" message="tns:removeSoapResponse"/>
+        </operation>
+        <operation name="getById">
+            <input name="getByIdSoapInput" message="tns:getByIdSoapRequest"/>
+            <output name="getByIdSoapOutput" message="tns:getByIdSoapResponse"/>
+        </operation>
+        <operation name="getList">
+            <input name="getListSoapInput" message="tns:getListSoapRequest"/>
+            <output name="getListSoapOutput" message="tns:getListSoapResponse"/>
+        </operation>
+        <operation name="getFilesList">
+            <input name="getFilesListSoapInput" message="tns:getFilesListSoapRequest"/>
+            <output name="getFilesListSoapOutput" message="tns:getFilesListSoapResponse"/>
+        </operation>
+        <operation name="attachFiles">
+            <input name="attachFilesSoapInput" message="tns:attachFilesSoapRequest"/>
+            <output name="attachFilesSoapOutput" message="tns:attachFilesSoapResponse"/>
+        </operation>
+        <operation name="removeFile">
+            <input name="removeFileSoapInput" message="tns:removeFileSoapRequest"/>
+            <output name="removeFileSoapOutput" message="tns:removeFileSoapResponse"/>
+        </operation>
+        <operation name="downloadFile">
+            <input name="downloadFileSoapInput" message="tns:downloadFileSoapRequest"/>
+            <output name="downloadFileSoapOutput" message="tns:downloadFileSoapResponse"/>
+        </operation>
+        <operation name="getResizeImg">
+            <input name="getResizeImgSoapInput" message="tns:getResizeImgSoapRequest"/>
+            <output name="getResizeImgSoapOutput" message="tns:getResizeImgSoapResponse"/>
+        </operation>
+
+    </portType>
+
+    <!-- HttpGet port type -->
+    <portType name="ActivityHttpGetPortType">
+        <operation name="add">
+            <input name="addHttpGetInput" message="tns:addHttpGetRequest"/>
+            <output name="addHttpGetOutput" message="tns:addHttpGetResponse"/>
+        </operation>
+        <operation name="update">
+            <input name="updateHttpGetInput" message="tns:updateHttpGetRequest"/>
+            <output name="updateHttpGetOutput" message="tns:updateHttpGetResponse"/>
+        </operation>
+        <operation name="remove">
+            <input name="removeHttpGetInput" message="tns:removeHttpGetRequest"/>
+            <output name="removeHttpGetOutput" message="tns:removeHttpGetResponse"/>
+        </operation>
+        <operation name="getById">
+            <input name="getByIdHttpGetInput" message="tns:getByIdHttpGetRequest"/>
+            <output name="getByIdHttpGetOutput" message="tns:getByIdHttpGetResponse"/>
+        </operation>
+        <operation name="getList">
+            <input name="getListHttpGetInput" message="tns:getListHttpGetRequest"/>
+            <output name="getListHttpGetOutput" message="tns:getListHttpGetResponse"/>
+        </operation>
+        <operation name="getFilesList">
+            <input name="getFilesListHttpGetInput" message="tns:getFilesListHttpGetRequest"/>
+            <output name="getFilesListHttpGetOutput" message="tns:getFilesListHttpGetResponse"/>
+        </operation>
+        <operation name="attachFiles">
+            <input name="attachFilesHttpGetInput" message="tns:getListHttpGetRequest"/>
+            <output name="attachFilesHttpGetOutput" message="tns:getListHttpGetResponse"/>
+        </operation>
+        <operation name="removeFile">
+            <input name="removeFileHttpGetInput" message="tns:getListHttpGetRequest"/>
+            <output name="removeFileHttpGetOutput" message="tns:getListHttpGetResponse"/>
+        </operation>
+        <operation name="downloadFile">
+            <input name="downloadFileHttpGetInput" message="tns:downloadFileHttpGetRequest"/>
+            <output name="downloadFileHttpGetOutput" message="tns:downloadFileHttpGetResponse"/>
+        </operation>
+        <operation name="getResizeImg">
+            <input name="getResizeImgHttpGetInput" message="tns:getResizeImgHttpGetRequest"/>
+            <output name="getResizeImgHttpGetOutput" message="tns:getResizeImgHttpGetResponse"/>
+        </operation>
+    </portType>
+
+    <!-- HttpPost port type -->
+    <portType name="ActivityHttpPostPortType">
+        <operation name="add">
+            <input name="addHttpPostInput" message="tns:addHttpPostRequest"/>
+            <output name="addHttpPostOutput" message="tns:addHttpPostResponse"/>
+        </operation>
+        <operation name="update">
+            <input name="updateHttpPostInput" message="tns:updateHttpPostRequest"/>
+            <output name="updateHttpPostOutput" message="tns:updateHttpPostResponse"/>
+        </operation>
+        <operation name="remove">
+            <input name="removeHttpPostInput" message="tns:removeHttpPostRequest"/>
+            <output name="removeHttpPostOutput" message="tns:removeHttpPostResponse"/>
+        </operation>
+        <operation name="getById">
+            <input name="getByIdHttpPostInput" message="tns:getByIdHttpPostRequest"/>
+            <output name="getByIdHttpPostOutput" message="tns:getByIdHttpPostResponse"/>
+        </operation>
+        <operation name="getList">
+            <input name="getListHttpPostInput" message="tns:getListHttpPostRequest"/>
+            <output name="getListHttpPostOutput" message="tns:getListHttpPostResponse"/>
+        </operation>
+        <operation name="getFilesList">
+            <input name="getFilesListHttpPostInput" message="tns:getFilesListHttpPostRequest"/>
+            <output name="getFilesListHttpPostOutput" message="tns:getFilesListHttpPostResponse"/>
+        </operation>
+        <operation name="attachFiles">
+            <input name="attachFilesHttpPostInput" message="tns:attachFilesHttpPostRequest"/>
+            <output name="attachFilesHttpPostOutput" message="tns:attachFilesHttpPostResponse"/>
+        </operation>
+        <operation name="removeFile">
+            <input name="removeFileHttpPostInput" message="tns:removeFileHttpPostRequest"/>
+            <output name="removeFileHttpPostOutput" message="tns:removeFileHttpPostResponse"/>
+        </operation>
+        <operation name="downloadFile">
+            <input name="downloadFileHttpPostInput" message="tns:downloadFileHttpPostRequest"/>
+            <output name="downloadFileHttpPostOutput" message="tns:downloadFileHttpPostResponse"/>
+        </operation>
+        <operation name="getResizeImg">
+            <input name="getResizeImgHttpPostInput" message="tns:getResizeImgHttpPostRequest"/>
+            <output name="getResizeImgHttpPostOutput" message="tns:getResizeImgHttpPostResponse"/>
+        </operation>
+
+    </portType>
+
+
+    <!-- Soap port type binding -->
+    <binding name="ActivitySoapPortTypeBinding" type="tns:ActivitySoapPortType">
+        <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="add">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/add"/>
+            <input name="addSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="addSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="update">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/update"/>
+            <input name="updateSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="updateSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="remove">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/remove"/>
+            <input name="removeSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="removeSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="getById">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/getById"/>
+            <input name="getByIdSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="getByIdSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="getList">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/getList"/>
+            <input name="getListSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="getListSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="getFilesList">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/getFilesList"/>
+            <input name="getFilesListSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="getFilesListSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="attachFiles">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/attachFiles"/>
+            <input name="attachFilesSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="attachFilesSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="removeFile">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/removeFile"/>
+            <input name="removeFileSoapInput">
+                <soap:header message="tns:header" part="sessionId" use="literal"/>
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="removeFileSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="downloadFile">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/downloadFile"/>
+            <input name="downloadFileSoapInput">
+            <soap:header message="tns:header" part="sessionId" use="literal"/>
+            <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="downloadFileSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+        <operation name="getResizeImg">
+            <soap:operation soapAction="http://demo.5pmweb.com/api/v2/service/soap/activity/getResizeImg"/>
+            <input name="getResizeImgSoapInput">
+            <soap:header message="tns:header" part="sessionId" use="literal"/>
+            <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+            </input>
+            <output name="getResizeImgSoapOutput">
+                <soap:body use="literal" namespace="http://demo.5pmweb.com/api/v2/wsdl/activity"/>
+			</output>
+        </operation>
+    </binding>
+
+    <!-- HttpGet port type binding -->
+    <binding name="ActivityHttpGetPortTypeBinding" type="tns:ActivityHttpGetPortType">
+        <http:binding verb="GET"/>
+        <operation name="add">
+            <http:operation location="/add" />
+            <input name="addHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="addHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="update">
+            <http:operation location="/update" />
+            <input name="updateHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="updateHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="remove">
+            <http:operation location="/remove" />
+            <input name="removeHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="removeHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getById">
+            <http:operation location="/getById" />
+            <input name="getByIdHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getByIdHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getList">
+            <http:operation location="/getList" />
+            <input name="getListHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getListHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getFilesList">
+            <http:operation location="/getFilesList" />
+            <input name="getFilesListHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getFilesListHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="attachFiles">
+            <http:operation location="/attachFiles" />
+            <input name="attachFilesHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="attachFilesHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="removeFile">
+            <http:operation location="/removeFile" />
+            <input name="removeFileHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="removeFileHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="downloadFile">
+            <http:operation location="/downloadFile" />
+            <input name="downloadFileHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="downloadFileHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="downloadFile">
+            <http:operation location="/downloadFile" />
+            <input name="downloadFileHttpGetInput">
+                <http:urlEncoded />
+            </input>
+            <output name="downloadFileHttpGetOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+    </binding>
+
+    <!-- HttpPost port type binding -->
+    <binding name="ActivityHttpPostPortTypeBinding" type="tns:ActivityHttpPostPortType">
+        <http:binding verb="POST"/>
+        <operation name="add">
+            <http:operation location="/add" />
+            <input name="addHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="addHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="update">
+            <http:operation location="/update" />
+            <input name="updateHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="updateHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="remove">
+            <http:operation location="/remove" />
+            <input name="removeHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="removeHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getById">
+            <http:operation location="/getById" />
+            <input name="getByIdHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getByIdHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getList">
+            <http:operation location="/getList" />
+            <input name="getListHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getListHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="getFilesList">
+            <http:operation location="/getFilesList" />
+            <input name="getFilesListHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="getFilesListHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="attachFiles">
+            <http:operation location="/attachFiles" />
+            <input name="attachFilesHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="attachFilesHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="removeFile">
+            <http:operation location="/removeFile" />
+            <input name="removeFileHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="removeFileHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+        <operation name="downloadFile">
+            <http:operation location="/downloadFile" />
+            <input name="downloadFileHttpPostInput">
+                <http:urlEncoded />
+            </input>
+            <output name="downloadFileHttpPostOutput">
+                <mime:mimeXml part="response" />
+            </output>
+        </operation>
+    </binding>
+
+
+    <!-- activity management service -->
+    <service name="ActivityService">
+        <documentation>5pm activity servcie</documentation>
+        <port name="ActivitySoapPort" binding="tns:ActivitySoapPortTypeBinding">
+            <soap:address location="https://demo.5pmweb.com/api/v2/service/soap/activity"/>
+        </port>
+        <port name="ActivityHttpGetPort" binding="tns:ActivityHttpGetPortTypeBinding">
+            <http:address location="https://demo.5pmweb.com/api/v2/service/get/activity" />
+        </port>
+        <port name="ActivityHttpPostPort" binding="tns:ActivityHttpPostPortTypeBinding">
+            <http:address location="https://demo.5pmweb.com/api/v2/service/post/activity" />
+        </port>
+    </service>
+</definitions>

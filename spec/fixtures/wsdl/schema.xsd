@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="http://demo.5pmweb.com/api/v2/wsdl/schema" xmlns:tns="http://demo.5pmweb.com/api/v2/wsdl/schema" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:complexType name="AuthToken">
+        <xsd:sequence>
+            <xsd:element name="sessionId" type="xsd:string"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:element name="authToken" type="tns:AuthToken"></xsd:element>
+    <xsd:element name="sessionId" type="xsd:string"></xsd:element>
+    <xsd:complexType name="AuthToken">
+        <xsd:sequence>
+            <xsd:element name="sessionId" type="xsd:string" minOccurs="1" maxOccurs="1">
+                <xsd:annotation>
+                    <xsd:documentation>sessionId to use with requests</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="User">
+        <xsd:sequence>
+            <xsd:element name="id" type="xsd:integer" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>Required on update operation</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="password" type="xsd:string" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>Required on add operation (at least 6 symbols len string)</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="email" type="xsd:string" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>Required on add operation</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="firstName" type="xsd:string" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>Required on add operation</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="lastName" type="xsd:string" maxOccurs="1" minOccurs="0"></xsd:element>
+            <xsd:element name="title" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="address" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="workPhone" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="homePhone" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="cellPhone" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="timezone" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="company" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="comment" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="securityLevel" type="xsd:string" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>Required on add operation (values: 0 - admin, 100 - user, 150 - external user, 200 - client)</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="canViewProfiles" type="xsd:string" minOccurs="0" maxOccurs="1"></xsd:element>
+		    <xsd:element name="avatar" type="xsd:string" minOccurs="0"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="UserList">
+        <xsd:sequence>
+            <xsd:element name="items" type="tns:User" minOccurs="0" maxOccurs="unbounded"></xsd:element>
+            <xsd:element name="count" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="total" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ProjectsGroup">
+        <xsd:sequence>
+            <xsd:element name="id" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="name" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="info" type="xsd:string" minOccurs="0"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ProjectsGroupList">
+        <xsd:sequence>
+            <xsd:element name="items" type="tns:ProjectsGroup" minOccurs="0" maxOccurs="unbounded"></xsd:element>
+            <xsd:element name="count" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="total" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="Project">
+        <xsd:sequence>
+            <xsd:element name="id" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="name" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="description" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="tags" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="clientId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="ownerId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="groupId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="startDate" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="endDate" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="priority" type="xsd:integer" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>Valid values:
+1 - low
+2 - normal
+3 - high
+4 - urgent
+
+*setting other value - will leave field unchanged</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="status" type="xsd:integer" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>Valid values:
+10 - open
+20 - on hold
+30 - done
+
+*setting other value - will leave field unchanged</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="createdAt" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="updatedAt" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="notifyProjectTeam" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="notifyClient" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="notifyUsers" type="tns:UserList" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="hidden" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="flag" type="xsd:integer" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>Valid values:
+0 - blank
+1 - violet
+2 - orange
+3 - red
+
+*setting other value - will leave field unchanged</xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="team" type="tns:UserList" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="can_edit" type="xsd:boolean" minOccurs="0"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ProjectList">
+        <xsd:sequence>
+            <xsd:element name="items" type="tns:Project" minOccurs="0" maxOccurs="unbounded"></xsd:element>
+            <xsd:element name="count" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="total" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ProjectListFilter">
+        <xsd:sequence>
+            <xsd:element name="groupId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="ownerId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="assignedTo" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="active" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="hide_old_object_period" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="name" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="getFields" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="order" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="status" type="xsd:string" minOccurs="0"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="Task">
+        <xsd:sequence>
+            <xsd:element name="id" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="parentId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="parentName" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="name" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="description" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="tags" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="projectId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="ownerId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="groupId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="startDate" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="endDate" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="priority" type="xsd:integer" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Valid values:
+                        1 - low
+                        2 - normal
+                        3 - high
+                        4 - urgent
+
+                        *setting other value - will leave field unchanged
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="progress" type="xsd:float" minOccurs="0"></xsd:element>
+            <xsd:element name="status" type="xsd:integer" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Valid values:
+                        10 - open
+                        20 - on hold
+                        30 - done
+
+                        *setting other value - will leave field unchanged
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="createdAt" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="updatedAt" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="notifyProjectTeam" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="notifyTaskTeam" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="notifyClient" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="notifyUsers" type="tns:UserList" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="hidden" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="flag" type="xsd:integer" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Valid values:
+                        0 - blank
+                        1 - violet
+                        2 - orange
+                        3 - red
+
+                        *setting other value - will leave field unchanged
+                </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="hoursDone" type="xsd:float" minOccurs="0"></xsd:element>
+            <xsd:element name="estimatedTime" type="xsd:float" minOccurs="0"></xsd:element>
+            <xsd:element name="team" type="tns:UserList" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="can_edit" type="xsd:boolean" minOccurs="0"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="TaskList">
+        <xsd:sequence>
+            <xsd:element name="items" type="tns:Task" minOccurs="0" maxOccurs="unbounded"></xsd:element>
+            <xsd:element name="count" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="total" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="TaskListFilter">
+        <xsd:sequence>
+            <xsd:element name="projectId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="parentId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="startedFrom" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="startedBefore" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="deadlineFrom" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="deadlineBefore" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="progressLessThan" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="progressMoreThan" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="createdFrom" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="createdBefore" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="updatedFrom" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="updatedBefore" type="xsd:dateTime" minOccurs="0"></xsd:element>
+            <xsd:element name="groupId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="ownerId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="assignedTo" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="hidden" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="flag" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="active" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="hide_old_object_period" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="name" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="mystuff" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="get_urgent" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="getFields" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="order" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="status" type="xsd:string" minOccurs="0"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="Activity">
+        <xsd:annotation>
+            <xsd:documentation>unified data type for messages and progress notes used in lists.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="id" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="taskId" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="taskName" type="xsd:string" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="projectId" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="projectName" type="xsd:string" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="type" type="xsd:string" minOccurs="0" maxOccurs="1">
+                <xsd:annotation>
+                    <xsd:documentation>
+						Valid values:
+                        "msg" - message,
+                        "progress" - progress note,
+						"file" - file note,
+						"googledocs" - google docs link,
+						"ss_boards" - spiderscribe board
+						"ff_boards" - firefly board
+                    </xsd:documentation>
+                </xsd:annotation>
+			</xsd:element>
+            <xsd:element name="text" type="xsd:string" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="ownerId" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="progress" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="hoursDone" type="xsd:float" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="createdAt" type="xsd:dateTime" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="notifyProjectTeam" type="xsd:boolean" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="notifyTaskTeam" type="xsd:boolean" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="notifyClient" type="xsd:boolean" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="notifyUsers" type="tns:UserList" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="hideFromClients" type="xsd:boolean" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="date" type="xsd:dateTime" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="files" type="tns:FileList" minOccurs="0" maxOccurs="1"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ActivityListFilter">
+        <xsd:sequence maxOccurs="1">
+            <xsd:element name="taskId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="projectId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="assignedTo" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="groupId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="type" type="xsd:string" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+						Valid values:
+                        "msg" - message,
+                        "progress" - progress note,
+						"file" - file note,
+						"googledocs" - google docs link,
+						"ss_boards" - spiderscribe board
+						"ff_boards" - firefly board
+                    </xsd:documentation>
+                </xsd:annotation>
+			</xsd:element>
+            <xsd:element name="active" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="hide_old_object_period" type="xsd:integer" minOccurs="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Valid values:
+                        0 - show ALL note
+                        N={1 - 360} - hide ALL non active note N days ago
+                        1000 - hide ALL non active note
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ActivityList">
+        <xsd:sequence>
+            <xsd:element name="items" type="tns:Activity" minOccurs="0" maxOccurs="unbounded"></xsd:element>
+            <xsd:element name="count" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="total" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ImageInfo">
+    <xsd:sequence>
+        <xsd:element name="width" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+        <xsd:element name="height" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+    </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="File">
+        <xsd:annotation>
+            <xsd:documentation>unified data type for files.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="id" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="activityId" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="activityType" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="name" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="url" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="type" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="size" type="xsd:integer" minOccurs="0"></xsd:element>
+            <xsd:element name="content" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="createdAt" type="xsd:dateTime" minOccurs="0"></xsd:element>
+			<xsd:element name="can_edit" type="xsd:boolean" minOccurs="0"></xsd:element>
+			<xsd:element name="can_thumb" type="xsd:boolean" minOccurs="0"></xsd:element>
+            <xsd:element name="url_thumb" type="xsd:string" minOccurs="0"></xsd:element>
+            <xsd:element name="image_info" type="tns:ImageInfo" minOccurs="0"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="FileList">
+        <xsd:sequence>
+            <xsd:element name="items" type="tns:File" minOccurs="0" maxOccurs="unbounded"></xsd:element>
+            <xsd:element name="count" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+            <xsd:element name="total" type="xsd:integer" minOccurs="0" maxOccurs="1"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+</xsd:schema>
