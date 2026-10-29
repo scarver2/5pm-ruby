@@ -22,10 +22,14 @@ Dir.chdir(File.expand_path("..", __dir__)) do
   abort "expected an exact commit" unless git.call("rev-parse", "#{commit}^{commit}").strip == commit
   git.call("merge-base", "--is-ancestor", commit, "refs/remotes/origin/master")
   source = git.call("show", "#{commit}:lib/five_pm/version.rb")
-  abort "version mismatch" unless source.match?(/VERSION = "#{Regexp.escape(version)}"/)
+  abort "version mismatch" unless source.match?(/^\s*VERSION = "#{Regexp.escape(version)}"(?:\.freeze)?\s*$/)
   changelog = git.call("show", "#{commit}:CHANGELOG.md")
   abort "missing dated changelog" unless changelog.match?(/^## #{Regexp.escape(version)} — \d{4}-\d{2}-\d{2}$/)
-  evidence = JSON.parse(git.call("show", "#{commit}:docs/live-validation.json"))
+  begin
+    evidence = JSON.parse(git.call("show", "#{commit}:docs/live-validation.json"))
+  rescue JSON::ParserError
+    abort "live-validation evidence is not valid JSON"
+  end
   unless evidence["version"] == version && evidence["disposable_tenant"] == true &&
          evidence["result"] == "passed" && evidence["contract_verified"] == true &&
          evidence["read_operations_verified"] == true && evidence["mutation_operations_verified"] == true &&
@@ -34,6 +38,10 @@ Dir.chdir(File.expand_path("..", __dir__)) do
     abort "live-validation evidence is incomplete"
   end
   git.call("merge-base", "--is-ancestor", evidence.fetch("evidence_commit"), commit)
+  changed = git.call("diff", "--name-only", evidence.fetch("evidence_commit"), commit).lines.map(&:strip)
+  unless changed.all? { |path| path == "docs/live-validation.json" }
+    abort "candidate differs from the live-validated commit; validate the changed code again"
+  end
   _, tag_status = Open3.capture2e("git", "show-ref", "--verify", "refs/tags/v#{version}")
   if tag_status.success? && git.call("rev-parse", "refs/tags/v#{version}^{commit}").strip != commit
     abort "existing version tag points elsewhere"
