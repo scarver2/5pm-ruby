@@ -1,0 +1,1 @@
+{"activity":{"id":"987","taskId":"456","type":"msg","text":"Synthetic activity","progress":"34","date":"2026-10-28T14:30:00Z","files":{"items":[{"id":"10","size":"128","name":"example.txt","can_thumb":"true","image_info":{"width":"640","height":480,"futureImage":"retained"},"content":"synthetic-content","futureFile":42}],"count":"1","total":"1"}}}

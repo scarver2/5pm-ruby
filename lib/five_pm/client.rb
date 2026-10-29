@@ -28,11 +28,14 @@ module FivePM
     SESSION_TTL = 30 * 60
 
     def initialize(host:, login:, password:, open_timeout: 5, read_timeout: 30, write_timeout: 30,
-                   transport: nil, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+                   response_mode: :raw, transport: nil, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
       unless [login, password].all? { |value| value.is_a?(String) && !value.empty? }
         raise ConfigurationError, "login and password must be nonempty strings"
       end
 
+      raise ConfigurationError, "response_mode must be :raw or :typed" unless %i[raw typed].include?(response_mode)
+
+      @response_mode = response_mode
       validated = Transport.new(host: host, open_timeout: open_timeout, read_timeout: read_timeout,
                                 write_timeout: write_timeout)
       @transport = transport || validated
@@ -60,7 +63,8 @@ module FivePM
       raise ArgumentError, "unsupported parameter names" unless (params.keys - allowed).empty?
 
       params["sessionId"] = @mutex.synchronize { session_id } if contract.fetch("parameters").key?("sessionId")
-      @transport.post(service.to_s, operation.to_s, params)
+      payload = @transport.post(service.to_s, operation.to_s, params)
+      @response_mode == :typed ? Response.new(payload, contract: contract) : payload
     end
 
     def sign_in
@@ -76,7 +80,9 @@ module FivePM
         return false unless @session_id
 
         begin
-          @transport.post("authentication", "signOut", { "sessionId" => @session_id })
+          payload = @transport.post("authentication", "signOut", { "sessionId" => @session_id })
+          contract = OPERATIONS.fetch("authentication").fetch("signOut")
+          @response_mode == :typed ? Response.new(payload, contract: contract) : payload
         ensure
           @session_id = nil
         end

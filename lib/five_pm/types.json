@@ -1,0 +1,498 @@
+{
+  "AuthToken": {
+    "sessionId": {
+      "type": "string",
+      "repeated": false
+    }
+  },
+  "User": {
+    "id": {
+      "type": "integer",
+      "repeated": false
+    },
+    "password": {
+      "type": "string",
+      "repeated": false
+    },
+    "email": {
+      "type": "string",
+      "repeated": false
+    },
+    "firstName": {
+      "type": "string",
+      "repeated": false
+    },
+    "lastName": {
+      "type": "string",
+      "repeated": false
+    },
+    "title": {
+      "type": "string",
+      "repeated": false
+    },
+    "address": {
+      "type": "string",
+      "repeated": false
+    },
+    "workPhone": {
+      "type": "string",
+      "repeated": false
+    },
+    "homePhone": {
+      "type": "string",
+      "repeated": false
+    },
+    "cellPhone": {
+      "type": "string",
+      "repeated": false
+    },
+    "timezone": {
+      "type": "integer",
+      "repeated": false
+    },
+    "company": {
+      "type": "string",
+      "repeated": false
+    },
+    "comment": {
+      "type": "string",
+      "repeated": false
+    },
+    "securityLevel": {
+      "type": "string",
+      "repeated": false
+    },
+    "canViewProfiles": {
+      "type": "string",
+      "repeated": false
+    },
+    "avatar": {
+      "type": "string",
+      "repeated": false
+    }
+  },
+  "UserList": {
+    "items": {
+      "type": "User",
+      "repeated": true
+    },
+    "count": {
+      "type": "integer",
+      "repeated": false
+    },
+    "total": {
+      "type": "integer",
+      "repeated": false
+    }
+  },
+  "ProjectsGroup": {
+    "id": {
+      "type": "integer",
+      "repeated": false
+    },
+    "name": {
+      "type": "string",
+      "repeated": false
+    },
+    "info": {
+      "type": "string",
+      "repeated": false
+    }
+  },
+  "ProjectsGroupList": {
+    "items": {
+      "type": "ProjectsGroup",
+      "repeated": true
+    },
+    "count": {
+      "type": "integer",
+      "repeated": false
+    },
+    "total": {
+      "type": "integer",
+      "repeated": false
+    }
+  },
+  "Project": {
+    "id": {
+      "type": "integer",
+      "repeated": false
+    },
+    "name": {
+      "type": "string",
+      "repeated": false
+    },
+    "description": {
+      "type": "string",
+      "repeated": false
+    },
+    "tags": {
+      "type": "string",
+      "repeated": false
+    },
+    "clientId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "ownerId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "groupId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "startDate": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "endDate": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "priority": {
+      "type": "integer",
+      "repeated": false
+    },
+    "status": {
+      "type": "integer",
+      "repeated": false
+    },
+    "createdAt": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "updatedAt": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "notifyProjectTeam": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "notifyClient": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "notifyUsers": {
+      "type": "UserList",
+      "repeated": false
+    },
+    "hidden": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "flag": {
+      "type": "integer",
+      "repeated": false
+    },
+    "team": {
+      "type": "UserList",
+      "repeated": false
+    },
+    "can_edit": {
+      "type": "boolean",
+      "repeated": false
+    }
+  },
+  "ProjectList": {
+    "items": {
+      "type": "Project",
+      "repeated": true
+    },
+    "count": {
+      "type": "integer",
+      "repeated": false
+    },
+    "total": {
+      "type": "integer",
+      "repeated": false
+    }
+  },
+  "Task": {
+    "id": {
+      "type": "integer",
+      "repeated": false
+    },
+    "parentId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "parentName": {
+      "type": "string",
+      "repeated": false
+    },
+    "name": {
+      "type": "string",
+      "repeated": false
+    },
+    "description": {
+      "type": "string",
+      "repeated": false
+    },
+    "tags": {
+      "type": "string",
+      "repeated": false
+    },
+    "projectId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "ownerId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "groupId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "startDate": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "endDate": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "priority": {
+      "type": "integer",
+      "repeated": false
+    },
+    "progress": {
+      "type": "float",
+      "repeated": false
+    },
+    "status": {
+      "type": "integer",
+      "repeated": false
+    },
+    "createdAt": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "updatedAt": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "notifyProjectTeam": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "notifyTaskTeam": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "notifyClient": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "notifyUsers": {
+      "type": "UserList",
+      "repeated": false
+    },
+    "hidden": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "flag": {
+      "type": "integer",
+      "repeated": false
+    },
+    "hoursDone": {
+      "type": "float",
+      "repeated": false
+    },
+    "estimatedTime": {
+      "type": "float",
+      "repeated": false
+    },
+    "team": {
+      "type": "UserList",
+      "repeated": false
+    },
+    "can_edit": {
+      "type": "boolean",
+      "repeated": false
+    }
+  },
+  "TaskList": {
+    "items": {
+      "type": "Task",
+      "repeated": true
+    },
+    "count": {
+      "type": "integer",
+      "repeated": false
+    },
+    "total": {
+      "type": "integer",
+      "repeated": false
+    }
+  },
+  "Activity": {
+    "id": {
+      "type": "integer",
+      "repeated": false
+    },
+    "taskId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "taskName": {
+      "type": "string",
+      "repeated": false
+    },
+    "projectId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "projectName": {
+      "type": "string",
+      "repeated": false
+    },
+    "type": {
+      "type": "string",
+      "repeated": false
+    },
+    "text": {
+      "type": "string",
+      "repeated": false
+    },
+    "ownerId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "progress": {
+      "type": "integer",
+      "repeated": false
+    },
+    "hoursDone": {
+      "type": "float",
+      "repeated": false
+    },
+    "createdAt": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "notifyProjectTeam": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "notifyTaskTeam": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "notifyClient": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "notifyUsers": {
+      "type": "UserList",
+      "repeated": false
+    },
+    "hideFromClients": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "date": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "files": {
+      "type": "FileList",
+      "repeated": false
+    }
+  },
+  "ActivityList": {
+    "items": {
+      "type": "Activity",
+      "repeated": true
+    },
+    "count": {
+      "type": "integer",
+      "repeated": false
+    },
+    "total": {
+      "type": "integer",
+      "repeated": false
+    }
+  },
+  "ImageInfo": {
+    "width": {
+      "type": "integer",
+      "repeated": false
+    },
+    "height": {
+      "type": "integer",
+      "repeated": false
+    }
+  },
+  "File": {
+    "id": {
+      "type": "integer",
+      "repeated": false
+    },
+    "activityId": {
+      "type": "integer",
+      "repeated": false
+    },
+    "activityType": {
+      "type": "string",
+      "repeated": false
+    },
+    "name": {
+      "type": "string",
+      "repeated": false
+    },
+    "url": {
+      "type": "string",
+      "repeated": false
+    },
+    "type": {
+      "type": "string",
+      "repeated": false
+    },
+    "size": {
+      "type": "integer",
+      "repeated": false
+    },
+    "content": {
+      "type": "string",
+      "repeated": false
+    },
+    "createdAt": {
+      "type": "dateTime",
+      "repeated": false
+    },
+    "can_edit": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "can_thumb": {
+      "type": "boolean",
+      "repeated": false
+    },
+    "url_thumb": {
+      "type": "string",
+      "repeated": false
+    },
+    "image_info": {
+      "type": "ImageInfo",
+      "repeated": false
+    }
+  },
+  "FileList": {
+    "items": {
+      "type": "File",
+      "repeated": true
+    },
+    "count": {
+      "type": "integer",
+      "repeated": false
+    },
+    "total": {
+      "type": "integer",
+      "repeated": false
+    }
+  }
+}

@@ -1,4 +1,5 @@
 require_relative "five_pm/version"
 require_relative "five_pm/errors"
 require_relative "five_pm/transport"
+require_relative "five_pm/response"
 require_relative "five_pm/client"

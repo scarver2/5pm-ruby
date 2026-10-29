@@ -13,10 +13,12 @@ Initial implementation, 2026-10-28. Worktree: `sdk`, branch: `feat/api-v2-sdk`.
 - Error classes that omit remote bodies, network details and chained secret-bearing exceptions.
 - RSpec synthetic tests, WSDL contract checks, SimpleCov 90% minimum, RuboCop, CI and Dependabot.
 - Packaging validation, quickstart, contribution/security policies and separate MCP adapter plan.
+- Opt-in typed response models for all 14 schema response types; unknown fields and raw JSON preserved.
+- Nested typed lists, immutable snapshots, snake_case readers and redacted inspection.
 
 ## Verified locally
 
-- Ruby 4.0.9: 39 passing examples, 100% line coverage.
+- Ruby 4.0.9: 56 passing examples, over 99% line coverage.
 - RuboCop: no offenses.
 - Strict gem build: successful; package file inventory and MIT license verified.
 - Plain Ruby can load the SDK without development dependencies.
@@ -30,9 +32,9 @@ No authenticated API calls or account mutations have been made.
 
 - Validate contracts against that test account; confirm JSON envelopes and error shapes.
 - Add sanitized observed fixtures alongside synthetic ones and opt-in sandbox tests.
-- Implement lossless typed response mapping after envelope verification.
+- Confirm typed response mapping against observed JSON envelopes and error shapes.
 - Verify pagination behavior, date/timezone semantics, attachments and rate-limit handling.
-- Run the Ruby 3.2/3.3/3.4/4.0 matrix in hosted CI.
+- Keep the Ruby 3.2/3.3/3.4/4.0 hosted CI matrix passing (initial milestone passed all four).
 - Create the standalone MCP tracking issue from docs/mcp-plan.md when adapter work begins.
 - Check RubyGems name availability before release; obtain explicit approval before publishing.
 
