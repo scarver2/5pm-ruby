@@ -109,6 +109,13 @@ RSpec.describe "bounded pagination" do
     expect(resource.each_item(count: 2).take(1)).to eq([{ "id" => "1" }])
   end
 
+  it "keeps offsets correct if a raw-page consumer mutates the returned page" do
+    expect(client).to receive(:call).with("tasks", "getList", offset: 0, count: 2).and_return(page)
+    expect(client).to receive(:call).with("tasks", "getList", offset: 2, count: 2)
+                                    .and_return("list" => { "items" => [] })
+    resource.each_page(count: 2) { |result| result.fetch("list").fetch("items").clear }
+  end
+
   it "rejects repeated pages, malformed envelopes and exhausted bounds" do
     allow(client).to receive(:call).and_return(page)
     expect { resource.each_page(count: 2).to_a }.to raise_error(FivePM::ProtocolError, /repeated page/)

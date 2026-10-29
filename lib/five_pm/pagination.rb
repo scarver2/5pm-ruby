@@ -19,15 +19,16 @@ module FivePM
         items = raw.dig("list", "items") if raw.is_a?(Hash) && raw["list"].is_a?(Hash)
         raise ProtocolError, "pagination expected a list.items array" unless items.is_a?(Array)
 
+        received = items.length
         signature = JSON.generate(items)
-        raise ProtocolError, "pagination received a repeated page" if previous == signature && !items.empty?
-        raise ProtocolError, "pagination exceeded the requested page size" if items.length > count
+        raise ProtocolError, "pagination received a repeated page" if previous == signature && received.positive?
+        raise ProtocolError, "pagination exceeded the requested page size" if received > count
 
         yield page
-        return self if items.empty? || items.length < count
+        return self if received.zero? || received < count
 
         previous = signature
-        offset += items.length
+        offset += received
       end
       raise ProtocolError, "pagination reached max_pages; resume with an explicit offset"
     end
