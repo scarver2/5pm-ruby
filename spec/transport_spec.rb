@@ -105,6 +105,16 @@ RSpec.describe FivePM::Transport do
     end
   end
 
+  it "bounds DNS lookup before connecting and redacts timeout details" do
+    configured = described_class.new(host: "example.5pmweb.com", open_timeout: 0.01)
+    allow(Addrinfo).to receive(:getaddrinfo) { sleep 1 }
+    expect(Net::HTTP).not_to receive(:new)
+    expect { configured.post("projects", "getAll", {}) }.to raise_error(FivePM::TransportError) do |error|
+      expect(error.cause).to be_nil
+      expect(error.message).not_to include("example.5pmweb.com")
+    end
+  end
+
   it "redacts transport inspection" do
     expect(transport.inspect).to eq("#<FivePM::Transport>")
   end

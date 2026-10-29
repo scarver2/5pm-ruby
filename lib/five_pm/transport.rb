@@ -3,6 +3,7 @@ require "json"
 require "ipaddr"
 require "socket"
 require "openssl"
+require "timeout"
 
 module FivePM
   class Transport
@@ -38,7 +39,9 @@ module FivePM
       raise ArgumentError, "parameters must be an object" unless parameters.is_a?(Hash)
 
       Request.validate!(parameters)
-      addresses = Addrinfo.getaddrinfo(@host, 443, Socket::AF_INET, :STREAM).map(&:ip_address).uniq
+      addresses = Timeout.timeout(@timeouts.fetch(:open_timeout)) do
+        Addrinfo.getaddrinfo(@host, 443, Socket::AF_INET, :STREAM).map(&:ip_address).uniq
+      end
       if addresses.empty? || addresses.any? { |address| BLOCKED.any? { |network| network.include?(address) } }
         raise ConfigurationError, "account must resolve to public IPv4 addresses"
       end

@@ -6,6 +6,11 @@ It does not publish. `bin/release-check VERSION FULL_COMMIT_SHA` is also read-on
 
 Before a release:
 
+Choose the release version and dated changelog before the final live-validation run.
+The candidate must have the same tracked tree as its tested commit, except for the
+`docs/live-validation.json` evidence file itself. Any other change requires validation
+again, including changes to tests, packaging, the MCP adapter or release tooling.
+
 1. Merge reviewed changes through PRs with passing CI; do not change master directly.
 2. Obtain a disposable account and compare its six WSDLs and schema with the public snapshots.
 3. Inject credentials via the process environment. Designate the test tenant explicitly
@@ -22,7 +27,7 @@ Before a release:
    verified `contract_verified`, `read_operations_verified`, `mutation_operations_verified`
    booleans. Never include a tenant hostname, login, password, session token or account payload.
    No success evidence is supplied in this repository until those checks actually happen.
-6. Add a dated changelog entry and version, pass CI and `bin/package`, and merge the
+6. Pass CI and `bin/package` for the tested version and dated changelog, and merge the
    release preparation through review. Fetch origin/master and tags, then run
    `bin/release-check VERSION FULL_COMMIT_SHA` from a clean checkout. The command
    requires the candidate to be accepted on origin/master and rejects conflicting tags.

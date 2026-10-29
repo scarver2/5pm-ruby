@@ -46,6 +46,15 @@ RSpec.describe "read-only release preflight" do
       output, status = Open3.capture2e(RbConfig.ruby, script, "0.1.0", candidate)
       expect(status).not_to be_success
       expect(output).to include("tag points elsewhere")
+      run_git(directory, "tag", "-d", "v0.1.0")
+      File.write(File.join(directory, "lib/five_pm/changed.rb"), "# Untested runtime change\n")
+      run_git(directory, "add", ".")
+      run_git(directory, "commit", "-qm", "untested change after validation")
+      changed_candidate = run_git(directory, "rev-parse", "HEAD")
+      run_git(directory, "update-ref", "refs/remotes/origin/master", changed_candidate)
+      output, status = Open3.capture2e(RbConfig.ruby, script, "0.1.0", changed_candidate)
+      expect(status).not_to be_success
+      expect(output).to include("differs from the live-validated commit")
     end
   end
 
