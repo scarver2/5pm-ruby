@@ -153,3 +153,15 @@ Run `bundle exec ruby bin/package` to verify the actual built artifact. See
 
 Official sources: [developer guide](https://www.5pmweb.com/5pm_api.php),
 [API reference](https://www.5pmweb.com/help/api_docs.php).
+
+## Standalone MCP adapter
+
+The separate [five_pm-mcp package](mcp/README.md) provides ten read tools over the
+SDK using the official MCP Ruby SDK. Its executable is read-only; optional embedded
+project/task mutation tools require trusted per-call operator approval. MCP is a
+runtime dependency only of that separate gem. Run `bundle exec five-pm-mcp` with
+the same injected environment variables, or see its README for host configuration.
+
+`bundle exec ruby bin/package-mcp` verifies both installed artifacts and the adapter
+protocol in an isolated temporary GEM_HOME. All tests remain synthetic until a test
+account is supplied; no gem publication is automated.

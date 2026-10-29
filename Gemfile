@@ -7,3 +7,8 @@ gem "rexml", "~> 3.4"
 gem "rspec", "~> 3.13"
 gem "rubocop", "~> 1.75"
 gem "simplecov", "~> 0.22"
+
+# Integration-test the separate adapter without adding MCP to the core runtime.
+group :test do
+  gemspec path: "mcp"
+end
