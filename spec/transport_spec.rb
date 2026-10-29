@@ -12,7 +12,9 @@ RSpec.describe FivePM::Transport do
       allow(http).to receive(setter)
     end
     allow(http).to receive(:start).and_yield(http)
-    allow(http).to receive(:request).and_return(response)
+    allow(response).to receive(:[]).and_return(nil)
+    allow(response).to receive(:read_body) { |&block| block.call(response.body) }
+    allow(http).to receive(:request).and_yield(response)
   end
 
   it "pins DNS, verifies TLS, disables proxies and retries, and sets timeouts" do
@@ -27,7 +29,7 @@ RSpec.describe FivePM::Transport do
   end
 
   it "encodes nested forms and secrets in the body, keeping the URL clean" do
-    expect(http).to receive(:request) do |request|
+    expect(http).to receive(:request) do |request, &block|
       expect(request).to be_a(Net::HTTP::Post)
       expect(request.path).to eq("/api/v2/service/post/tasks/add")
       expect(request["content-type"]).to eq("application/x-www-form-urlencoded")
@@ -36,7 +38,7 @@ RSpec.describe FivePM::Transport do
         "task[name]" => "A&B + test", "task[hidden]" => "false", "task[team][0][id]" => "12",
         "sessionId" => "synthetic-secret", "retType" => "json"
       )
-      response
+      block.call(response)
     end
     transport.post("tasks", "add", { "task" => { "name" => "A&B + test", "hidden" => false,
                                                  "team" => [{ "id" => 12 }], "missing" => nil },
@@ -103,6 +105,16 @@ RSpec.describe FivePM::Transport do
     end
   end
 
+  it "bounds DNS lookup before connecting and redacts timeout details" do
+    configured = described_class.new(host: "example.5pmweb.com", open_timeout: 0.01)
+    allow(Addrinfo).to receive(:getaddrinfo) { sleep 1 }
+    expect(Net::HTTP).not_to receive(:new)
+    expect { configured.post("projects", "getAll", {}) }.to raise_error(FivePM::TransportError) do |error|
+      expect(error.cause).to be_nil
+      expect(error.message).not_to include("example.5pmweb.com")
+    end
+  end
+
   it "redacts transport inspection" do
     expect(transport.inspect).to eq("#<FivePM::Transport>")
   end
@@ -114,5 +126,58 @@ RSpec.describe "transport operation validation" do
     expect(Addrinfo).not_to receive(:getaddrinfo)
     expect { transport.post("tasks/../../internal", "add", {}) }.to raise_error(ArgumentError)
     expect { transport.post("activity", "getResizeImg", {}) }.to raise_error(ArgumentError)
+  end
+end
+
+RSpec.describe "streaming response limits and HTTP errors" do
+  let(:http) { instance_double(Net::HTTP) }
+  let(:response) { instance_double(Net::HTTPResponse, code: "200") }
+  let(:transport) { FivePM::Transport.new(host: "example.5pmweb.com", max_response_bytes: 16) }
+
+  before do
+    allow(Addrinfo).to receive(:getaddrinfo).and_return([double(ip_address: "8.8.8.8")])
+    allow(Net::HTTP).to receive(:new).and_return(http)
+    %i[ipaddr= use_ssl= verify_mode= max_retries= open_timeout= read_timeout= write_timeout=].each do |setter|
+      allow(http).to receive(setter)
+    end
+    allow(http).to receive(:start).and_yield(http)
+    allow(http).to receive(:request).and_yield(response)
+    allow(response).to receive(:[]).and_return(nil)
+  end
+
+  it "assembles streamed JSON and aborts before buffering oversized bodies" do
+    allow(response).to receive(:read_body).and_yield('{"id":').and_yield("7}")
+    expect(transport.post("tasks", "getById", "id" => 7)).to eq("id" => 7)
+    allow(response).to receive(:read_body).and_yield("x" * 17)
+    expect { transport.post("tasks", "getById", "id" => 7) }.to raise_error(FivePM::ProtocolError, /size limit/)
+  end
+
+  it "exposes safe rate limit metadata without response bodies" do
+    allow(response).to receive(:code).and_return("429")
+    [nil, "5", "Wed, 29 Oct 2026 10:00:00 GMT", "secret"].each do |header|
+      allow(response).to receive(:[]).with("Retry-After").and_return(header)
+      expect(response).not_to receive(:read_body)
+      expect { transport.post("tasks", "getById", "id" => 7) }.to raise_error(FivePM::RateLimitError) do |error|
+        expect(error.retry_after).to eq(header == "5" ? 5 : nil)
+        expect(error.retryable?).to eq(header.nil? || header == "5")
+        expect(error.message).not_to include("secret")
+      end
+    end
+  end
+
+  it "classifies not-found and server statuses" do
+    allow(response).to receive(:code).and_return("404")
+    expect { transport.post("tasks", "getById", "id" => 7) }.to raise_error(FivePM::NotFoundError)
+    allow(response).to receive(:code).and_return("503")
+    expect { transport.post("tasks", "getById", "id" => 7) }.to raise_error(FivePM::ServerError)
+  end
+
+  it "validates response size and complex timeout options" do
+    [nil, 0, -1, 1.5].each do |value|
+      expect { FivePM::Transport.new(host: "example.5pmweb.com", max_response_bytes: value) }
+        .to raise_error(FivePM::ConfigurationError)
+    end
+    expect { FivePM::Transport.new(host: "example.5pmweb.com", read_timeout: Complex(1, 1)) }
+      .to raise_error(FivePM::ConfigurationError)
   end
 end
