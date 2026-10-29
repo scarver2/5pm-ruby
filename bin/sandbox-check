@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+# No writes to account data. Authentication creates a temporary API session.
+require_relative "../lib/five_pm"
+require "open3"
+
+abort "set FIVE_PM_SANDBOX=1 for an explicitly designated disposable account" unless ENV["FIVE_PM_SANDBOX"] == "1"
+begin
+  host = ENV.fetch("FIVE_PM_HOST")
+  abort "FIVE_PM_SANDBOX_HOST must match FIVE_PM_HOST" unless ENV["FIVE_PM_SANDBOX_HOST"] == host
+  client = FivePM::Client.new(host: host, login: ENV.fetch("FIVE_PM_LOGIN"), password: ENV.fetch("FIVE_PM_PASSWORD"),
+                              response_mode: :typed)
+  checks = []
+  begin
+    user = client.authentication.authorized_user
+    raise FivePM::ProtocolError, "missing authorized user" unless user.user.is_a?(FivePM::Models::User)
+
+    checks << "authentication.getAuthorizedUser"
+    %i[projects project_groups tasks activity users].each do |service|
+      resource = client.public_send(service)
+      response = %i[project_groups users].include?(service) ? resource.list : resource.list(count: 1)
+      raise FivePM::ProtocolError, "missing list envelope" unless response.list.is_a?(FivePM::Models::Record)
+
+      checks << "#{service}.list"
+    end
+  ensure
+    client.sign_out
+  end
+  commit, status = Open3.capture2("git", "-C", File.expand_path("..", __dir__), "rev-parse", "HEAD")
+  abort "could not identify tested commit" unless status.success?
+  puts JSON.pretty_generate(version: FivePM::VERSION, evidence_commit: commit.strip, disposable_tenant: true,
+                            result: "read_only_passed", checks: checks, contract_verified: false,
+                            read_operations_verified: false, mutation_operations_verified: false)
+rescue FivePM::Error, KeyError
+  abort "sandbox check failed; inspect configuration and API contracts without logging credentials or account payloads"
+end

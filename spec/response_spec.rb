@@ -16,6 +16,7 @@ RSpec.describe FivePM::Response do
     expect(response.list).to be_a(FivePM::Models::ProjectList)
     expect(response.list.count).to eq(1)
     expect(response.list.total).to eq(12)
+    expect(response.list.to_h).to eq(source.fetch("list"))
     project = response.list.first
     expect(project).to be_a(FivePM::Models::Project)
     expect(project.id).to eq(123)

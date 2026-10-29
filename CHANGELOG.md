@@ -8,3 +8,9 @@
 - Opt-in immutable typed responses for all schema response types, with lossless raw JSON,
   snake_case readers, nested typed lists and strict scalar normalization.
 - Synthetic JSON fixtures and schema parity tests; live envelope verification remains pending.
+
+- Bounded opt-in read retries and pagination; streamed response-size limits and specific HTTP errors.
+- Pre-I/O request validation, rejected-session invalidation and copied credentials.
+- Explicit user/authentication/attachment helpers and typed-model request round trips.
+- Fix Enumerable overriding typed list `to_h`.
+- Isolated packaging, read-only release gates and opt-in sandbox preflight.

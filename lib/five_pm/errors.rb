@@ -13,4 +13,21 @@ module FivePM
       super("5pm HTTP request failed (#{status})")
     end
   end
+
+  class RateLimitError < HTTPError
+    attr_reader :retry_after
+
+    def initialize(retry_after: nil, retryable: true)
+      @retry_after = retry_after
+      @retryable = retryable
+      super(429)
+    end
+
+    def retryable?
+      @retryable
+    end
+  end
+
+  class NotFoundError < HTTPError; end
+  class ServerError < HTTPError; end
 end

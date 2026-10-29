@@ -116,6 +116,8 @@ module FivePM
       model.const_set(:FIELDS, fields)
       if fields.dig("items", "repeated")
         model.include(Enumerable)
+        # Enumerable#to_h would otherwise shadow Record's lossless JSON view.
+        model.define_method(:to_h, Record.instance_method(:to_h))
         model.define_method(:each) do |&block|
           return enum_for(:each) unless block
 

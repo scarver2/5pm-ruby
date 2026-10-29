@@ -23,28 +23,31 @@ module FivePM
   end
 
   require_relative "resource"
+  require_relative "services"
 
   class Client
     SESSION_TTL = 30 * 60
 
     def initialize(host:, login:, password:, open_timeout: 5, read_timeout: 30, write_timeout: 30,
-                   response_mode: :raw, transport: nil, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
+                   response_mode: :raw, read_retries: 0, max_retry_delay: 30, max_response_bytes: 5 * 1024 * 1024,
+                   transport: nil, clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) })
       unless [login, password].all? { |value| value.is_a?(String) && !value.empty? }
         raise ConfigurationError, "login and password must be nonempty strings"
       end
 
       raise ConfigurationError, "response_mode must be :raw or :typed" unless %i[raw typed].include?(response_mode)
 
+      @retry_policy = RetryPolicy.new(max_retries: read_retries, max_delay: max_retry_delay)
       @response_mode = response_mode
       validated = Transport.new(host: host, open_timeout: open_timeout, read_timeout: read_timeout,
-                                write_timeout: write_timeout)
+                                write_timeout: write_timeout, max_response_bytes: max_response_bytes)
       @transport = transport || validated
-      @login = login
-      @password = password
+      @login = login.dup.freeze
+      @password = password.dup.freeze
       @clock = clock
       @mutex = Mutex.new
       @services = SERVICE_NAMES.to_h do |name, wire|
-        type = name == :authentication ? Service : Resource
+        type = { authentication: Authentication, users: Users, activity: Activity }.fetch(name, Resource)
         [name, type.new(self, wire)]
       end
     end
@@ -62,8 +65,17 @@ module FivePM
       allowed = contract.fetch("parameters").keys - %w[sessionId login password]
       raise ArgumentError, "unsupported parameter names" unless (params.keys - allowed).empty?
 
-      params["sessionId"] = @mutex.synchronize { session_id } if contract.fetch("parameters").key?("sessionId")
-      payload = @transport.post(service.to_s, operation.to_s, params)
+      Request.operation!(service.to_s, operation.to_s, params)
+      token = @mutex.synchronize { session_id } if contract.fetch("parameters").key?("sessionId")
+      params["sessionId"] = token if token
+      begin
+        payload = @retry_policy.call(service.to_s, operation.to_s) do
+          @transport.post(service.to_s, operation.to_s, params)
+        end
+      rescue AuthenticationError
+        @mutex.synchronize { @session_id = nil if @session_id == token }
+        raise
+      end
       @response_mode == :typed ? Response.new(payload, contract: contract) : payload
     end
 
@@ -87,6 +99,10 @@ module FivePM
           @session_id = nil
         end
       end
+    end
+
+    def marshal_dump
+      raise TypeError, "FivePM clients cannot be serialized"
     end
 
     def inspect

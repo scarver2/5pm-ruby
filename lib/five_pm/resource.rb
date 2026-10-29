@@ -2,14 +2,18 @@ module FivePM
   # Convenience wrappers retain the complete upstream JSON envelope. Use #call
   # for less common operations and exact WSDL parameter names.
   class Resource < Service
+    include Pagination
+
     OBJECT_PARAMETERS = { "projects" => "project", "projectsgroups" => "group", "tasks" => "task",
                           "activity" => "activity", "users" => "user" }.freeze
 
     def create(attributes)
+      attributes = attributes.to_h if attributes.is_a?(Models::Record)
       call("add", **{ OBJECT_PARAMETERS.fetch(@name) => attributes })
     end
 
     def update(attributes)
+      attributes = attributes.to_h if attributes.is_a?(Models::Record)
       unless attributes.is_a?(Hash) && (attributes.key?(:id) || attributes.key?("id"))
         raise ArgumentError, "update requires an id in the attributes"
       end

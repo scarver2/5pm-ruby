@@ -13,14 +13,21 @@ module FivePM
                  198.18.0.0/15 198.51.100.0/24 203.0.113.0/24 224.0.0.0/4
                  240.0.0.0/4].map { |cidr| IPAddr.new(cidr) }.freeze
 
-    def initialize(host:, open_timeout: 5, read_timeout: 30, write_timeout: 30)
+    def initialize(host:, open_timeout: 5, read_timeout: 30, write_timeout: 30, max_response_bytes: 5 * 1024 * 1024)
       unless host.is_a?(String) && /\A[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.5pmweb\.com\z/.match?(host)
         raise ConfigurationError, "host must be an account hostname such as example.5pmweb.com"
       end
 
-      @host = host
+      unless max_response_bytes.is_a?(Integer) && max_response_bytes.positive?
+        raise ConfigurationError, "maximum response bytes must be a positive integer"
+      end
+
+      @max_response_bytes = max_response_bytes
+      @host = host.dup.freeze
       @timeouts = { open_timeout: open_timeout, read_timeout: read_timeout, write_timeout: write_timeout }
-      return if @timeouts.values.all? { |value| value.is_a?(Numeric) && value.finite? && value.positive? }
+      return if @timeouts.values.all? do |value|
+        value.is_a?(Numeric) && value.real? && value.finite? && value.positive?
+      end
 
       raise ConfigurationError, "timeouts must be positive finite numbers"
     end
@@ -28,6 +35,9 @@ module FivePM
     def post(service, operation, parameters)
       raise ArgumentError, "unsupported 5pm operation" unless OPERATIONS.dig(service, operation)
 
+      raise ArgumentError, "parameters must be an object" unless parameters.is_a?(Hash)
+
+      Request.validate!(parameters)
       addresses = Addrinfo.getaddrinfo(@host, 443, Socket::AF_INET, :STREAM).map(&:ip_address).uniq
       if addresses.empty? || addresses.any? { |address| BLOCKED.any? { |network| network.include?(address) } }
         raise ConfigurationError, "account must resolve to public IPv4 addresses"
@@ -42,12 +52,21 @@ module FivePM
       request = Net::HTTP::Post.new("/api/v2/service/post/#{service}/#{operation}")
       request["Accept"] = "application/json"
       request.set_form_data(flatten(parameters.merge("retType" => "json")))
-      response = http.start { |connection| connection.request(request) }
-      status = response.code.to_i
-      raise AuthenticationError, "5pm authentication failed" if [401, 403].include?(status)
-      raise HTTPError, status unless (200..299).cover?(status)
+      body = +""
+      http.start do |connection|
+        connection.request(request) do |response|
+          check_status!(response)
+          response.read_body do |chunk|
+            if body.bytesize + chunk.bytesize > @max_response_bytes
+              raise ProtocolError,
+                    "5pm response exceeded configured size limit"
+            end
 
-      JSON.parse(response.body)
+            body << chunk
+          end
+        end
+      end
+      JSON.parse(body)
     rescue JSON::ParserError
       raise ProtocolError, "5pm returned invalid JSON", cause: nil
     rescue SocketError, SystemCallError, IOError, Timeout::Error, OpenSSL::SSL::SSLError
@@ -59,6 +78,20 @@ module FivePM
     end
 
     private
+
+    def check_status!(response)
+      status = response.code.to_i
+      raise AuthenticationError, "5pm authentication failed" if [401, 403].include?(status)
+
+      if status == 429
+        header = response["Retry-After"]
+        seconds = header.to_i if header && /\A[0-9]+\z/.match?(header)
+        raise RateLimitError.new(retry_after: seconds, retryable: header.nil? || !seconds.nil?)
+      end
+      raise NotFoundError, status if status == 404
+      raise ServerError, status if (500..599).cover?(status)
+      raise HTTPError, status unless (200..299).cover?(status)
+    end
 
     def flatten(value, prefix = nil, result = [])
       case value

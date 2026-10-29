@@ -4,7 +4,7 @@ Ruby SDK for 5pm API v2. MIT licensed; Ruby 3.2+.
 
 Early development: public demo WSDLs are inventoried, but account-specific contracts,
 JSON response envelopes, and sandbox behavior still require verification. Do not deploy
-this version to production. Gem name availability has not been checked for publication.
+this version to production. The gem name was absent from RubyGems on 2026-10-29; availability must be rechecked before publication.
 
 ## Development
 
@@ -47,10 +47,11 @@ Filters and other wire options retain their documented camelCase names.
 
 Responses retain their full JSON structure and unknown fields. The initial sign-in parser
 expects `auth.sessionId` from the WSDL; that JSON envelope is provisional pending sandbox
-observation. There is no automatic pagination, retry, or date/time conversion. Caller-supplied
+observation. Pagination and read retries are explicit opt-ins; there is no date/time conversion. Caller-supplied
 parameters retain wire names and values. Authentication refresh is synchronized with a
-30-minute TTL and 30-second margin. Authentication HTTP failures are reported without replay.
+30-minute TTL and 30-second margin. Authentication HTTP failures invalidate the rejected session for the next explicit call without replay.
 All calls use form-encoded HTTPS POST; redirects and environment proxies are disabled.
+Response bodies stream into a bounded buffer (5 MiB by default, configurable with `max_response_bytes`).
 
 See [API inventory](docs/api-support.md), [security policy](SECURITY.md),
 [contributing](CONTRIBUTING.md), and [MCP follow-up plan](docs/mcp-plan.md).
@@ -99,6 +100,47 @@ Serialization deliberately includes the complete payload, which can contain secr
 The synthetic fixtures assume WSDL response part names form a JSON envelope and XSD
 lists use `items`/`count`/`total`. This is provisional until live validation. Typed mode
 rejects incompatible shapes rather than guessing envelope or singleton-list variants.
+
+## Bounded pagination, retries and attachments
+
+`tasks`, `projects` and `activity` expose lazy `each_page` and `each_item` enumerators:
+
+```ruby
+client.tasks.each_item(filter: { projectId: 123 }, count: 100, max_pages: 20).take(150)
+```
+
+Enumerators request pages only as consumed, advance offset by received item count,
+and stop on empty or short pages. They reject oversized/repeated pages, incompatible
+`list.items` shapes and exhausted `max_pages` bounds rather than silently truncating.
+They do not rely on totals, assume a stable dataset, or guarantee a consistent snapshot
+while account data changes. Offset semantics still need live validation.
+
+`read_retries: 0` (default) disables application retries. Set 1–3 to enable retries only
+for the explicit read allowlist in `FivePM::RetryPolicy::READS`. Authentication sign-in,
+all mutations and unknown operations are excluded, even after timeouts. Transient HTTP
+429/500/502/503/504 and network errors use bounded jittered exponential backoff.
+`max_retry_delay: 30` bounds each pause. Numeric Retry-After is honored; longer than
+allowed delays, malformed values and HTTP-date headers are surfaced without retry.
+There is no automatic replay after authentication or JSON/protocol failures.
+
+HTTP errors expose numeric `status`; `RateLimitError` also exposes `retry_after` and
+`retryable?`. `NotFoundError` and `ServerError` specialize `HTTPError`. Remote error
+bodies are never included in exceptions. HTTP-200 API error envelopes remain unverified.
+
+`authentication.authorized_user`, `users.find_by_email(email)`, and activity's `files`,
+`attach_files(activity_id:, files:)`, `delete_file(id)` and `download_file(id)` wrap
+verified POST bindings. Attachments preserve the WSDL FileList object representation;
+no binary encoding is inferred and returned URLs are never followed. Downloads request
+JSON (`stream: false`). Confirm upload/download content semantics in the test tenant.
+
+Request validation rejects missing required operation parameters, unsafe nested field
+names, arbitrary Ruby objects, cycles, invalid identifiers and invalid pagination bounds
+before authentication or I/O. Typed records can be passed to create/update helpers using
+their original JSON fields. Model list `to_h` retains the JSON view despite Enumerable.
+Clients copy configuration strings and refuse Marshal serialization of credentials.
+
+Run `bundle exec ruby bin/package` to verify the actual built artifact. See
+[release preparation](docs/releasing.md) and [implementation guideposts](docs/implementation-guides.md).
 
 ## Remaining release gates
 
