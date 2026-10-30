@@ -2,6 +2,9 @@
 
 ## 0.1.0 — unreleased
 
+- Preserve exact-commit live release qualification for every version; historical
+  development reports cannot replace candidate evidence.
+
 - Restrict releases to manual dispatch from master for an explicitly approved
   version and exact commit; retain protected environment approval for tag/publish jobs.
 

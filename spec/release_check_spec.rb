@@ -33,6 +33,21 @@ RSpec.describe "read-only release preflight" do
       evidence = { version: "0.1.0", evidence_commit: evidence_commit, disposable_tenant: true,
                    result: "passed", contract_verified: true, read_operations_verified: true,
                    mutation_operations_verified: true }
+      # Historical success and a policy manifest cannot replace exact-source evidence.
+      historical = evidence.merge(worktree_dirty: true, release_evidence: false)
+      File.write(File.join(directory, "docs/live-validation-report.json"), JSON.generate(historical))
+      File.write(File.join(directory, "docs/recorded-release-baseline.json"),
+                 JSON.generate(version: "0.1.0", mode: "recorded_baseline"))
+      run_git(directory, "add", ".")
+      run_git(directory, "commit", "-qm", "synthetic historical report only")
+      historical_commit = run_git(directory, "rev-parse", "HEAD")
+      run_git(directory, "update-ref", "refs/remotes/origin/master", historical_commit)
+      script = File.join(directory, "bin/release-check")
+      output, status = Open3.capture2e("bash", script, "0.1.0", historical_commit)
+      expect(status).not_to be_success
+      expect(output).to include("release Git check failed")
+      expect(run_git(directory, "tag", "--list")).to eq("")
+      evidence[:evidence_commit] = historical_commit
       File.write(File.join(directory, "docs/live-validation.json"), JSON.generate(evidence))
       run_git(directory, "add", ".")
       run_git(directory, "commit", "-qm", "synthetic completed validation")

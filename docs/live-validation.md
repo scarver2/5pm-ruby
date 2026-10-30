@@ -4,6 +4,28 @@ Live validation on 2026-10-30 exercised both packages using a disposable tenant.
 Reports and fixtures exclude its hostname, credentials, session tokens, record IDs,
 account payloads and attachment contents.
 
+## Qualification prerequisites
+
+Before live qualification, independently verify the designated disposable tenant is
+active, isolated from production, and contains no business records requiring
+preservation. Verify the credential is Cora's standard User, not Admin. Owner
+confirmation alone does not replace these read-only checks. Do not change roles,
+create replacement users or elevate privileges without separate authorization.
+
+Run the sandbox preflight first, then compare the tenant's six WSDL inventories and
+XSD against the snapshots before running the documented bounded mutation suite.
+Operate only on newly created labelled records; verify attachment removal, deletion
+readbacks, zero labelled leftovers and session cleanup. Stop on unverified isolation,
+permissions or cleanup. Record failures and the exact tested commit without secrets
+or account payloads. Live testing remains opt-in and is never part of CI.
+
+On 2026-10-30 qualification stopped before the sandbox/contract/mutation suite:
+the supplied test credential was Admin, the saved browser session was signed out,
+and independent isolation/record inventory could not be completed. Read-only
+role-verification sessions were closed. No new qualification success is claimed.
+A securely supplied standard User account and independent tenant verification are
+required to resume. The earlier historical report remains development evidence.
+
 ## Reproduce
 
 Inject `FIVE_PM_HOST`, `FIVE_PM_LOGIN` and `FIVE_PM_PASSWORD` from an environment or

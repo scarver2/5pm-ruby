@@ -4,6 +4,13 @@
 loads the installed artifact in a subprocess outside Bundler's source checkout.
 It does not publish. `bin/release-check VERSION FULL_COMMIT_SHA` is also read-only.
 
+The exact-commit live-validation gate applies to every version, including 0.1.0.
+Historical reports, recorded fixtures, report digests, offline CI and policy manifests
+do not substitute for fresh qualification of the actual source candidate. The
+historical `docs/live-validation-report.json` remains unchanged development evidence.
+Any weaker policy requires explicit Sheriff approval and separate Deputy review;
+there is no recorded-baseline bypass in the release check.
+
 Before a release:
 
 Choose the release version and dated changelog before the final live-validation run.
