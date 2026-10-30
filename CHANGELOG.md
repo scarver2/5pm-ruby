@@ -2,6 +2,18 @@
 
 ## 0.1.0 — unreleased
 
+- Restrict releases to manual dispatch from master for an explicitly approved
+  version and exact commit; retain protected environment approval for tag/publish jobs.
+
+- Align packaging/release bin scripts with abbu and printavo: shared Bash runner,
+  Ruby support helpers, pkg artifacts, isolated installs and read-only tag verification.
+
+- Name the packages `5pm` and `5pm-mcp`, with matching dependencies, builds and
+  release configuration; retain the `FivePM` Ruby namespace and require paths.
+
+- Prepare protected GitHub OIDC publishing for both gems, with exact-commit release
+  checks, separate tag permissions, and standard Bundler build/release tasks.
+
 - Retain live cleanup ledger entries until deletion is confirmed; reject false/null/zero
   results and independently verify absence when lookup errors use a generic API code.
 
@@ -40,7 +52,7 @@
 - Fix Enumerable overriding typed list `to_h`.
 - Isolated packaging, read-only release gates and opt-in sandbox preflight.
 
-- Separate five_pm-mcp package with official MCP SDK protocol handling, default read-only
+- Separate 5pm-mcp package with official MCP SDK protocol handling, default read-only
   tools, per-request operator approval for embedded mutations and redacted audit events.
 - Real synthetic stdio/executable tests and isolated installation checks for both artifacts.
 - Host-configurable MCP tool allowlists and stdio confirmation-enforcement regression tests.

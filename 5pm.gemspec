@@ -1,6 +1,6 @@
 require_relative "lib/five_pm/version"
 Gem::Specification.new do |spec|
-  spec.name = "five_pm"
+  spec.name = "5pm"
   spec.version = FivePM::VERSION
   spec.authors = ["Stan Carver II"]
   spec.summary = "Ruby SDK for the 5pm API v2"

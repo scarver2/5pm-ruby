@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+source "$(dirname "$0")/_lib.sh"
+run ruby "$BIN_DIR/support/verify_release_tag.rb" "$@"

@@ -1,0 +1,192 @@
+name: Release gems
+run-name: Release ${{ inputs.version }} at ${{ inputs.commit }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Approved stable version for both gems, without v
+        required: true
+        type: string
+      commit:
+        description: Approved full 40-character commit SHA accepted on master
+        required: true
+        type: string
+
+permissions: {}
+concurrency:
+  group: rubygems-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == 'scarver2/5pm-ruby' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.candidate.outputs.version }}
+      commit: ${{ steps.candidate.outputs.commit }}
+      epoch: ${{ steps.candidate.outputs.epoch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Require configured release environment protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/environments/release" > "$RUNNER_TEMP/release-environment.json"
+          jq -e '
+            .can_admins_bypass == false and
+            .deployment_branch_policy.custom_branch_policies == true and
+            any(.protection_rules[]; .type == "required_reviewers" and
+              any(.reviewers[]; .type == "User" and .reviewer.login == "scarver2"))
+          ' "$RUNNER_TEMP/release-environment.json"
+          gh api "repos/$GITHUB_REPOSITORY/environments/release/deployment-branch-policies" \
+            > "$RUNNER_TEMP/release-branches.json"
+          jq -e '
+            (.branch_policies | length) == 2 and
+            any(.branch_policies[]; .name == "master" and .type == "branch") and
+            any(.branch_policies[]; .name == "v*" and .type == "tag")
+          ' "$RUNNER_TEMP/release-branches.json"
+      - name: Validate exact release candidate
+        id: candidate
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_COMMIT: ${{ inputs.commit }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]
+          [[ "$GITHUB_REF" == refs/heads/master ]]
+          version="$INPUT_VERSION"
+          commit="$INPUT_COMMIT"
+          git fetch origin master:refs/remotes/origin/master --tags
+          bin/release-check "$version" "$commit"
+          {
+            echo "version=$version"
+            echo "commit=$commit"
+            echo "epoch=$(git show -s --format=%ct "$commit")"
+          } >> "$GITHUB_OUTPUT"
+          printf '### Release candidate\n\nVersion: %s\n\nCommit: %s\n' "$version" "$commit" >> "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.2", "3.3", "3.4", "4.0"]
+    env:
+      SOURCE_DATE_EPOCH: ${{ needs.prepare.outputs.epoch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: bin/spec
+      - run: bin/lint --cache false
+      - run: bin/package-mcp
+
+  tag:
+    name: Authorize and tag exact candidate
+    needs: [prepare, verify]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: master
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Create only the approved immutable tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+          git fetch origin master:refs/remotes/origin/master --tags
+          bin/release-check "$VERSION" "$COMMIT"
+          if ! git show-ref --verify --quiet "refs/tags/v$VERSION"; then
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" --method POST \
+              -f "ref=refs/tags/v$VERSION" -f "sha=$COMMIT"
+          fi
+          git fetch origin "refs/tags/v$VERSION"
+          [[ "$(git rev-parse 'FETCH_HEAD^{commit}')" == "$COMMIT" ]]
+
+  publish-core:
+    name: Publish approved 5pm
+    needs: [prepare, tag]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SOURCE_DATE_EPOCH: ${{ needs.prepare.outputs.epoch }}
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - run: git fetch origin master:refs/remotes/origin/master --tags
+      - run: bin/spec
+      - run: bin/lint --cache false
+      - run: bin/package-mcp
+      - name: Verify approved publication tag
+        run: bin/verify-release-tag
+        env:
+          RELEASE_TAG_REF: refs/tags/v${{ needs.prepare.outputs.version }}
+      - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
+
+  publish-mcp:
+    name: Publish approved 5pm-mcp
+    needs: [prepare, publish-core]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SOURCE_DATE_EPOCH: ${{ needs.prepare.outputs.epoch }}
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - run: git fetch origin master:refs/remotes/origin/master --tags
+      - run: bin/spec
+      - run: bin/lint --cache false
+      - run: bin/package-mcp
+      - name: Verify approved publication tag
+        run: bin/verify-release-tag
+        env:
+          RELEASE_TAG_REF: refs/tags/v${{ needs.prepare.outputs.version }}
+      - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
+        with:
+          working-directory: mcp

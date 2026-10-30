@@ -1,6 +1,6 @@
-# five_pm-mcp
+# 5pm-mcp
 
-Separate MIT-licensed MCP adapter for `five_pm`, using the official MCP Ruby SDK.
+Separate MIT-licensed MCP adapter for `5pm`, using the official MCP Ruby SDK.
 Ruby 3.2+. The core SDK does not depend on MCP. This package is not yet published;
 live disposable-account verification is documented in [the live validation guide](../docs/live-validation.md).
 
@@ -103,7 +103,7 @@ completed API result or trigger replay; the embedding host must monitor its audi
 ## Development and release
 
 The gem includes `sig/five_pm-mcp.rbs`, covering server configuration, trusted approval
-callbacks and redacted audit events. Its RBS manifest loads the core `five_pm`
+callbacks and redacted audit events. Its RBS manifest loads the core `5pm`
 signatures automatically when the adapter signatures are loaded by gem name.
 The upstream protocol server is described structurally; the MCP SDK ships no RBS.
 
