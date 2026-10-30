@@ -4,6 +4,28 @@ Live validation on 2026-10-30 exercised both packages using a disposable tenant.
 Reports and fixtures exclude its hostname, credentials, session tokens, record IDs,
 account payloads and attachment contents.
 
+## Qualification prerequisites
+
+Before live qualification, independently verify the designated disposable tenant is
+active, isolated from production, and contains no business records requiring
+preservation. Verify the credential is Cora's standard User, not Admin. Owner
+confirmation alone does not replace these read-only checks. Do not change roles,
+create replacement users or elevate privileges without separate authorization.
+
+Run the sandbox preflight first, then compare the tenant's six WSDL inventories and
+XSD against the snapshots before running the documented bounded mutation suite.
+Operate only on newly created labelled records; verify attachment removal, deletion
+readbacks, zero labelled leftovers and session cleanup. Stop on unverified isolation,
+permissions or cleanup. Record failures and the exact tested commit without secrets
+or account payloads. Live testing remains opt-in and is never part of CI.
+
+On 2026-10-30 qualification stopped before the sandbox/contract/mutation suite:
+the supplied test credential was Admin, the saved browser session was signed out,
+and independent isolation/record inventory could not be completed. Read-only
+role-verification sessions were closed. No new qualification success is claimed.
+A securely supplied standard User account and independent tenant verification are
+required to resume. The earlier historical report remains development evidence.
+
 ## Reproduce
 
 Inject `FIVE_PM_HOST`, `FIVE_PM_LOGIN` and `FIVE_PM_PASSWORD` from an environment or
@@ -22,11 +44,7 @@ The single JSON report identifies the base commit, dirty-worktree status and a
 SHA-256 digest of the tested source. The digest covers the sorted Git tracked and
 untracked, non-ignored files as `path`, NUL, byte length, NUL, then file bytes;
 `docs/live-validation-report.json` itself is excluded. It is development evidence,
-not fresh accepted-commit release evidence. For 0.1.0 only, the maintainer has
-selected this recorded baseline with a pinned report digest; see
-[release preparation](releasing.md). That decision does not change this report's
-provenance, assert current service behavior or authorize new live calls. Later
-versions retain the exact-commit live-evidence requirement unless separately reviewed.
+not the accepted-commit release evidence required by `bin/release-check`.
 
 The harness records successful transport operation names only, including calls made
 by the actual stdio process. With `--mutations`, it fails unless every one of the
@@ -83,26 +101,4 @@ deletion already succeeded before sending another deletion request.
 Dates remain exact strings; no timezone inference or conversion is performed.
 Retries, rate limits, transport failures and malformed schemas are tested with
 synthetic responses rather than inducing failures or load on the live account.
-Publication authorization, hosted CI and the version-specific validation policy remain separate gates.
-
-## Optional sandbox preflight diagnostics
-
-Inject credentials via the process environment. Designate the test tenant explicitly
-with `FIVE_PM_SANDBOX=1` and `FIVE_PM_SANDBOX_HOST=$FIVE_PM_HOST`.
-Run `bundle exec ruby bin/sandbox-check`. It checks authentication and resource list
-envelopes without changing account data; it creates and closes a temporary session.
-Its redacted report is only `read_only_passed`, not full release evidence.
-On failure, stderr includes a JSON diagnostic with a fixed operation stage and
-error category (and numeric HTTP status when available). It never includes
-exception messages, credentials or response bodies. `authentication_rejected`
-indicates HTTP 401/403; `unexpected_response` indicates a JSON/contract mismatch,
-which does not establish that the password is wrong. A cleanup failure does not
-replace the diagnostic for an earlier failed operation.
-Sign-in failures also report whether parsed JSON was received and its shape:
-only fixed, known contract fields and JSON types are emitted, never arbitrary
-keys, scalar values, tokens or server error text. This distinguishes a missing
-authentication envelope from a transport JSON-decoding failure without dumping
-the response body.
-Typed validation failures include `schema_mismatch` with the declared field name,
-expected schema type and actual JSON type. No field values are retained in that
-error or printed. Nested errors identify the innermost invalid field.
+Publication, hosted-CI acceptance and accepted-commit release evidence remain separate gates.

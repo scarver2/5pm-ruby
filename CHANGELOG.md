@@ -2,8 +2,8 @@
 
 ## 0.1.0 — unreleased
 
-- Qualify 0.1.0 against the explicitly selected, digest-pinned recorded baseline;
-  retain opt-in live tests and separate publication approval.
+- Preserve exact-commit live release qualification for every version; historical
+  development reports cannot replace candidate evidence.
 
 - Restrict releases to manual dispatch from master for an explicitly approved
   version and exact commit; retain protected environment approval for tag/publish jobs.

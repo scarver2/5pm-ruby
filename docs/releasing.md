@@ -4,44 +4,60 @@
 loads the installed artifact in a subprocess outside Bundler's source checkout.
 It does not publish. `bin/release-check VERSION FULL_COMMIT_SHA` is also read-only.
 
+The exact-commit live-validation gate applies to every version, including 0.1.0.
+Historical reports, recorded fixtures, report digests, offline CI and policy manifests
+do not substitute for fresh qualification of the actual source candidate. The
+historical `docs/live-validation-report.json` remains unchanged development evidence.
+Any weaker policy requires explicit Sheriff approval and separate Deputy review;
+there is no recorded-baseline bypass in the release check.
+
 Before a release:
 
-For **0.1.0 only**, the maintainer has selected the recorded baseline rather than
-requiring a fresh live run of the exact candidate. This is a release qualification
-policy decision, not authorization to publish. Live testing remains opt-in.
+Choose the release version and dated changelog before the final live-validation run.
+The candidate must have the same tracked tree as its tested commit, except for the
+`docs/live-validation.json` evidence file itself. Any other change requires validation
+again, including changes to tests, packaging, the MCP adapter or release tooling.
 
-`docs/recorded-release-baseline.json` pins the SHA-256 of the existing sanitized
-`docs/live-validation-report.json`. The read-only gate requires the report's successful
-read, mutation, attachment/user and cleanup results, complete coverage of the
-candidate operation inventory, and an ancestral historical commit. It rejects
-changed report bytes, missing operations or unsuccessful cleanup. The historical
-report remains unchanged: its dirty-worktree provenance and `release_evidence: false`
-are retained. No fresh live testing of the candidate is claimed. Synthetic fixtures
-and WSDL/XSD snapshots support repeatable offline regression tests; they are not a
-VCR cassette or a guarantee about the service's present state.
-
-1. Merge reviewed source and policy changes through PRs with passing four-version CI.
-2. Keep both gem versions aligned and prepare a dated changelog before publication.
-3. Run `bin/spec`, `bin/lint`, and `bin/package-mcp` for the candidate. Review differences
-   from the historical baseline, including packaging and response-contract changes.
-4. Fetch origin/master and tags; from a clean checkout run
-   `bin/release-check VERSION FULL_COMMIT_SHA`. Accepted-master, dated changelog,
-   matching gem versions and immutable-tag checks still apply.
-5. Verify the protected release environment and both RubyGems trusted publishers.
-   Request separate approval of the specific version and exact commit before dispatch.
-
-For versions **other than 0.1.0**, the existing exact-commit live-evidence policy
-remains: `docs/live-validation.json` must record version, full `evidence_commit`,
-`disposable_tenant: true`, `result: "passed"`, and verified contract/read/mutation
-booleans. Its tested commit must be ancestral and the candidate tree may differ only
-in that evidence file. Do not fabricate this evidence or relabel the historical report.
-A future recorded-baseline decision requires another reviewed policy change.
-
-Optional live validation: see [disposable-account validation](live-validation.md).
-Verify an isolated disposable tenant and standard User privileges, run the read-only
-sandbox preflight first, and enable mutations only with explicit authorization and
-`FIVE_PM_ALLOW_MUTATIONS=1`. Verify cleanup and keep credentials, identifiers and
-account payloads out of reports. Live checks are never run by CI or publication.
+1. Merge reviewed changes through PRs with passing CI; do not change master directly.
+2. Obtain a disposable account and compare its six WSDLs and schema with the public snapshots.
+3. Inject credentials via the process environment. Designate the test tenant explicitly
+   with `FIVE_PM_SANDBOX=1` and `FIVE_PM_SANDBOX_HOST=$FIVE_PM_HOST`.
+   Run `bundle exec ruby bin/sandbox-check`. It checks authentication and resource list
+   envelopes without changing account data; it creates and closes a temporary session.
+   Its redacted report is only `read_only_passed`, not full release evidence.
+   On failure, stderr includes a JSON diagnostic with a fixed operation stage and
+   error category (and numeric HTTP status when available). It never includes
+   exception messages, credentials or response bodies. `authentication_rejected`
+   indicates HTTP 401/403; `unexpected_response` indicates a JSON/contract mismatch,
+   which does not establish that the password is wrong. A cleanup failure does not
+   replace the diagnostic for an earlier failed operation.
+   Sign-in failures also report whether parsed JSON was received and its shape:
+   only fixed, known contract fields and JSON types are emitted, never arbitrary
+   keys, scalar values, tokens or server error text. This distinguishes a missing
+   authentication envelope from a transport JSON-decoding failure without dumping
+   the response body.
+   Typed validation failures include `schema_mismatch` with the declared field name,
+   expected schema type and actual JSON type. No field values are retained in that
+   error or printed. Nested errors identify the innermost invalid field.
+4. Record sanitized real success/error fixtures, including HTTP-200 errors if observed.
+   Verify offsets, totals, dates, bool encoding, and attachments. Perform destructive
+   create/update/delete checks only in that disposable account, explicitly enabled by
+   the operator. Do not run these checks in CI or point them at production.
+   The reproducible `bin/live-check --mutations` suite requires both disposable-tenant
+   designation and `FIVE_PM_ALLOW_MUTATIONS=1`. See [live validation](live-validation.md).
+   Its dirty-worktree development report is not a substitute for accepted-commit evidence.
+5. Commit reviewed evidence in `docs/live-validation.json` with the tested `version`,
+   full `evidence_commit`, `disposable_tenant: true`, `result: "passed"`, and separately
+   verified `contract_verified`, `read_operations_verified`, `mutation_operations_verified`
+   booleans. Never include a tenant hostname, login, password, session token or account payload.
+   No success evidence is supplied in this repository until those checks actually happen.
+6. Pass CI and `bin/package` for the tested version and dated changelog, and merge the
+   release preparation through review. Fetch origin/master and tags, then run
+   `bin/release-check VERSION FULL_COMMIT_SHA` from a clean checkout. The command
+   requires the candidate to be accepted on origin/master and rejects conflicting tags.
+7. Recheck the RubyGems name and request explicit maintainer publication approval.
+   Publication must target the approved version and exact reviewed commit. Tag and
+   publish only after that approval using the protected workflow described below.
 
 ## Connect GitHub and RubyGems once
 
@@ -123,8 +139,9 @@ The packaging checks inspect the actual installed artifacts. CI repeats validati
 on Ruby 3.2, 3.3, 3.4 and 4.0. Release builds set `SOURCE_DATE_EPOCH` to the approved
 commit timestamp. Neither build task publishes.
 
-Before dispatch, complete the version-specific baseline/evidence and dated changelog
-gates above. Both gem versions must match. Preparing this workflow does not
+Before dispatch, complete the live evidence and dated changelog gates above. Both
+gem versions must match. The development report `docs/live-validation-report.json`
+does not satisfy `docs/live-validation.json`. Preparing this workflow does not
 advance the version, date the changelog or authorize publication.
 
 After merging the workflow, open Actions → **Release gems** → **Run workflow** on
@@ -152,4 +169,4 @@ If core publication succeeds and MCP fails, inspect the published core version a
 provenance, fix the cause, and rerun only the failed jobs against the same approved
 candidate. Do not rerun an already-successful publish job, move the tag, overwrite a
 published version or automatically yank it. Code changes require a new reviewed
-candidate and its version-specific validation; arrange a new version when the core is already published.
+candidate and fresh evidence; arrange a new version when the core is already published.

@@ -182,8 +182,7 @@ Run `bin/package` to verify the actual built artifact. See
 
 ## Remaining release gates
 
-- Review the 0.1.0 recorded-baseline policy and candidate offline checks; live tests remain opt-in.
-  Other versions retain exact-commit live evidence unless separately reviewed.
+- Review and merge the live-validated source; regenerate release evidence for the exact accepted commit.
 - Keep the supported Ruby matrix passing in hosted CI. Live checks remain opt-in and outside CI.
 - Date/time strings remain opaque; no timezone conversion or consistent-snapshot guarantee is offered.
 - Rate-limit and transient-network behavior is tested synthetically, without stressing the live account.
