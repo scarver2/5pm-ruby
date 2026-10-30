@@ -16,6 +16,6 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/CHANGELOG.md"
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["rubygems_mfa_required"] = "true"
-  spec.add_dependency "json", ">= 2.6", "< 3"
+  spec.add_dependency "json", ">= 2.6", "< 4"
   spec.add_dependency "net-http", ">= 0.3", "< 1"
 end
