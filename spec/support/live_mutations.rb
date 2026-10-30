@@ -6,6 +6,7 @@ require "five_pm"
 require "five_pm/mcp"
 require "securerandom"
 require "tmpdir"
+require_relative "live_record_checks"
 
 checks = []
 created = []
@@ -33,18 +34,11 @@ add = lambda do |service, part, attributes|
   id
 end
 remove = lambda do |service, id|
-  raw = client.public_send(service).delete(id)
-  raise "delete did not succeed" unless validate.call(service, "remove", raw).status
-
+  wire = service == :project_groups ? "projectsgroups" : service.to_s
+  contract = FivePM::OPERATIONS.fetch(wire).fetch("remove")
+  LiveRecordChecks.remove!(client.public_send(service), id: id, contract: contract, service: service)
   created.reject! { |record| record["service"] == service.to_s && record["id"] == id }
   save.call
-  begin
-    client.public_send(service).get(id)
-    raise "deleted record still exists"
-  rescue FivePM::APIError
-    # Missing-record codes differ by service. Final list checks also verify absence.
-    nil
-  end
 end
 begin
   stage = "project_groups.create"
@@ -193,6 +187,7 @@ begin
     marker = result.dig("structuredContent", "data")
     raise "MCP delete failed" unless marker == true || (marker.is_a?(Integer) && marker.positive?)
 
+    LiveRecordChecks.absent!(client.public_send(service), id, service: service)
     created.reject! { |record| record["service"] == service.to_s && record["id"] == id }
     save.call
     checks << stage
@@ -223,7 +218,12 @@ rescue StandardError => e
   exit 1
 ensure
   created.reverse.dup.each do |record|
-    remove.call(record.fetch("service").to_sym, record.fetch("id"))
+    service = record.fetch("service")
+    wire = service == "project_groups" ? "projectsgroups" : service
+    contract = FivePM::OPERATIONS.fetch(wire).fetch("remove")
+    LiveRecordChecks.cleanup!(client.public_send(service), id: record.fetch("id"), contract: contract, service: service)
+    created.delete(record)
+    save.call
   rescue StandardError
     warn JSON.generate(result: "cleanup_failed", service: record.fetch("service"))
   end

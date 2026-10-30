@@ -39,6 +39,11 @@ Attachment removal requires a successful deletion result and a new attachment-li
 request showing the target file is absent before parent-record cleanup begins.
 Subprocess deadlines cover process exit and pipe draining; timed-out process groups
 are killed and reaped rather than waiting indefinitely in Open3 cleanup.
+Cleanup entries remain tracked until both a successful deletion result and absence
+are verified. False results and failed readbacks preserve entries for recovery.
+Users/groups use generic API errors for missing records, so their complete getAll
+lists must independently confirm absence. Cleanup first checks whether an earlier
+deletion already succeeded before sending another deletion request.
 
 ## Verified scope
 

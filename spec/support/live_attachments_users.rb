@@ -5,6 +5,7 @@ abort "set FIVE_PM_ALLOW_MUTATIONS=1 for disposable mutation checks" unless ENV[
 require "five_pm"
 require "securerandom"
 require_relative "live_attachment_checks"
+require_relative "live_record_checks"
 client = FivePM::Client.new(host: ENV.fetch("FIVE_PM_HOST"), login: ENV.fetch("FIVE_PM_LOGIN"),
                             password: ENV.fetch("FIVE_PM_PASSWORD"))
 created = []
@@ -30,9 +31,8 @@ begin
 
   checks << stage
   stage = "users.delete"
-  result = client.users.delete(user_id)
-  raise "user deletion missing data" unless result.key?("data")
-
+  LiveRecordChecks.remove!(client.users, id: user_id, contract: FivePM::OPERATIONS.dig("users", "remove"),
+                                         service: :users)
   created.delete([:users, user_id])
   checks << stage
   stage = "attachment.setup"
@@ -78,7 +78,8 @@ rescue StandardError => e
   exit 1
 ensure
   created.reverse_each do |service, id|
-    client.public_send(service).delete(id)
+    contract = FivePM::OPERATIONS.fetch(service.to_s).fetch("remove")
+    LiveRecordChecks.cleanup!(client.public_send(service), id: id, contract: contract, service: service)
   rescue StandardError
     warn JSON.generate(result: "cleanup_failed", service: service)
   end

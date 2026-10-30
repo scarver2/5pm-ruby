@@ -2,6 +2,9 @@
 
 ## 0.1.0 — unreleased
 
+- Retain live cleanup ledger entries until deletion is confirmed; reject false/null/zero
+  results and independently verify absence when lookup errors use a generic API code.
+
 - Recognize mapped response parts in presence checks, verify attachment absence after
   deletion, and bound live subprocess exit and pipe draining with process-group cleanup.
 
