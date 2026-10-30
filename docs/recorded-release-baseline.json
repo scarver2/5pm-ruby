@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "mode": "recorded_baseline",
+  "decision": "Use the recorded baseline for this release; live testing remains opt-in. This is not publication authorization.",
+  "report": "docs/live-validation-report.json",
+  "report_sha256": "6413f114eabcf866de4b9340ceb1f82b8e9f624e6faaa20edcbffb4a71510e31",
+  "fresh_candidate_live_validation": false,
+  "limitations": [
+    "Historical report references a dirty development worktree.",
+    "Candidate source was not freshly tested against a live account.",
+    "Offline fixtures and contract snapshots are the regression baseline."
+  ]
+}

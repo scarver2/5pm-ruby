@@ -22,7 +22,11 @@ The single JSON report identifies the base commit, dirty-worktree status and a
 SHA-256 digest of the tested source. The digest covers the sorted Git tracked and
 untracked, non-ignored files as `path`, NUL, byte length, NUL, then file bytes;
 `docs/live-validation-report.json` itself is excluded. It is development evidence,
-not the accepted-commit release evidence required by `bin/release-check`.
+not fresh accepted-commit release evidence. For 0.1.0 only, the maintainer has
+selected this recorded baseline with a pinned report digest; see
+[release preparation](releasing.md). That decision does not change this report's
+provenance, assert current service behavior or authorize new live calls. Later
+versions retain the exact-commit live-evidence requirement unless separately reviewed.
 
 The harness records successful transport operation names only, including calls made
 by the actual stdio process. With `--mutations`, it fails unless every one of the
@@ -79,4 +83,26 @@ deletion already succeeded before sending another deletion request.
 Dates remain exact strings; no timezone inference or conversion is performed.
 Retries, rate limits, transport failures and malformed schemas are tested with
 synthetic responses rather than inducing failures or load on the live account.
-Publication, hosted-CI acceptance and accepted-commit release evidence remain separate gates.
+Publication authorization, hosted CI and the version-specific validation policy remain separate gates.
+
+## Optional sandbox preflight diagnostics
+
+Inject credentials via the process environment. Designate the test tenant explicitly
+with `FIVE_PM_SANDBOX=1` and `FIVE_PM_SANDBOX_HOST=$FIVE_PM_HOST`.
+Run `bundle exec ruby bin/sandbox-check`. It checks authentication and resource list
+envelopes without changing account data; it creates and closes a temporary session.
+Its redacted report is only `read_only_passed`, not full release evidence.
+On failure, stderr includes a JSON diagnostic with a fixed operation stage and
+error category (and numeric HTTP status when available). It never includes
+exception messages, credentials or response bodies. `authentication_rejected`
+indicates HTTP 401/403; `unexpected_response` indicates a JSON/contract mismatch,
+which does not establish that the password is wrong. A cleanup failure does not
+replace the diagnostic for an earlier failed operation.
+Sign-in failures also report whether parsed JSON was received and its shape:
+only fixed, known contract fields and JSON types are emitted, never arbitrary
+keys, scalar values, tokens or server error text. This distinguishes a missing
+authentication envelope from a transport JSON-decoding failure without dumping
+the response body.
+Typed validation failures include `schema_mismatch` with the declared field name,
+expected schema type and actual JSON type. No field values are retained in that
+error or printed. Nested errors identify the innermost invalid field.
