@@ -1,4 +1,6 @@
 require "rspec/core/rake_task"
+require_relative "bin/support/release_tasks"
+FivePMReleaseTasks.install(__dir__)
 RSpec::Core::RakeTask.new(:spec)
 desc "Check locked dependencies support the minimum Ruby version"
 task :compatibility do

@@ -185,7 +185,9 @@ Run `bundle exec ruby bin/package` to verify the actual built artifact. See
 - Keep the supported Ruby matrix passing in hosted CI. Live checks remain opt-in and outside CI.
 - Date/time strings remain opaque; no timezone conversion or consistent-snapshot guarantee is offered.
 - Rate-limit and transient-network behavior is tested synthetically, without stressing the live account.
-- Verify RubyGems name availability and obtain explicit publication approval.
+- Configure the protected `release` environment and both RubyGems trusted publishers
+  using [release preparation](docs/releasing.md); verify name availability and obtain
+  explicit approval for the version and exact commit before dispatching publication.
 
 Official sources: [developer guide](https://www.5pmweb.com/5pm_api.php),
 [API reference](https://www.5pmweb.com/help/api_docs.php).

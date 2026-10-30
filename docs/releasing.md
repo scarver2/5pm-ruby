@@ -50,7 +50,86 @@ again, including changes to tests, packaging, the MCP adapter or release tooling
    requires the candidate to be accepted on origin/master and rejects conflicting tags.
 7. Recheck the RubyGems name and request explicit maintainer publication approval.
    Publication must target the approved version and exact reviewed commit. Tag and
-   publish only after that approval. There is no automated publishing workflow.
+   publish only after that approval using the protected workflow described below.
 
-On 2026-10-29, RubyGems' `GET /api/v1/gems/five_pm.json` returned 404. This check
-neither reserves the name nor guarantees future availability.
+## Connect GitHub and RubyGems once
+
+This follows [abbu's release workflow](https://github.com/scarver2/abbu/blob/4c64d0eb0ccdbc0a8c04b2e50da92594faf75d09/.github/workflows/release.yml)
+(browser dispatch, exact commit, separate tag and publish jobs) and
+[printavo's release workflow](https://github.com/scarver2/printavo-ruby/blob/464ae6f29b8ff7627cf829c02351d1b9eadea37d/.github/workflows/release.yml)
+(pinned RubyGems action and Bundler tasks). Both packages publish through
+[trusted publishing](https://guides.rubygems.org/trusted-publishing/), without a
+long-lived RubyGems API key or GitHub PAT in repository secrets.
+
+A repository administrator must create the
+[release environment](https://github.com/scarver2/5pm-ruby/settings/environments):
+
+- Name: `release`; required reviewer: `scarver2`.
+- Disable administrator bypass. Allow the initiating maintainer to approve, matching abbu.
+- Select deployment branches and tags: branch `master` and tag `v*`, only.
+
+The workflow checks these protections before building or tagging. Missing protection
+or inaccessible environment metadata stops the run. The current GitHub connection
+cannot create this environment: GitHub returned HTTP 403, administrator rights required.
+
+Sign into RubyGems.org and create two
+[pending trusted publishers](https://rubygems.org/profile/oidc/pending_trusted_publishers)
+for the first publication:
+
+| Gem name | GitHub owner | Repository | Workflow filename | Environment |
+| --- | --- | --- | --- | --- |
+| `five_pm` | `scarver2` | `5pm-ruby` | `release.yml` | `release` |
+| `five_pm-mcp` | `scarver2` | `5pm-ruby` | `release.yml` | `release` |
+
+These are separate gem registrations using the same workflow identity. For an
+already-owned gem, configure its trusted publisher instead of a pending publisher.
+On 2026-10-30, both gem API lookups returned HTTP 404; that neither reserves the
+names nor guarantees availability. Recheck before publication. Account setup must
+be completed by the authenticated RubyGems owner; repository configuration alone
+does not establish that connection.
+
+## Build and approve a release
+
+Standard Bundler tasks build the core and MCP artifacts respectively:
+
+```sh
+bundle exec rake build
+bundle exec rake -f mcp/Rakefile build
+bundle exec rake
+bundle exec rubocop --cache false
+bundle exec ruby bin/package-mcp
+```
+
+The packaging checks inspect the actual installed artifacts. CI repeats validation
+on Ruby 3.2, 3.3, 3.4 and 4.0. Release builds set `SOURCE_DATE_EPOCH` to the approved
+commit timestamp. Neither build task publishes.
+
+Before dispatch, complete the live evidence and dated changelog gates above. Both
+gem versions must match. The development report `docs/live-validation-report.json`
+does not satisfy `docs/live-validation.json`. Preparing this workflow does not
+advance the version, date the changelog or authorize publication.
+
+After merging the workflow, open Actions → **Release gems** → **Run workflow** on
+`master`. Enter the explicitly approved stable version without `v` and its full
+40-character accepted commit SHA. The read-only preflight rejects an unaccepted
+commit, untested changes, incomplete evidence, mismatched versions or a conflicting tag.
+A `v*` tag push is also supported and passes the same gates and environment approvals.
+
+Approve the protected tag job only after inspecting the candidate summary and
+verification jobs. It creates `vVERSION` only if absent and verifies its exact target;
+it never moves an existing tag. Approve each protected publication job for that same
+candidate. Publishing has OIDC permission and read-only repository contents; only
+the separate tag job can write repository contents. Bundler's source-control push
+action is disabled. Local publishing tasks refuse to run outside this workflow.
+
+The pinned `rubygems/release-gem` action invokes `bundle exec rake release` for the
+core gem, waits for RubyGems availability, then does the same in `mcp/`. The MCP
+package depends on the matching core version. The workflow does not create a GitHub
+Release. No workflow should be dispatched merely to test the connection: a successful
+run publishes both gems.
+
+If core publication succeeds and MCP fails, inspect the published core version and
+provenance, fix the cause, and rerun only the failed jobs against the same approved
+candidate. Do not rerun an already-successful publish job, move the tag, overwrite a
+published version or automatically yank it. Code changes require a new reviewed
+candidate and fresh evidence; arrange a new version when the core is already published.

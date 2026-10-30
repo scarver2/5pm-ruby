@@ -2,6 +2,9 @@
 
 ## 0.1.0 — unreleased
 
+- Prepare protected GitHub OIDC publishing for both gems, with exact-commit release
+  checks, separate tag permissions, and standard Bundler build/release tasks.
+
 - Retain live cleanup ledger entries until deletion is confirmed; reject false/null/zero
   results and independently verify absence when lookup errors use a generic API code.
 

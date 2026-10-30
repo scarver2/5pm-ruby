@@ -17,6 +17,8 @@ RSpec.describe "read-only release preflight" do
       FileUtils.cp(File.join(__dir__, "../bin/release-check"), File.join(directory, "bin/release-check"))
       FileUtils.mkdir_p(File.join(directory, "lib/five_pm"))
       FileUtils.mkdir_p(File.join(directory, "docs"))
+      FileUtils.mkdir_p(File.join(directory, "mcp/lib/five_pm/mcp"))
+      File.write(File.join(directory, "mcp/lib/five_pm/mcp/version.rb"), 'VERSION = "0.1.0"')
       File.write(File.join(directory, "lib/five_pm/version.rb"), 'VERSION = "0.1.0"')
       File.write(File.join(directory, "CHANGELOG.md"), "## 0.1.0 — 2026-10-29\n")
       run_git(directory, "init", "-q")

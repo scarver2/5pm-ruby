@@ -23,6 +23,8 @@ Dir.chdir(File.expand_path("..", __dir__)) do
   git.call("merge-base", "--is-ancestor", commit, "refs/remotes/origin/master")
   source = git.call("show", "#{commit}:lib/five_pm/version.rb")
   abort "version mismatch" unless source.match?(/^\s*VERSION = "#{Regexp.escape(version)}"(?:\.freeze)?\s*$/)
+  adapter = git.call("show", "#{commit}:mcp/lib/five_pm/mcp/version.rb")
+  abort "MCP version mismatch" unless adapter.match?(/^\s*VERSION = "#{Regexp.escape(version)}"(?:\.freeze)?\s*$/)
   changelog = git.call("show", "#{commit}:CHANGELOG.md")
   abort "missing dated changelog" unless changelog.match?(/^## #{Regexp.escape(version)} — \d{4}-\d{2}-\d{2}$/)
   begin
