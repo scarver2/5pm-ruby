@@ -1,0 +1,6 @@
+{
+  "rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b": {
+    "source": "https://github.com/rubygems/release-gem/blob/7f9650160c1a4e7989fdc9855807bdbd421d8b6b/action.yml",
+    "inputs": ["token", "await-release", "setup-trusted-publisher", "attestations", "working-directory"]
+  }
+}
