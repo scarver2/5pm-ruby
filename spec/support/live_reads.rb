@@ -7,6 +7,7 @@ require "open3"
 require "timeout"
 require "rexml/document"
 require "net/http"
+require_relative "live_subprocess"
 
 checks = []
 stage = "configuration"
@@ -120,11 +121,11 @@ begin
   end
   requests << { jsonrpc: "2.0", id: 8, method: "tools/call",
                 params: { name: "five_pm_delete_tasks", arguments: { id: 1, confirmed: true } } }
-  stdout, stderr, status = Timeout.timeout(120) do
-    Open3.capture3(RbConfig.ruby, "-Ilib", "-Imcp/lib", "-r", "./spec/support/live_operation_audit",
-                   "mcp/exe/five-pm-mcp",
-                   stdin_data: "#{requests.map { |request| JSON.generate(request) }.join("\n")}\n")
-  end
+  stdout, stderr, status = LiveSubprocess.capture(
+    {}, RbConfig.ruby, "-Ilib", "-Imcp/lib", "-r", "./spec/support/live_operation_audit",
+    "mcp/exe/five-pm-mcp", timeout: 120,
+                           stdin_data: "#{requests.map { |request| JSON.generate(request) }.join("\n")}\n"
+  )
   raise "stdio process failed" unless status.success?
 
   responses = stdout.lines.map { |line| JSON.parse(line) }.to_h { |response| [response.fetch("id"), response] }

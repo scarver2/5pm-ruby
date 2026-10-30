@@ -4,6 +4,7 @@ abort "designate a disposable tenant with FIVE_PM_SANDBOX=1 and matching FIVE_PM
 abort "set FIVE_PM_ALLOW_MUTATIONS=1 for disposable mutation checks" unless ENV["FIVE_PM_ALLOW_MUTATIONS"] == "1"
 require "five_pm"
 require "securerandom"
+require_relative "live_attachment_checks"
 client = FivePM::Client.new(host: ENV.fetch("FIVE_PM_HOST"), login: ENV.fetch("FIVE_PM_LOGIN"),
                             password: ENV.fetch("FIVE_PM_PASSWORD"))
 created = []
@@ -63,7 +64,7 @@ begin
 
   checks << stage
   stage = "activity.delete_file"
-  client.activity.delete_file(file_id)
+  LiveAttachmentChecks.remove!(client.activity, task_id: task_id, file_id: file_id)
   checks << stage
   puts JSON.pretty_generate(result: "passed", checks: checks)
 rescue StandardError => e

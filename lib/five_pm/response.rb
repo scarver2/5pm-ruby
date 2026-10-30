@@ -182,6 +182,10 @@ module FivePM
       super(payload, fields: fields, reader_payload: Envelope.parts(payload, contract))
     end
 
+    def key?(key)
+      @values.key?(key.to_s)
+    end
+
     # Only declared response parts get convenience readers. Unknown keys remain
     # accessible through [] and the original JSON snapshot through #to_h.
     def method_missing(name, *arguments)

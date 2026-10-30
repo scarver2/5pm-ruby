@@ -2,6 +2,23 @@ require "spec_helper"
 require "rexml/document"
 
 RSpec.describe FivePM::Response do
+  it "distinguishes mapped false/null parts from missing parts while retaining wire keys" do
+    contract = FivePM::OPERATIONS.dig("tasks", "remove")
+    [false, nil, 0, true].each do |value|
+      source = { "data" => value, "future" => nil }
+      response = described_class.new(source, contract: contract)
+      expect(response.key?(:status)).to be(true)
+      expect(response.key?("status")).to be(true)
+      expect(response.key?(:data)).to be(true)
+      expect(response.key?(:future)).to be(true)
+      expect(response.key?(:missing)).to be(false)
+      expect(response.to_h).to eq(source)
+    end
+    expect(described_class.new({}, contract: contract).key?(:status)).to be(false)
+    expect(described_class.new({ "status" => nil }, contract: contract).key?(:status)).to be(true)
+    expect(FivePM::Models::Task.new({ "id" => nil }).key?(:id)).to be(true)
+    expect(FivePM::Models::Task.new({}).key?(:id)).to be(false)
+  end
   it "maps sanitized live response shapes and rejects observed error envelopes" do
     observed = lambda do |name|
       JSON.parse(File.read(File.join(__dir__, "fixtures/observed/#{name}.json")))

@@ -35,6 +35,10 @@ The web UI normally shows only the original demo data after verification because
 all labelled test records are deleted. Write verification includes read-after-update
 assertions, post-delete failures and a final scan for leftover records; it does not
 depend on retaining records in the UI.
+Attachment removal requires a successful deletion result and a new attachment-list
+request showing the target file is absent before parent-record cleanup begins.
+Subprocess deadlines cover process exit and pipe draining; timed-out process groups
+are killed and reaped rather than waiting indefinitely in Open3 cleanup.
 
 ## Verified scope
 

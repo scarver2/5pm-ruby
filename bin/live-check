@@ -6,6 +6,7 @@ require "timeout"
 require "digest"
 require "tmpdir"
 require_relative "../lib/five_pm/version"
+require_relative "../spec/support/live_subprocess"
 
 abort "usage: ruby bin/live-check [--mutations]" unless [[], ["--mutations"]].include?(ARGV)
 unless ENV["FIVE_PM_SANDBOX"] == "1" && ENV.fetch("FIVE_PM_HOST", "") != "" &&
@@ -24,10 +25,10 @@ Dir.chdir(root) do
     scripts = ["live_reads"]
     scripts += %w[live_mutations live_attachments_users live_cleanup] if mutations
     reports = scripts.map do |script|
-      stdout, stderr, status = Timeout.timeout(300) do
-        Open3.capture3({ "FIVE_PM_LIVE_AUDIT" => audit_path }, RbConfig.ruby, "-Ilib", "-Imcp/lib",
-                       "-r", "./spec/support/live_operation_audit", "spec/support/#{script}.rb")
-      end
+      stdout, stderr, status = LiveSubprocess.capture(
+        { "FIVE_PM_LIVE_AUDIT" => audit_path }, RbConfig.ruby, "-Ilib", "-Imcp/lib",
+        "-r", "./spec/support/live_operation_audit", "spec/support/#{script}.rb", timeout: 300
+      )
       result = JSON.parse(stdout) unless stdout.empty?
       diagnostics = stderr.lines.filter_map do |line|
         JSON.parse(line)

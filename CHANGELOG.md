@@ -2,6 +2,9 @@
 
 ## 0.1.0 — unreleased
 
+- Recognize mapped response parts in presence checks, verify attachment absence after
+  deletion, and bound live subprocess exit and pipe draining with process-group cleanup.
+
 - Validate UTF-8 JSON after streamed chunks are assembled; preserve arbitrary bytes
   when probing binary downloads for API error envelopes.
 

@@ -103,6 +103,8 @@ fields remain exact strings; no zone is inferred and no date parsing is attempte
 Exception: `User.canViewProfiles` accepts both WSDL-declared strings and JSON booleans
 observed in the test account; its reader preserves either representation unchanged.
 Missing readers return nil; `key?` distinguishes missing fields from explicit null.
+For responses with a `data` wrapper, `key?` recognizes mapped reader parts as well
+as original keys; `raw.key?` checks only the wire envelope.
 Malformed known types raise `FivePM::ProtocolError` without including field values;
 these errors never trigger a replay of the request. Unknown fields are not validated.
 
