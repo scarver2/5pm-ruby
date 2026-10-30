@@ -2,6 +2,31 @@
 
 ## 0.1.0 — unreleased
 
+- Retain live cleanup ledger entries until deletion is confirmed; reject false/null/zero
+  results and independently verify absence when lookup errors use a generic API code.
+
+- Recognize mapped response parts in presence checks, verify attachment absence after
+  deletion, and bound live subprocess exit and pipe draining with process-group cleanup.
+
+- Validate UTF-8 JSON after streamed chunks are assembled; preserve arbitrary bytes
+  when probing binary downloads for API error envelopes.
+
+- Ship RBS for both gems, including all generated model readers and MCP callback
+  contracts; validate source and installed-package signatures in the default checks.
+
+- Live disposable-account contract, CRUD, pagination, MCP stdio and mutation-approval verification.
+- Redacted numeric `APIError` for HTTP-200 errors, including code 0 validation errors.
+- Preserve live integer deletion markers and add bounded binary `Download` results.
+- Opt-in reproducible live suite with separate mutation enablement and cleanup checks.
+
+- Accept live JSON booleans as well as WSDL strings for `User.canViewProfiles`,
+  preserving both representations without relaxing other string fields.
+
+- Accept the observed sign-in JSON envelope `data.sessionId`, retain the original
+  WSDL-shaped envelope, and reject ambiguous authentication responses.
+- Map operation-specific `data` envelopes in typed readers, pagination and MCP,
+  preserving raw wire JSON and false scalar results without replaying mutations.
+
 - Initial SDK scaffold, contract inventory, POST transport and synchronized sessions.
 - Generic service calls validated against public demo WSDL POST bindings.
 - CRUD/list helpers for all five resource services, synthetic RSpec contracts, CI and packaging.
@@ -18,6 +43,7 @@
 - Separate five_pm-mcp package with official MCP SDK protocol handling, default read-only
   tools, per-request operator approval for embedded mutations and redacted audit events.
 - Real synthetic stdio/executable tests and isolated installation checks for both artifacts.
+- Host-configurable MCP tool allowlists and stdio confirmation-enforcement regression tests.
 
 - Review fixes: retain typed-list serialization in the base layer, include DNS lookup
   in timeout handling, reject stale live-validation evidence after code changes, and

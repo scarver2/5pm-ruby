@@ -23,26 +23,23 @@ Initial implementation, 2026-10-28. Worktree: `sdk`, branch: `feat/api-v2-sdk`.
 - Separate five_pm-mcp gem with official SDK, read-only stdio tools, opt-in host-confirmed mutations and redacted audit events.
 - Real synthetic stdio/executable tests and isolated installation verification for both gem artifacts.
 
-## Verified locally
+## Verification completed on 2026-10-30
 
-- Ruby 4.0.9: 93 passing examples, over 99% line coverage.
-- RuboCop: no offenses.
-- Strict gem build: successful; package file inventory and MIT license verified.
-- Plain Ruby can load the SDK without development dependencies.
+- Offline schema, protocol, redaction, binary transport and mutation-safety regression tests.
+- RuboCop, strict builds, core dependency isolation and installed-package checks.
+- Live account-specific WSDL/schema comparison, all resource CRUD/read paths,
+  pagination, user creation and synthetic-attachment byte round trips.
+- Live MCP stdio reads and embedded project/task mutation approvals, denials and audits.
+- Supported Ruby matrix: 3.2, 3.3, 3.4 and 4.0.
 
-## Deferred at user request
+See [live validation](live-validation.md) for reproducible commands and API differences.
+The development report identifies the tested working tree; it does not authorize a release.
 
-Use synthetic tests for now; a disposable test account will be provided later.
-No authenticated API calls or account mutations have been made.
+## Remaining release gates
 
-## Remaining acceptance gates
+- Review and merge the tested source with passing hosted CI.
+- Generate accepted-commit release evidence according to [releasing](releasing.md).
+- Recheck RubyGems name availability and obtain explicit publication approval.
 
-- Validate contracts against that test account; confirm JSON envelopes and error shapes.
-- Add sanitized observed fixtures alongside synthetic ones and opt-in sandbox tests.
-- Confirm typed response mapping against observed JSON envelopes and error shapes.
-- Verify pagination behavior, date/timezone semantics, attachments and rate-limit handling.
-- Keep the Ruby 3.2/3.3/3.4/4.0 hosted CI matrix passing (initial milestone passed all four).
-- Complete live validation of the separately implemented MCP package tracked in issue #4.
-- Check RubyGems name availability before release; obtain explicit approval before publishing.
-
-The proposed change does not close issue #1; this is a reviewable initial milestone.
+Date/time conversion is intentionally absent. Retry/rate-limit failure paths are
+verified synthetically rather than by stressing the live account.

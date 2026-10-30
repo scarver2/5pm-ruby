@@ -3,6 +3,27 @@ require "open3"
 require "timeout"
 
 RSpec.describe "official MCP SDK over stdio" do
+  it "requires a fresh trusted approval for each mutation over the real protocol" do
+    arguments = [{ id: 7, confirmed: true }, { id: 7 }, { id: 7 }, { id: 7 }]
+    messages = arguments.each_with_index.map do |args, index|
+      JSON.generate(jsonrpc: "2.0", id: index + 1, method: "tools/call",
+                    params: { name: "five_pm_delete_tasks", arguments: args })
+    end
+    script = File.join(__dir__, "support/mcp_stdio_fixture.rb")
+    stdout, stderr, status = Timeout.timeout(15) do
+      Open3.capture3(RbConfig.ruby, "-Imcp/lib", script, "synthetic-approvals",
+                     stdin_data: "#{messages.join("\n")}\n")
+    end
+    expect(status).to be_success
+    results = stdout.lines.map { |line| JSON.parse(line).fetch("result") }
+    expect(results.map { |result| result.fetch("isError") }).to eq([true, true, false, true])
+    expect(results[1].dig("structuredContent", "error", "code")).to eq("approval_required")
+    expect(results[2].dig("structuredContent", "data")).to be(true)
+    expect(results[3].dig("structuredContent", "error", "code")).to eq("approval_required")
+    expect(stderr.lines.map { |line| JSON.parse(line).fetch("outcome") }).to eq(%w[rejected denied success denied])
+    expect(stdout + stderr).not_to include("synthetic-password-secret", "synthetic-token-secret", "synthetic-login")
+  end
+
   it "negotiates lifecycle, lists tools, executes synthetic reads and rejects writes without stdout contamination" do
     messages = [
       { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-11-25", capabilities: {},

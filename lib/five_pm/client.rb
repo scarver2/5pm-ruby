@@ -68,14 +68,20 @@ module FivePM
       Request.operation!(service.to_s, operation.to_s, params)
       token = @mutex.synchronize { session_id } if contract.fetch("parameters").key?("sessionId")
       params["sessionId"] = token if token
+      binary = service.to_s == "activity" && operation.to_s == "downloadFile"
       begin
         payload = @retry_policy.call(service.to_s, operation.to_s) do
-          @transport.post(service.to_s, operation.to_s, params)
+          binary ? @transport.download_file(params) : @transport.post(service.to_s, operation.to_s, params)
         end
       rescue AuthenticationError
         @mutex.synchronize { @session_id = nil if @session_id == token }
         raise
       end
+      return payload if binary
+
+      # Injected transports may return unchecked JSON. Keep this public boundary
+      # safe as well as Transport's direct-call boundary.
+      APIResult.check!(payload)
       @response_mode == :typed ? Response.new(payload, contract: contract) : payload
     end
 
@@ -87,12 +93,17 @@ module FivePM
       self
     end
 
+    def download_file(id)
+      call("activity", "downloadFile", id: id, stream: false)
+    end
+
     def sign_out
       @mutex.synchronize do
         return false unless @session_id
 
         begin
           payload = @transport.post("authentication", "signOut", { "sessionId" => @session_id })
+          APIResult.check!(payload)
           contract = OPERATIONS.fetch("authentication").fetch("signOut")
           @response_mode == :typed ? Response.new(payload, contract: contract) : payload
         ensure
@@ -117,10 +128,14 @@ module FivePM
       @session_id = nil
       started = @clock.call
       response = @transport.post("authentication", "signIn", { "login" => @login, "password" => @password })
-      # WSDL auth:AuthToken; the outer JSON envelope still needs sandbox confirmation.
-      token = response.dig("auth", "sessionId") if response.is_a?(Hash) && response["auth"].is_a?(Hash)
+      APIResult.check!(response)
+      # The test tenant returns data.sessionId; retain the WSDL-shaped envelope
+      # for compatibility. Reject ambiguous responses rather than picking a token.
+      envelopes = response.is_a?(Hash) ? %w[data auth].select { |key| response.key?(key) } : []
+      envelope = response[envelopes.first] if envelopes.length == 1
+      token = envelope["sessionId"] if envelope.is_a?(Hash)
       unless token.is_a?(String) && !token.empty?
-        raise ProtocolError, "5pm signIn response did not contain auth.sessionId"
+        raise ProtocolError, "5pm signIn response did not contain an unambiguous sessionId"
       end
 
       @expires_at = started + SESSION_TTL - 30

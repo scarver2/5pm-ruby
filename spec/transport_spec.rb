@@ -95,6 +95,76 @@ RSpec.describe FivePM::Transport do
     end
   end
 
+  it "decodes UTF-8 JSON when multibyte characters span binary chunks" do
+    payload = { "data" => { "name" => "José 東京 🌍" } }
+    bytes = JSON.generate(payload).b
+    allow(response).to receive(:read_body) do |&block|
+      bytes.bytes.each_slice(2) { |chunk| block.call(chunk.pack("C*")) }
+    end
+    result = transport.post("projects", "getAll", {})
+    expect(result).to eq(payload)
+    expect(result.dig("data", "name").encoding).to eq(Encoding::UTF_8)
+  end
+
+  it "rejects invalid UTF-8 JSON without leaking bytes, payloads or parser causes" do
+    allow(response).to receive(:body).and_return("{\"data\":\"private-secret-\xff\"}".b)
+    expect { transport.post("projects", "getAll", {}) }.to raise_error(FivePM::ProtocolError) do |error|
+      expect(error.message).to eq("5pm returned invalid JSON")
+      expect(error.cause).to be_nil
+    end
+  end
+
+  it "keeps non-UTF-8 downloads binary when probing for JSON error envelopes" do
+    bytes = "\x00\xff\xfe binary".b
+    allow(response).to receive(:body).and_return(bytes)
+    result = transport.download_file("id" => 7)
+    expect(result.bytes).to eq(bytes)
+    expect(result.bytes.encoding).to eq(Encoding::BINARY)
+  end
+
+  it "rejects HTTP-200 numeric API error envelopes without retaining remote messages" do
+    [0, 441].each do |code|
+      allow(response).to receive(:body).and_return(JSON.generate(code: code, message: "private-payload-secret"))
+      expect { transport.post("tasks", "getById", { "id" => 7 }) }.to raise_error(FivePM::APIError) do |error|
+        expect(error.code).to eq(code)
+        expect(error.message).not_to include("secret")
+        expect(error.cause).to be_nil
+      end
+    end
+  end
+
+  it "downloads immutable binary bytes without following file URLs or parsing JSON attachments" do
+    bytes = "\x00\xff synthetic attachment".b
+    allow(response).to receive(:body).and_return(bytes)
+    allow(response).to receive(:[]).with("Content-Type").and_return("application/octet-stream")
+    allow(response).to receive(:[]).with("Content-Disposition").and_return('attachment; filename="synthetic.bin"')
+    expect(http).to receive(:request) do |request, &block|
+      expect(request.path).to eq("/api/v2/service/post/activity/downloadFile")
+      expect(URI.decode_www_form(request.body).to_h).to include("id" => "7", "sessionId" => "synthetic-secret")
+      block.call(response)
+    end
+    result = transport.download_file("id" => 7, "sessionId" => "synthetic-secret", "stream" => false)
+    expect(result.bytes).to eq(bytes)
+    expect(result.bytes.encoding).to eq(Encoding::BINARY)
+    expect(result.bytes).to be_frozen
+    expect(result.content_type).to eq("application/octet-stream")
+    expect(result).to be_frozen
+    expect(result.inspect).to eq("#<FivePM::Download>")
+    allow(response).to receive(:body).and_return('{"code":441,"message":"file content"}')
+    expect(transport.download_file("id" => 7).bytes).to eq(response.body)
+  end
+
+  it "bounds downloads and recognizes API errors instead of returning them as files" do
+    allow(response).to receive(:body).and_return('{"code":441,"message":"private-error-secret"}')
+    expect { transport.download_file("id" => 7) }.to raise_error(FivePM::APIError) do |error|
+      expect(error.code).to eq(441)
+      expect(error.message).not_to include("private-error-secret")
+    end
+    allow(response).to receive(:body).and_return("too many bytes")
+    bounded = described_class.new(host: "example.5pmweb.com", max_response_bytes: 2)
+    expect { bounded.download_file("id" => 7) }.to raise_error(FivePM::ProtocolError, /size limit/)
+  end
+
   it "redacts network exception details and causes without retrying" do
     [SocketError, IOError, Errno::ECONNRESET, Net::ReadTimeout, OpenSSL::SSL::SSLError].each do |error_type|
       allow(http).to receive(:request).and_raise(error_type, "synthetic-secret")

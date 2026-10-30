@@ -1,6 +1,27 @@
 require "json"
 
 module FivePM
+  # Resolve the JSON data wrapper against the operation's declared response part.
+  # This is a reader view only; callers retain the complete original wire JSON.
+  module Envelope
+    def self.parts(payload, contract)
+      raise ProtocolError, "expected a response object" unless payload.is_a?(Hash)
+
+      APIResult.check!(payload)
+      return payload unless payload.key?("data")
+
+      primary = contract.fetch("response").keys - ["sessionId"]
+      unless primary.length == 1 && primary.none? { |part| payload.key?(part) }
+        raise ProtocolError, "ambiguous response envelope"
+      end
+      if payload["success"].equal?(false) || payload["error"] || payload["errors"] || payload["fault"]
+        raise ProtocolError, "API returned an error envelope"
+      end
+
+      payload.merge(primary.first => payload.fetch("data"))
+    end
+  end
+
   module Models
     TYPES = JSON.parse(::File.read(::File.join(__dir__, "types.json")))
 
@@ -16,13 +37,17 @@ module FivePM
     # Models keep a frozen snapshot of the original JSON and expose typed readers.
     # No fields are discarded, and date/time strings never acquire a guessed zone.
     class Record
-      def initialize(payload, fields: self.class::FIELDS)
+      def initialize(payload, fields: self.class::FIELDS, reader_payload: nil)
         raise ProtocolError, "expected a JSON object for #{self.class.name}" unless payload.is_a?(Hash)
 
         @raw = snapshot(payload)
-        @values = @raw.to_h do |key, value|
+        @values = (reader_payload ? snapshot(reader_payload) : @raw).to_h do |key, value|
           definition = fields[key]
-          [key, definition ? convert(value, definition) : value]
+          [key, definition ? convert_field(key, value, definition) : value]
+        rescue SchemaError
+          raise
+        rescue ProtocolError
+          raise SchemaError.new(field: key, expected_type: definition.fetch("type"), value: value), cause: nil
         end.freeze
         freeze
       end
@@ -51,6 +76,10 @@ module FivePM
       end
 
       private
+
+      def convert_field(_key, value, definition)
+        convert(value, definition)
+      end
 
       def snapshot(value)
         case value
@@ -130,6 +159,18 @@ module FivePM
       end
       const_set(name, model)
     end
+
+    class User
+      private
+
+      # The test tenant returns a JSON boolean for this XSD string field.
+      # Keep both observed booleans and legacy strings in their original form.
+      def convert_field(key, value, definition)
+        return value if key == "canViewProfiles" && (value.equal?(true) || value.equal?(false))
+
+        super
+      end
+    end
   end
 
   class Response < Models::Record
@@ -138,7 +179,11 @@ module FivePM
       fields = contract.fetch("response").to_h do |key, type|
         [key, { "type" => type.split(":").last }]
       end
-      super(payload, fields: fields)
+      super(payload, fields: fields, reader_payload: Envelope.parts(payload, contract))
+    end
+
+    def key?(key)
+      @values.key?(key.to_s)
     end
 
     # Only declared response parts get convenience readers. Unknown keys remain
@@ -152,6 +197,16 @@ module FivePM
 
     def respond_to_missing?(name, include_private = false)
       @parts.any? { |part| part.gsub(/([a-z0-9])([A-Z])/, '\\1_\\2').downcase == name.to_s } || super
+    end
+
+    private
+
+    def convert_field(key, value, definition)
+      # Live project/task deletions return an integer marker, not an XSD boolean.
+      # Preserve that result rather than guessing its meaning or coercing it.
+      return value if key == "status" && definition["type"] == "boolean" && value.is_a?(Integer) && value >= 0
+
+      super
     end
   end
 end

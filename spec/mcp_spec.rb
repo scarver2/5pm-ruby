@@ -15,6 +15,22 @@ RSpec.describe FivePM::MCPAdapter::Server do
     rpc(server, "tools/call", { name: name, arguments: arguments })
   end
 
+  it "reads data-wrapped raw users and groups, redacts credentials and preserves false mutation results" do
+    expect(client).to receive(:users).and_return(resource)
+    expect(resource).to receive(:get).with(7).and_return("data" => { "id" => 7, "password" => "secret" })
+    expect(call_tool(adapter.server, "five_pm_get_users", id: 7).dig("result", "structuredContent", "data"))
+      .to eq("id" => 7)
+    expect(client).to receive(:project_groups).and_return(resource)
+    expect(resource).to receive(:list).and_return("data" => { "items" => [{ "id" => 1 }] })
+    expect(call_tool(adapter.server, "five_pm_list_project_groups").dig("result", "structuredContent", "data"))
+      .to eq("items" => [{ "id" => 1 }], "next_offset" => nil)
+    configured = described_class.new(client: client, allow_mutations: true, approver: ->(_proposal) { true })
+    expect(client).to receive(:tasks).and_return(resource)
+    expect(resource).to receive(:delete).with(7).once.and_return("data" => false)
+    expect(call_tool(configured.server, "five_pm_delete_tasks", id: 7).dig("result", "structuredContent", "data"))
+      .to be(false)
+  end
+
   it "advertises only allowlisted read tools by default" do
     response = rpc(adapter.server, "tools/list")
     tools = response.fetch("result").fetch("tools")
@@ -25,6 +41,21 @@ RSpec.describe FivePM::MCPAdapter::Server do
     response = call_tool(adapter.server, "five_pm_delete_tasks", id: 7, confirmed: true)
     expect(response).to have_key("error")
     expect(adapter.inspect).to eq("#<FivePM::MCPAdapter::Server>")
+  end
+
+  it "restricts discovery and dispatch to the operator's explicit tool allowlist" do
+    names = ["five_pm_get_tasks"]
+    configured = described_class.new(client: client, allowed_tools: names)
+    names << "five_pm_list_tasks"
+    expect(rpc(configured.server, "tools/list").dig("result", "tools").map { |tool| tool.fetch("name") })
+      .to eq(["five_pm_get_tasks"])
+    expect(client).not_to receive(:tasks)
+    expect(call_tool(configured.server, "five_pm_list_tasks")).to have_key("error")
+    expect { described_class.new(client: client, allowed_tools: ["five_pm_delete_tasks"]) }
+      .to raise_error(ArgumentError, "invalid tool allowlist")
+    expect { described_class.new(client: client, allowed_tools: "five_pm_get_tasks") }.to raise_error(ArgumentError)
+    empty = described_class.new(client: client, allowed_tools: [])
+    expect(rpc(empty.server, "tools/list").dig("result", "tools")).to eq([])
   end
 
   it "rejects unknown arguments, credentials, invalid bounds and unsupported filters before I/O" do

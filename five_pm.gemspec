@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/scarver2/5pm-ruby"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2"
-  spec.files = Dir["lib/**/*", "docs/**/*", "examples/**/*.rb", "README.md", "LICENSE", "CHANGELOG.md",
+  spec.files = Dir["lib/**/*", "sig/**/*.rbs", "docs/**/*", "examples/**/*.rb", "README.md", "LICENSE", "CHANGELOG.md",
                    "SECURITY.md"].select do |path|
     File.file?(path)
   end

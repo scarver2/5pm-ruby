@@ -34,7 +34,7 @@ module FivePM
     end
 
     def download_file(id)
-      call("downloadFile", id: id, stream: false)
+      @client.download_file(id)
     end
   end
 end

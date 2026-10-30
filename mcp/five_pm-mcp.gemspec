@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/scarver2/5pm-ruby"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2"
-  spec.files = Dir["lib/**/*.rb", "exe/*", "README.md", "LICENSE"].select { |path| File.file?(path) }
+  spec.files = Dir["lib/**/*.rb", "sig/**/*", "exe/*", "README.md", "LICENSE"].select { |path| File.file?(path) }
   spec.bindir = "exe"
   spec.executables = ["five-pm-mcp"]
   spec.require_paths = ["lib"]

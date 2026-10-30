@@ -2,20 +2,67 @@
 # No writes to account data. Authentication creates a temporary API session.
 require_relative "../lib/five_pm"
 require "open3"
+require "English"
+
+# Only fixed contract field names and JSON types may leave the process. Never
+# print arbitrary keys or scalar values from an account response.
+def response_shape(value, depth = 0)
+  type = case value
+         when Hash then "object"
+         when Array then "array"
+         when String then "string"
+         when Numeric then "number"
+         when true, false then "boolean"
+         when nil then "null"
+         else "unknown"
+         end
+  shape = { type: type }
+  if value.is_a?(Hash) && depth < 2
+    fields = %w[auth sessionId data response result error errors fault code message success user list items count total
+                signOutState]
+    shape[:fields] = fields.select { |field| value.key?(field) }.to_h do |field|
+      [field, response_shape(value.fetch(field), depth + 1)]
+    end
+  end
+  shape
+end
 
 abort "set FIVE_PM_SANDBOX=1 for an explicitly designated disposable account" unless ENV["FIVE_PM_SANDBOX"] == "1"
+stage = "configuration"
+sign_in_diagnostic = { response_received: false }
+last_response_diagnostic = {}
 begin
   host = ENV.fetch("FIVE_PM_HOST")
   abort "FIVE_PM_SANDBOX_HOST must match FIVE_PM_HOST" unless ENV["FIVE_PM_SANDBOX_HOST"] == host
+  transport = FivePM::Transport.new(host: host)
+  transport.define_singleton_method(:post) do |service, operation, parameters|
+    unless operation == "signOut"
+      last_response_diagnostic.replace(operation: "#{service}.#{operation}", response_received: false)
+    end
+    payload = super(service, operation, parameters)
+    unless operation == "signOut"
+      last_response_diagnostic[:response_received] = true
+      last_response_diagnostic[:shape] = response_shape(payload)
+    end
+    if service == "authentication" && operation == "signIn"
+      sign_in_diagnostic[:response_received] = true
+      sign_in_diagnostic[:shape] = response_shape(payload)
+    end
+    payload
+  end
   client = FivePM::Client.new(host: host, login: ENV.fetch("FIVE_PM_LOGIN"), password: ENV.fetch("FIVE_PM_PASSWORD"),
-                              response_mode: :typed)
+                              response_mode: :typed, transport: transport)
   checks = []
   begin
+    stage = "authentication.signIn" # rubocop:disable Lint/UselessAssignment -- read by rescue when sign-in raises
+    client.sign_in
+    stage = "authentication.getAuthorizedUser"
     user = client.authentication.authorized_user
     raise FivePM::ProtocolError, "missing authorized user" unless user.user.is_a?(FivePM::Models::User)
 
     checks << "authentication.getAuthorizedUser"
     %i[projects project_groups tasks activity users].each do |service|
+      stage = "#{service}.list"
       resource = client.public_send(service)
       response = %i[project_groups users].include?(service) ? resource.list : resource.list(count: 1)
       raise FivePM::ProtocolError, "missing list envelope" unless response.list.is_a?(FivePM::Models::Record)
@@ -23,13 +70,40 @@ begin
       checks << "#{service}.list"
     end
   ensure
-    client.sign_out
+    # Preserve the original failure if closing the session also fails.
+    original_error = $ERROR_INFO
+    begin
+      stage = "authentication.signOut" unless original_error
+      client.sign_out
+    rescue FivePM::Error
+      raise unless original_error
+    end
   end
   commit, status = Open3.capture2("git", "-C", File.expand_path("..", __dir__), "rev-parse", "HEAD")
   abort "could not identify tested commit" unless status.success?
   puts JSON.pretty_generate(version: FivePM::VERSION, evidence_commit: commit.strip, disposable_tenant: true,
                             result: "read_only_passed", checks: checks, contract_verified: false,
                             read_operations_verified: false, mutation_operations_verified: false)
-rescue FivePM::Error, KeyError
-  abort "sandbox check failed; inspect configuration and API contracts without logging credentials or account payloads"
+rescue FivePM::Error, KeyError => e
+  category = case e
+             when FivePM::ConfigurationError, KeyError then "configuration"
+             when FivePM::AuthenticationError then "authentication_rejected"
+             when FivePM::APIError then "api_error"
+             when FivePM::HTTPError then "http_error"
+             when FivePM::TransportError then "connection_failed"
+             when FivePM::ProtocolError then "unexpected_response"
+             else "sdk_error"
+             end
+  diagnostic = { result: "failed", stage: stage, category: category }
+  if e.is_a?(FivePM::SchemaError)
+    diagnostic[:schema_mismatch] = { field: e.field, expected_type: e.expected_type, actual_type: e.actual_type }
+  end
+  diagnostic[:sign_in_response] = sign_in_diagnostic if stage == "authentication.signIn"
+  if stage != "authentication.signIn" && !last_response_diagnostic.empty?
+    diagnostic[:last_response] = last_response_diagnostic
+  end
+  diagnostic[:http_status] = e.status if e.is_a?(FivePM::HTTPError)
+  diagnostic[:api_code] = e.code if e.is_a?(FivePM::APIError)
+  warn JSON.generate(diagnostic)
+  abort "sandbox check failed; diagnostic excludes credentials and account payloads"
 end

@@ -3,6 +3,7 @@ gemspec
 # RuboCop uses parallel; the 2.x series requires Ruby 3.3.
 gem "parallel", "~> 1.28.0"
 gem "rake", "~> 13.0"
+gem "rbs", "~> 3.10.0"
 gem "rexml", "~> 3.4"
 gem "rspec", "~> 3.13"
 gem "rubocop", "~> 1.75"

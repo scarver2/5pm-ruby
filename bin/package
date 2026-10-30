@@ -16,6 +16,9 @@ Dir.chdir(root) do
   end
   abort "package file mismatch" unless package.spec.files.sort == expected.files.sort
   abort "license mismatch" unless package.spec.license == "MIT" && package.spec.files.include?("LICENSE")
+  %w[sig/five_pm.rbs sig/models.rbs].each do |signature|
+    abort "missing core RBS signatures" unless package.spec.files.include?(signature)
+  end
   if package.spec.files.any? { |file| file.match?(%r{(^|/)(spec|vendor|coverage|\.env)(/|$)}) }
     abort "unexpected private or development files in package"
   end
@@ -31,6 +34,9 @@ Dir.chdir(root) do
     Bundler.with_unbundled_env do
       valid = system({ "GEM_PATH" => dependency_path }, RbConfig.ruby, "-I#{directory}/lib", "-e", smoke, directory)
       abort "isolated package smoke test failed" unless valid
+      unless system({ "GEM_PATH" => dependency_path }, RbConfig.ruby, "-S", "rbs", "-I", "#{directory}/sig", "validate")
+        abort "packaged core RBS validation failed"
+      end
     end
   end
   puts "Verified #{path}"

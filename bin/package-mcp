@@ -18,6 +18,8 @@ Dir.chdir(root) do
   unless package.spec.files.sort == adapter.files.sort && package.spec.license == "MIT"
     abort "adapter package inventory or license mismatch"
   end
+  abort "missing adapter RBS signatures" unless package.spec.files.include?("sig/five_pm-mcp.rbs")
+  abort "missing RBS dependency manifest" unless package.spec.files.include?("sig/manifest.yaml")
   dependency_path = Bundler.load.specs.map(&:base_dir).uniq.join(File::PATH_SEPARATOR)
   Dir.mktmpdir("five-pm-mcp-package-") do |directory|
     environment = { "GEM_HOME" => directory, "GEM_PATH" => dependency_path }
@@ -38,6 +40,8 @@ Dir.chdir(root) do
         server = FivePM::MCPAdapter::Server.new(client: Object.new).server
         result = JSON.parse(server.handle_json(JSON.generate(jsonrpc: "2.0", id: 1, method: "tools/list")))
         abort "installed adapter failed protocol smoke test" unless result.fetch("result").fetch("tools").length == 10
+        # Resolve by gem name to verify the shipped manifest loads core signatures.
+        abort "installed RBS validation failed" unless system(RbConfig.ruby, "-S", "rbs", "-r", "five_pm-mcp", "validate")
       CODE
       abort "installed adapter smoke failed" unless system(environment, RbConfig.ruby, "-e", smoke, directory)
     end

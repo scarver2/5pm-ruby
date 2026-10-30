@@ -16,6 +16,7 @@ module FivePM
       max_pages.times do
         page = list(filter: filter, offset: offset, count: count, **options)
         raw = page.is_a?(Response) ? page.to_h : page
+        raw = Envelope.parts(raw, OPERATIONS.fetch(@name).fetch("getList")) if raw.is_a?(Hash)
         items = raw.dig("list", "items") if raw.is_a?(Hash) && raw["list"].is_a?(Hash)
         raise ProtocolError, "pagination expected a list.items array" unless items.is_a?(Array)
 
@@ -37,7 +38,11 @@ module FivePM
       return enum_for(__method__, **options) unless block_given?
 
       each_page(**options) do |page|
-        items = page.is_a?(Response) ? page.list.items : page.fetch("list").fetch("items")
+        items = if page.is_a?(Response)
+                  page.list.items
+                else
+                  Envelope.parts(page, OPERATIONS.fetch(@name).fetch("getList")).fetch("list").fetch("items")
+                end
         items.each(&block)
       end
       self

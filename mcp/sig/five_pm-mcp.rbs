@@ -1,0 +1,23 @@
+module FivePM
+  module MCPAdapter
+    VERSION: String
+    type proposal = { "tool" => String, "service" => String, "action" => String,
+                      "arguments" => Hash[String, FivePM::json], "request_id" => String }
+    type outcome = "success" | "denied" | "failed" | "uncertain" | "rejected"
+    type audit_event = { request_id: String, tool: String, outcome: outcome, timestamp: String }
+
+    # Structural boundary: the upstream MCP SDK does not ship RBS signatures.
+    interface _ProtocolServer
+      def handle_json: (String) -> String?
+    end
+
+    class Server
+      attr_reader server: _ProtocolServer
+      def initialize: (client: FivePM::Client, ?allow_mutations: bool,
+                       ?approver: (^(proposal) -> untyped)?, ?audit: ^(audit_event) -> untyped,
+                       ?allowed_tools: Array[String]?) -> void
+      def open: () -> untyped
+      def inspect: () -> String
+    end
+  end
+end
