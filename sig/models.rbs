@@ -1,0 +1,223 @@
+# Model readers follow types.json; every field is optional, matching missing/null JSON.
+module FivePM
+  module Models
+    TYPES: Hash[String, FivePM::fields]
+    class Record
+      def initialize: (FivePM::json_object, ?fields: FivePM::fields, ?reader_payload: FivePM::json_object?) -> void
+      def []: (String | Symbol) -> FivePM::reader_value
+      def key?: (String | Symbol) -> bool
+      def to_h: () -> FivePM::json_object
+      def raw: () -> FivePM::json_object
+      def to_json: (*untyped) -> String
+      def inspect: () -> String
+    end
+
+    class AuthToken < Record
+      FIELDS: FivePM::fields
+      def session_id: () -> (String)?
+    end
+
+    class User < Record
+      FIELDS: FivePM::fields
+      def id: () -> (Integer)?
+      def password: () -> (String)?
+      def email: () -> (String)?
+      def first_name: () -> (String)?
+      def last_name: () -> (String)?
+      def title: () -> (String)?
+      def address: () -> (String)?
+      def work_phone: () -> (String)?
+      def home_phone: () -> (String)?
+      def cell_phone: () -> (String)?
+      def timezone: () -> (Integer)?
+      def company: () -> (String)?
+      def comment: () -> (String)?
+      def security_level: () -> (String)?
+      def can_view_profiles: () -> (String | bool)?
+      def avatar: () -> (String)?
+    end
+
+    class UserList < Record
+      FIELDS: FivePM::fields
+      include Enumerable[Models::User]
+      def each: () -> Enumerator[Models::User, Array[Models::User]]
+              | () { (Models::User) -> void } -> Array[Models::User]
+      def items: () -> (Array[Models::User])?
+      def count: () -> (Integer)?
+      def total: () -> (Integer)?
+    end
+
+    class ProjectsGroup < Record
+      FIELDS: FivePM::fields
+      def id: () -> (Integer)?
+      def name: () -> (String)?
+      def info: () -> (String)?
+    end
+
+    class ProjectsGroupList < Record
+      FIELDS: FivePM::fields
+      include Enumerable[Models::ProjectsGroup]
+      def each: () -> Enumerator[Models::ProjectsGroup, Array[Models::ProjectsGroup]]
+              | () { (Models::ProjectsGroup) -> void } -> Array[Models::ProjectsGroup]
+      def items: () -> (Array[Models::ProjectsGroup])?
+      def count: () -> (Integer)?
+      def total: () -> (Integer)?
+    end
+
+    class Project < Record
+      FIELDS: FivePM::fields
+      def id: () -> (Integer)?
+      def name: () -> (String)?
+      def description: () -> (String)?
+      def tags: () -> (String)?
+      def client_id: () -> (Integer)?
+      def owner_id: () -> (Integer)?
+      def group_id: () -> (Integer)?
+      def start_date: () -> (String)?
+      def end_date: () -> (String)?
+      def priority: () -> (Integer)?
+      def status: () -> (Integer)?
+      def created_at: () -> (String)?
+      def updated_at: () -> (String)?
+      def notify_project_team: () -> (bool)?
+      def notify_client: () -> (bool)?
+      def notify_users: () -> (Models::UserList)?
+      def hidden: () -> (bool)?
+      def flag: () -> (Integer)?
+      def team: () -> (Models::UserList)?
+      def can_edit: () -> (bool)?
+    end
+
+    class ProjectList < Record
+      FIELDS: FivePM::fields
+      include Enumerable[Models::Project]
+      def each: () -> Enumerator[Models::Project, Array[Models::Project]]
+              | () { (Models::Project) -> void } -> Array[Models::Project]
+      def items: () -> (Array[Models::Project])?
+      def count: () -> (Integer)?
+      def total: () -> (Integer)?
+    end
+
+    class Task < Record
+      FIELDS: FivePM::fields
+      def id: () -> (Integer)?
+      def parent_id: () -> (Integer)?
+      def parent_name: () -> (String)?
+      def name: () -> (String)?
+      def description: () -> (String)?
+      def tags: () -> (String)?
+      def project_id: () -> (Integer)?
+      def owner_id: () -> (Integer)?
+      def group_id: () -> (Integer)?
+      def start_date: () -> (String)?
+      def end_date: () -> (String)?
+      def priority: () -> (Integer)?
+      def progress: () -> (Float)?
+      def status: () -> (Integer)?
+      def created_at: () -> (String)?
+      def updated_at: () -> (String)?
+      def notify_project_team: () -> (bool)?
+      def notify_task_team: () -> (bool)?
+      def notify_client: () -> (bool)?
+      def notify_users: () -> (Models::UserList)?
+      def hidden: () -> (bool)?
+      def flag: () -> (Integer)?
+      def hours_done: () -> (Float)?
+      def estimated_time: () -> (Float)?
+      def team: () -> (Models::UserList)?
+      def can_edit: () -> (bool)?
+    end
+
+    class TaskList < Record
+      FIELDS: FivePM::fields
+      include Enumerable[Models::Task]
+      def each: () -> Enumerator[Models::Task, Array[Models::Task]]
+              | () { (Models::Task) -> void } -> Array[Models::Task]
+      def items: () -> (Array[Models::Task])?
+      def count: () -> (Integer)?
+      def total: () -> (Integer)?
+    end
+
+    class Activity < Record
+      FIELDS: FivePM::fields
+      def id: () -> (Integer)?
+      def task_id: () -> (Integer)?
+      def task_name: () -> (String)?
+      def project_id: () -> (Integer)?
+      def project_name: () -> (String)?
+      def type: () -> (String)?
+      def text: () -> (String)?
+      def owner_id: () -> (Integer)?
+      def progress: () -> (Integer)?
+      def hours_done: () -> (Float)?
+      def created_at: () -> (String)?
+      def notify_project_team: () -> (bool)?
+      def notify_task_team: () -> (bool)?
+      def notify_client: () -> (bool)?
+      def notify_users: () -> (Models::UserList)?
+      def hide_from_clients: () -> (bool)?
+      def date: () -> (String)?
+      def files: () -> (Models::FileList)?
+    end
+
+    class ActivityList < Record
+      FIELDS: FivePM::fields
+      include Enumerable[Models::Activity]
+      def each: () -> Enumerator[Models::Activity, Array[Models::Activity]]
+              | () { (Models::Activity) -> void } -> Array[Models::Activity]
+      def items: () -> (Array[Models::Activity])?
+      def count: () -> (Integer)?
+      def total: () -> (Integer)?
+    end
+
+    class ImageInfo < Record
+      FIELDS: FivePM::fields
+      def width: () -> (Integer)?
+      def height: () -> (Integer)?
+    end
+
+    class File < Record
+      FIELDS: FivePM::fields
+      def id: () -> (Integer)?
+      def activity_id: () -> (Integer)?
+      def activity_type: () -> (String)?
+      def name: () -> (String)?
+      def url: () -> (String)?
+      def type: () -> (String)?
+      def size: () -> (Integer)?
+      def content: () -> (String)?
+      def created_at: () -> (String)?
+      def can_edit: () -> (bool)?
+      def can_thumb: () -> (bool)?
+      def url_thumb: () -> (String)?
+      def image_info: () -> (Models::ImageInfo)?
+    end
+
+    class FileList < Record
+      FIELDS: FivePM::fields
+      include Enumerable[Models::File]
+      def each: () -> Enumerator[Models::File, Array[Models::File]]
+              | () { (Models::File) -> void } -> Array[Models::File]
+      def items: () -> (Array[Models::File])?
+      def count: () -> (Integer)?
+      def total: () -> (Integer)?
+    end
+  end
+
+  class Response < Models::Record
+    def initialize: (json_object, contract: contract) -> void
+    def activity: () -> (Models::Activity)?
+    def auth: () -> (Models::AuthToken)?
+    def file: () -> (Models::File)?
+    def group: () -> (Models::ProjectsGroup)?
+    def is_ssl: () -> (bool)?
+    def list: () -> (Models::ActivityList | Models::FileList | Models::ProjectList | Models::ProjectsGroupList | Models::TaskList | Models::UserList)?
+    def nop_state: () -> (bool)?
+    def project: () -> (Models::Project)?
+    def session_id: () -> (String)?
+    def sign_out_state: () -> (bool)?
+    def status: () -> (Integer | bool)?
+    def task: () -> (Models::Task)?
+    def user: () -> (Models::User)?
+  end
+end

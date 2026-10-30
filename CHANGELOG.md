@@ -2,6 +2,9 @@
 
 ## 0.1.0 — unreleased
 
+- Ship RBS for both gems, including all generated model readers and MCP callback
+  contracts; validate source and installed-package signatures in the default checks.
+
 - Live disposable-account contract, CRUD, pagination, MCP stdio and mutation-approval verification.
 - Redacted numeric `APIError` for HTTP-200 errors, including code 0 validation errors.
 - Preserve live integer deletion markers and add bounded binary `Download` results.

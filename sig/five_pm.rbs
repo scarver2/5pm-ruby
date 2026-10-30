@@ -1,0 +1,152 @@
+module FivePM
+  VERSION: String
+  OPERATIONS: Hash[String, Hash[String, Hash[String, Hash[String, String]]]]
+  SERVICE_NAMES: Hash[Symbol, String]
+
+  type json = nil | bool | Integer | Float | String | Array[json] | Hash[String, json]
+  type json_object = Hash[String, json]
+  type input = nil | bool | Integer | Float | String | Array[input] | Hash[String | Symbol, input]
+  type parameters = Hash[String | Symbol, input]
+  type attributes = parameters | Models::Record
+  type identifier = Integer | String
+  type contract = Hash[String, Hash[String, String]]
+  type fields = Hash[String, Hash[String, String | bool]]
+  type result = json | Response
+  type reader_value = json | Models::Record | Array[Models::Record]
+
+  interface _Transport
+    def post: (String service, String operation, parameters) -> json
+    def download_file: (parameters) -> Download
+  end
+
+  class Client
+    SESSION_TTL: Integer
+    def initialize: (host: String, login: String, password: String, ?open_timeout: Numeric,
+                     ?read_timeout: Numeric, ?write_timeout: Numeric, ?response_mode: :raw | :typed,
+                     ?read_retries: Integer, ?max_retry_delay: Numeric, ?max_response_bytes: Integer,
+                     ?transport: _Transport?, ?clock: ^() -> Numeric) -> void
+    def authentication: () -> Authentication
+    def projects: () -> Resource
+    def project_groups: () -> Resource
+    def tasks: () -> Resource
+    def activity: () -> Activity
+    def users: () -> Users
+    def call: (String | Symbol service, String | Symbol operation, **input) -> (result | Download)
+    def sign_in: () -> self
+    def sign_out: () -> (result | false)
+    def download_file: (identifier) -> Download
+    def marshal_dump: () -> bot
+    def inspect: () -> String
+  end
+
+  class Service
+    def initialize: (Client, String) -> void
+    def call: (String | Symbol operation, **input) -> (result | Download)
+    def inspect: () -> String
+  end
+
+  module Pagination
+    def each_page: (?filter: parameters?, ?offset: Integer, ?count: Integer, ?max_pages: Integer, **input) -> Enumerator[result, self]
+                 | (?filter: parameters?, ?offset: Integer, ?count: Integer, ?max_pages: Integer, **input) { (result) -> void } -> self
+    def each_item: (**input) -> Enumerator[json | Models::Record, self]
+                 | (**input) { (json | Models::Record) -> void } -> self
+  end
+
+  class Resource < Service
+    include Pagination
+    OBJECT_PARAMETERS: Hash[String, String]
+    def create: (attributes) -> result
+    def update: (attributes) -> result
+    def get: (identifier) -> result
+    def delete: (identifier) -> result
+    def list: (?filter: parameters?, ?offset: Integer?, ?count: Integer?, **input) -> result
+  end
+
+  class Authentication < Service
+    def authorized_user: () -> result
+    def ssl?: () -> result
+  end
+
+  class Users < Resource
+    def find_by_email: (String) -> result
+  end
+
+  class Activity < Resource
+    def files: (?filter: parameters?, ?offset: Integer?, ?count: Integer?) -> result
+    def attach_files: (activity_id: identifier, files: parameters | Models::FileList) -> result
+    def delete_file: (identifier) -> result
+    def download_file: (identifier) -> Download
+  end
+
+  class Download
+    attr_reader bytes: String
+    attr_reader content_type: String?
+    def initialize: (bytes: String, content_type: String?) -> void
+    def inspect: () -> String
+  end
+
+  class Transport
+    def initialize: (host: String, ?open_timeout: Numeric, ?read_timeout: Numeric,
+                     ?write_timeout: Numeric, ?max_response_bytes: Integer) -> void
+    def post: (String service, String operation, parameters) -> json
+    def download_file: (parameters) -> Download
+    def inspect: () -> String
+  end
+
+  class RetryPolicy
+    READS: Hash[String, Array[String]]
+    RETRY_STATUSES: Array[Integer]
+    def initialize: (?max_retries: Integer, ?max_delay: Numeric,
+                     ?sleeper: ^(Numeric) -> untyped, ?random: ^() -> Numeric) -> void
+    def call: [A] (String service, String operation) { () -> A } -> A
+    def inspect: () -> String
+  end
+
+  module Request
+    def self.validate!: (input, ?Integer depth) -> void
+    def self.operation!: (String service, String operation, parameters) -> void
+    def self.identifier!: (identifier) -> nil
+  end
+
+  module Envelope
+    def self.parts: (json, contract) -> json_object
+  end
+
+  module APIResult
+    def self.check!: [A] (A) -> A
+  end
+
+  class Error < StandardError
+  end
+  class ConfigurationError < Error
+  end
+  class TransportError < Error
+  end
+  class ProtocolError < Error
+  end
+  class AuthenticationError < Error
+  end
+  class SchemaError < ProtocolError
+    attr_reader field: String
+    attr_reader expected_type: String
+    attr_reader actual_type: String
+    def initialize: (field: String, expected_type: String, value: reader_value) -> void
+  end
+  class APIError < Error
+    attr_reader code: Integer
+    def initialize: (Integer code) -> void
+  end
+  class HTTPError < Error
+    attr_reader status: Integer
+    def initialize: (Integer status) -> void
+  end
+  class RateLimitError < HTTPError
+    attr_reader retry_after: Integer?
+    def initialize: (?retry_after: Integer?, ?retryable: bool) -> void
+    def retryable?: () -> bool
+  end
+  class NotFoundError < HTTPError
+  end
+  class ServerError < HTTPError
+  end
+end

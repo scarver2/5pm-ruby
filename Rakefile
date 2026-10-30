@@ -8,4 +8,11 @@ task :compatibility do
   abort "Dependencies do not support Ruby #{minimum}: #{incompatible.map(&:name).join(', ')}" unless incompatible.empty?
 end
 
-task default: %i[compatibility spec]
+desc "Validate core and MCP RBS signatures"
+task :signatures do
+  ruby "-S", "rbs", "-I", "sig", "-I", "mcp/sig", "validate"
+  ruby "-S", "rbs", "-I", "sig", "-I", "mcp/sig", "test", "--target", "FivePM::*",
+       RbConfig.ruby, "-Ilib", "-Imcp/lib", "spec/support/rbs_smoke.rb"
+end
+
+task default: %i[compatibility signatures spec]

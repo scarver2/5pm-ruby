@@ -102,6 +102,11 @@ completed API result or trigger replay; the embedding host must monitor its audi
 
 ## Development and release
 
+The gem includes `sig/five_pm-mcp.rbs`, covering server configuration, trusted approval
+callbacks and redacted audit events. Its RBS manifest loads the core `five_pm`
+signatures automatically when the adapter signatures are loaded by gem name.
+The upstream protocol server is described structurally; the MCP SDK ships no RBS.
+
 From the root: `bundle exec rake`, `bundle exec rubocop`, and
 `bundle exec ruby bin/package-mcp`. The package check installs both built artifacts
 into an isolated temporary GEM_HOME, then exercises the installed adapter protocol.

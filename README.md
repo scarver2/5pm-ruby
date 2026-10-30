@@ -61,6 +61,15 @@ See [API inventory](docs/api-support.md), [security policy](SECURITY.md),
 
 ## Typed responses (opt-in)
 
+Both gems ship RBS signatures in `sig/`. Core signatures cover the client, resources,
+models, pagination, downloads and errors; adapter signatures cover configuration,
+approval proposals and audit events. Raw/typed configuration is selected at runtime,
+so client/resource result types are unions; narrow a result to `FivePM::Response`
+before using model readers. Unknown JSON fields remain recursive JSON values.
+The MCP SDK boundary is a structural interface because that dependency has no RBS.
+`bundle exec rake signatures` validates both sets, and package checks validate the
+signatures extracted from the built artifacts. RBS is a development-only dependency.
+
 Pass `response_mode: :typed` to `FivePM::Client.new` to receive a `FivePM::Response`.
 The default `:raw` mode keeps the original Hash/Array behavior. Both resource helpers
 and generic calls honor the selected mode; `sign_in` still returns the client.
