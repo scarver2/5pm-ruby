@@ -1,5 +1,5 @@
 name: Release gems
-run-name: Release ${{ inputs.version || github.ref_name }} at ${{ inputs.commit || github.sha }}
+run-name: Release ${{ inputs.version }} at ${{ inputs.commit }}
 
 on:
   workflow_dispatch:
@@ -12,8 +12,6 @@ on:
         description: Approved full 40-character commit SHA accepted on master
         required: true
         type: string
-  push:
-    tags: ["v*"]
 
 permissions: {}
 concurrency:
@@ -22,7 +20,7 @@ concurrency:
 
 jobs:
   prepare:
-    if: github.repository == 'scarver2/5pm-ruby'
+    if: github.repository == 'scarver2/5pm-ruby' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -61,15 +59,10 @@ jobs:
           INPUT_COMMIT: ${{ inputs.commit }}
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            [[ "$GITHUB_REF" == refs/heads/master ]]
-            version="$INPUT_VERSION"
-            commit="$INPUT_COMMIT"
-          else
-            [[ "$GITHUB_REF_TYPE" == tag ]]
-            version="${GITHUB_REF_NAME#v}"
-            commit="$(git rev-parse HEAD)"
-          fi
+          [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]
+          [[ "$GITHUB_REF" == refs/heads/master ]]
+          version="$INPUT_VERSION"
+          commit="$INPUT_COMMIT"
           git fetch origin master:refs/remotes/origin/master --tags
           bin/release-check "$version" "$commit"
           {
@@ -142,7 +135,6 @@ jobs:
       id-token: write
     env:
       SOURCE_DATE_EPOCH: ${{ needs.prepare.outputs.epoch }}
-      FIVE_PM_RELEASE_APPROVED: "true"
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
     steps:
@@ -175,7 +167,6 @@ jobs:
       id-token: write
     env:
       SOURCE_DATE_EPOCH: ${{ needs.prepare.outputs.epoch }}
-      FIVE_PM_RELEASE_APPROVED: "true"
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
     steps:

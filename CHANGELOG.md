@@ -2,6 +2,9 @@
 
 ## 0.1.0 — unreleased
 
+- Restrict releases to manual dispatch from master for an explicitly approved
+  version and exact commit; retain protected environment approval for tag/publish jobs.
+
 - Align packaging/release bin scripts with abbu and printavo: shared Bash runner,
   Ruby support helpers, pkg artifacts, isolated installs and read-only tag verification.
 

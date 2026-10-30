@@ -68,6 +68,12 @@ A repository administrator must create the
 - Disable administrator bypass. Allow the initiating maintainer to approve, matching abbu.
 - Select deployment branches and tags: branch `master` and tag `v*`, only.
 
+Both owner prerequisites remain required: this protected GitHub `release`
+environment and RubyGems trusted publishers for **both** `5pm` and `5pm-mcp`.
+Workflow environment variables only describe execution context and the selected
+candidate; they are not independent authorization. GitHub's required-reviewer
+approval gate and RubyGems' matching OIDC publisher policies enforce authorization.
+
 The workflow checks these protections before building or tagging. Missing protection
 or inaccessible environment metadata stops the run. The current GitHub connection
 cannot create this environment: GitHub returned HTTP 403, administrator rights required.
@@ -135,7 +141,9 @@ After merging the workflow, open Actions → **Release gems** → **Run workflow
 `master`. Enter the explicitly approved stable version without `v` and its full
 40-character accepted commit SHA. The read-only preflight rejects an unaccepted
 commit, untested changes, incomplete evidence, mismatched versions or a conflicting tag.
-A `v*` tag push is also supported and passes the same gates and environment approvals.
+Tag pushes never start publication. The only release entry point is manual dispatch
+from `master`; dispatch from any other branch or tag is rejected. Version and full
+commit inputs must identify the explicitly approved candidate.
 
 Approve the protected tag job only after inspecting the candidate summary and
 verification jobs. It creates `vVERSION` only if absent and verifies its exact target;

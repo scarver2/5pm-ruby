@@ -9,10 +9,13 @@ module FivePMReleaseTasks
     Bundler::GemHelper.install_tasks(dir: base)
     # The release-gem action invokes `rake release`. Only an already-approved,
     # pre-tagged exact candidate may reach Bundler's RubyGems push task.
+    # These environment checks prevent accidental local use; they are not
+    # authorization. GitHub's protected release environment and RubyGems OIDC
+    # publisher policy enforce authorization outside this process.
     root = File.expand_path("../..", __dir__)
     Rake::Task["release:guard_clean"].enhance do
       unless ENV["GITHUB_ACTIONS"] == "true" && ENV["GITHUB_REPOSITORY"] == "scarver2/5pm-ruby" &&
-             ENV["FIVE_PM_RELEASE_APPROVED"] == "true"
+             ENV["GITHUB_EVENT_NAME"] == "workflow_dispatch" && ENV["GITHUB_REF"] == "refs/heads/master"
         abort "publication requires the protected GitHub release workflow"
       end
       version = ENV.fetch("RELEASE_VERSION")
