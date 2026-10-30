@@ -18,7 +18,7 @@ module FivePMReleaseTasks
       version = ENV.fetch("RELEASE_VERSION")
       commit = ENV.fetch("RELEASE_COMMIT")
       spec = Bundler::GemHelper.gemspec
-      unless spec.version.to_s == version && %w[five_pm five_pm-mcp].include?(spec.name)
+      unless spec.version.to_s == version && %w[5pm 5pm-mcp].include?(spec.name)
         abort "publishing gem must match the approved package/version"
       end
       abort "publishing checkout must equal approved commit" unless Open3.capture2("git", "rev-parse",

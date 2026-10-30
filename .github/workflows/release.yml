@@ -133,7 +133,7 @@ jobs:
           [[ "$(git rev-parse 'FETCH_HEAD^{commit}')" == "$COMMIT" ]]
 
   publish-core:
-    name: Publish approved five_pm
+    name: Publish approved 5pm
     needs: [prepare, tag]
     runs-on: ubuntu-latest
     environment: release
@@ -162,7 +162,7 @@ jobs:
       - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
 
   publish-mcp:
-    name: Publish approved five_pm-mcp
+    name: Publish approved 5pm-mcp
     needs: [prepare, publish-core]
     runs-on: ubuntu-latest
     environment: release

@@ -20,7 +20,7 @@ Initial implementation, 2026-10-28. Worktree: `sdk`, branch: `feat/api-v2-sdk`.
 - Isolated package verification, read-only release gate and opt-in read-only sandbox preflight.
 - Reviewed scarver2/abbu and scarver2/printavo-ruby patterns; see implementation-guides.md.
 
-- Separate five_pm-mcp gem with official SDK, read-only stdio tools, opt-in host-confirmed mutations and redacted audit events.
+- Separate 5pm-mcp gem with official SDK, read-only stdio tools, opt-in host-confirmed mutations and redacted audit events.
 - Real synthetic stdio/executable tests and isolated installation verification for both gem artifacts.
 
 ## Verification completed on 2026-10-30

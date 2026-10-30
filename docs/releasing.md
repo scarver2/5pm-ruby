@@ -78,13 +78,12 @@ for the first publication:
 
 | Gem name | GitHub owner | Repository | Workflow filename | Environment |
 | --- | --- | --- | --- | --- |
-| `five_pm` | `scarver2` | `5pm-ruby` | `release.yml` | `release` |
-| `five_pm-mcp` | `scarver2` | `5pm-ruby` | `release.yml` | `release` |
+| `5pm` | `scarver2` | `5pm-ruby` | `release.yml` | `release` |
+| `5pm-mcp` | `scarver2` | `5pm-ruby` | `release.yml` | `release` |
 
 These are separate gem registrations using the same workflow identity. For an
 already-owned gem, configure its trusted publisher instead of a pending publisher.
-On 2026-10-30, both gem API lookups returned HTTP 404; that neither reserves the
-names nor guarantees availability. Recheck before publication. Account setup must
+Recheck both names for availability before publication. Account setup must
 be completed by the authenticated RubyGems owner; repository configuration alone
 does not establish that connection.
 

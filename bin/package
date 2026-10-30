@@ -6,11 +6,11 @@ require "bundler"
 
 root = File.expand_path("..", __dir__)
 Dir.chdir(root) do
-  abort "gem build failed" unless system(RbConfig.ruby, "-S", "gem", "build", "five_pm.gemspec", "--strict")
+  abort "gem build failed" unless system(RbConfig.ruby, "-S", "gem", "build", "5pm.gemspec", "--strict")
   require_relative "../lib/five_pm/version"
-  path = "five_pm-#{FivePM::VERSION}.gem"
+  path = "5pm-#{FivePM::VERSION}.gem"
   package = Gem::Package.new(path)
-  expected = Gem::Specification.load("five_pm.gemspec")
+  expected = Gem::Specification.load("5pm.gemspec")
   unless package.spec.name == expected.name && package.spec.version == expected.version
     abort "package metadata mismatch"
   end

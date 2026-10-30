@@ -1,4 +1,4 @@
-# five_pm
+# 5pm
 
 Ruby SDK for 5pm API v2. MIT licensed; Ruby 3.2+.
 
@@ -13,12 +13,13 @@ Publication still requires review and explicit approval.
 bundle install
 bundle exec rake
 bundle exec rubocop
-gem build five_pm.gemspec --strict
+gem build 5pm.gemspec --strict
 ```
 
 ## Configuration and initial API
 
-Install from this checkout with Bundler (`gem "five_pm", path: "/path/to/sdk"`).
+Install from this checkout with Bundler (`gem "5pm", path: "/path/to/sdk"`).
+The gem name is `5pm`; load it with `require "five_pm"` and use the `FivePM` namespace.
 Provide `FIVE_PM_HOST`, `FIVE_PM_LOGIN`, and `FIVE_PM_PASSWORD` through your environment
 or a secret manager such as Infisical; no dotenv file is needed.
 
@@ -194,7 +195,7 @@ Official sources: [developer guide](https://www.5pmweb.com/5pm_api.php),
 
 ## Standalone MCP adapter
 
-The separate [five_pm-mcp package](mcp/README.md) provides ten read tools over the
+The separate [5pm-mcp package](mcp/README.md) provides ten read tools over the
 SDK using the official MCP Ruby SDK. Its executable is read-only; optional embedded
 project/task mutation tools require trusted per-call operator approval. MCP is a
 runtime dependency only of that separate gem. Run `bundle exec five-pm-mcp` with
