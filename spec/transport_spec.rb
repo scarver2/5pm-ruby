@@ -95,6 +95,33 @@ RSpec.describe FivePM::Transport do
     end
   end
 
+  it "decodes UTF-8 JSON when multibyte characters span binary chunks" do
+    payload = { "data" => { "name" => "José 東京 🌍" } }
+    bytes = JSON.generate(payload).b
+    allow(response).to receive(:read_body) do |&block|
+      bytes.bytes.each_slice(2) { |chunk| block.call(chunk.pack("C*")) }
+    end
+    result = transport.post("projects", "getAll", {})
+    expect(result).to eq(payload)
+    expect(result.dig("data", "name").encoding).to eq(Encoding::UTF_8)
+  end
+
+  it "rejects invalid UTF-8 JSON without leaking bytes, payloads or parser causes" do
+    allow(response).to receive(:body).and_return("{\"data\":\"private-secret-\xff\"}".b)
+    expect { transport.post("projects", "getAll", {}) }.to raise_error(FivePM::ProtocolError) do |error|
+      expect(error.message).to eq("5pm returned invalid JSON")
+      expect(error.cause).to be_nil
+    end
+  end
+
+  it "keeps non-UTF-8 downloads binary when probing for JSON error envelopes" do
+    bytes = "\x00\xff\xfe binary".b
+    allow(response).to receive(:body).and_return(bytes)
+    result = transport.download_file("id" => 7)
+    expect(result.bytes).to eq(bytes)
+    expect(result.bytes.encoding).to eq(Encoding::BINARY)
+  end
+
   it "rejects HTTP-200 numeric API error envelopes without retaining remote messages" do
     [0, 441].each do |code|
       allow(response).to receive(:body).and_return(JSON.generate(code: code, message: "private-payload-secret"))

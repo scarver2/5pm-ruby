@@ -2,6 +2,9 @@
 
 ## 0.1.0 — unreleased
 
+- Validate UTF-8 JSON after streamed chunks are assembled; preserve arbitrary bytes
+  when probing binary downloads for API error envelopes.
+
 - Ship RBS for both gems, including all generated model readers and MCP callback
   contracts; validate source and installed-package signatures in the default checks.
 

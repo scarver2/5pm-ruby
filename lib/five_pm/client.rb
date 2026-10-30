@@ -79,6 +79,8 @@ module FivePM
       end
       return payload if binary
 
+      # Injected transports may return unchecked JSON. Keep this public boundary
+      # safe as well as Transport's direct-call boundary.
       APIResult.check!(payload)
       @response_mode == :typed ? Response.new(payload, contract: contract) : payload
     end

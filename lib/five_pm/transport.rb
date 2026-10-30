@@ -91,7 +91,7 @@ module FivePM
         check_download_error!(body) unless disposition.to_s.match?(/\battachment\b/i)
         Download.new(bytes: body, content_type: content_type)
       else
-        APIResult.check!(JSON.parse(body))
+        APIResult.check!(parse_json(body))
       end
     rescue JSON::ParserError
       raise ProtocolError, "5pm returned invalid JSON", cause: nil
@@ -100,11 +100,20 @@ module FivePM
     end
 
     def check_download_error!(body)
-      payload = JSON.parse(body)
+      payload = parse_json(body)
       APIResult.check!(payload)
     rescue JSON::ParserError
       # Ordinary file bytes need not be JSON. Never decode or follow file URLs.
       nil
+    end
+
+    def parse_json(body)
+      # Validate only after all chunks arrive: UTF-8 characters may span chunks.
+      # Duplicate the buffer so probing a download never changes its binary bytes.
+      text = body.dup.force_encoding(Encoding::UTF_8)
+      raise JSON::ParserError, "invalid UTF-8" unless text.valid_encoding?
+
+      JSON.parse(text)
     end
 
     def check_status!(response)
