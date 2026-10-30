@@ -4,6 +4,7 @@ require "json"
 require "open3"
 require "timeout"
 require "digest"
+require "tmpdir"
 require_relative "../lib/five_pm/version"
 
 abort "usage: ruby bin/live-check [--mutations]" unless [[], ["--mutations"]].include?(ARGV)
@@ -17,41 +18,54 @@ if mutations && ENV["FIVE_PM_ALLOW_MUTATIONS"] != "1"
 end
 root = File.expand_path("..", __dir__)
 Dir.chdir(root) do
-  scripts = ["live_reads"]
-  scripts += %w[live_mutations live_attachments_users live_cleanup] if mutations
-  reports = scripts.map do |script|
-    stdout, stderr, status = Timeout.timeout(300) do
-      Open3.capture3(RbConfig.ruby, "-Ilib", "-Imcp/lib", "spec/support/#{script}.rb")
+  Dir.mktmpdir("five-pm-operation-audit-") do |audit_directory|
+    audit_path = File.join(audit_directory, "operations.jsonl")
+    File.write(audit_path, "", mode: "w", perm: 0o600)
+    scripts = ["live_reads"]
+    scripts += %w[live_mutations live_attachments_users live_cleanup] if mutations
+    reports = scripts.map do |script|
+      stdout, stderr, status = Timeout.timeout(300) do
+        Open3.capture3({ "FIVE_PM_LIVE_AUDIT" => audit_path }, RbConfig.ruby, "-Ilib", "-Imcp/lib",
+                       "-r", "./spec/support/live_operation_audit", "spec/support/#{script}.rb")
+      end
+      result = JSON.parse(stdout) unless stdout.empty?
+      diagnostics = stderr.lines.filter_map do |line|
+        JSON.parse(line)
+      rescue JSON::ParserError
+        { "result" => "failed", "stage" => "local_harness" }
+      end
+      { check: script, passed: status.success? && result&.fetch("result") == "passed" && diagnostics.empty?,
+        report: result, diagnostics: diagnostics }
+    rescue JSON::ParserError, Timeout::Error
+      { check: script, passed: false, diagnostics: [{ result: "failed", stage: "local_harness" }] }
     end
-    result = JSON.parse(stdout) unless stdout.empty?
-    diagnostics = stderr.lines.filter_map do |line|
-      JSON.parse(line)
-    rescue JSON::ParserError
-      { "result" => "failed", "stage" => "local_harness" }
-    end
-    { check: script, passed: status.success? && result&.fetch("result") == "passed" && diagnostics.empty?,
-      report: result, diagnostics: diagnostics }
-  rescue JSON::ParserError, Timeout::Error
-    { check: script, passed: false, diagnostics: [{ result: "failed", stage: "local_harness" }] }
-  end
-  files, status = Open3.capture2("git", "ls-files", "-co", "--exclude-standard", "-z")
-  abort "could not identify source files" unless status.success?
-  digest = Digest::SHA256.new
-  files.split("\0").sort.each do |path|
-    next if path == "docs/live-validation-report.json" || !File.file?(path)
+    files, status = Open3.capture2("git", "ls-files", "-co", "--exclude-standard", "-z")
+    abort "could not identify source files" unless status.success?
+    digest = Digest::SHA256.new
+    files.split("\0").sort.each do |path|
+      next if path == "docs/live-validation-report.json" || !File.file?(path)
 
-    bytes = File.binread(path)
-    digest.update("#{path}\0#{bytes.bytesize}\0").update(bytes)
+      bytes = File.binread(path)
+      digest.update("#{path}\0#{bytes.bytesize}\0").update(bytes)
+    end
+    commit, status = Open3.capture2("git", "rev-parse", "HEAD")
+    abort "could not identify base commit" unless status.success?
+    dirty, = Open3.capture2("git", "status", "--porcelain")
+    passed = reports.all? { |report| report.fetch(:passed) }
+    operations = File.readlines(audit_path).map { |line| JSON.parse(line) }
+                     .map { |event| "#{event.fetch('service')}.#{event.fetch('operation')}" }.uniq.sort
+    inventory = JSON.parse(File.read("lib/five_pm/operations.json")).flat_map do |service, methods|
+      methods.keys.map { |operation| "#{service}.#{operation}" }
+    end.sort
+    missing = inventory - operations
+    passed &&= missing.empty? if mutations
+    puts JSON.pretty_generate(result: passed ? "passed" : "failed", version: FivePM::VERSION,
+                              checked_at: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                              evidence_commit: commit.strip, worktree_dirty: !dirty.empty?,
+                              source_sha256: digest.hexdigest,
+                              disposable_tenant: true, mutations_enabled: mutations, release_evidence: false,
+                              api_operations_verified: operations, api_operations_missing: missing,
+                              reports: reports)
+    exit(passed ? 0 : 1)
   end
-  commit, status = Open3.capture2("git", "rev-parse", "HEAD")
-  abort "could not identify base commit" unless status.success?
-  dirty, = Open3.capture2("git", "status", "--porcelain")
-  passed = reports.all? { |report| report.fetch(:passed) }
-  puts JSON.pretty_generate(result: passed ? "passed" : "failed", version: FivePM::VERSION,
-                            checked_at: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                            evidence_commit: commit.strip, worktree_dirty: !dirty.empty?,
-                            source_sha256: digest.hexdigest,
-                            disposable_tenant: true, mutations_enabled: mutations, release_evidence: false,
-                            reports: reports)
-  exit(passed ? 0 : 1)
 end

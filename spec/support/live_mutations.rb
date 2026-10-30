@@ -94,6 +94,26 @@ begin
 
     checks << stage
   end
+  stage = "mcp.all_read_tools"
+  read_events = []
+  reader = FivePM::MCPAdapter::Server.new(client: client, audit: ->(event) { read_events << event })
+  user = FivePM::Response.new(client.authentication.authorized_user,
+                              contract: FivePM::OPERATIONS.dig("authentication", "getAuthorizedUser")).user
+  { projects: project_id, tasks: task_id, activity: activity_id, project_groups: group_id,
+    users: user.id }.each do |service, id|
+    %w[list get].each do |action|
+      name = "five_pm_#{action}_#{service}"
+      arguments = action == "get" ? { id: Integer(id) } : { limit: 100 }
+      response = JSON.parse(reader.server.handle_json(JSON.generate(jsonrpc: "2.0", id: 1, method: "tools/call",
+                                                                    params: { name: name, arguments: arguments })))
+      raise "MCP read tool failed" unless response.dig("result", "isError") == false
+
+      data = response.dig("result", "structuredContent", "data")
+      found = action == "get" ? data : data.fetch("items").find { |item| item.fetch("id").to_s == id.to_s }
+      raise "MCP did not read the expected record" unless found && found.fetch("id").to_s == id.to_s
+    end
+  end
+  checks << stage
   [[:activity, activity_id], [:tasks, task_id], [:projects, project_id],
    [:project_groups, group_id]].each do |service, id|
     stage = "#{service}.delete"
@@ -184,7 +204,14 @@ begin
   raise "leaked audit payload" if JSON.generate(events).include?(prefix)
 
   checks << stage
-  puts JSON.pretty_generate(result: "passed", checks: checks, cleanup: created.empty?)
+  all_tools = JSON.parse(adapter.server.handle_json(JSON.generate(jsonrpc: "2.0", id: 1, method: "tools/list")))
+                  .dig("result", "tools").map { |tool| tool.fetch("name") }.sort
+  verified_tools = (events + read_events).select { |event| event.fetch(:outcome) == "success" }
+                                         .map { |event| event.fetch(:tool) }.uniq.sort
+  raise "untested MCP tools remain" unless verified_tools == all_tools && all_tools.length == 16
+
+  puts JSON.pretty_generate(result: "passed", checks: checks, mcp_tools_verified: verified_tools,
+                            cleanup: created.empty?)
 rescue StandardError => e
   report = { result: "failed", stage: stage, category: e.class.name, passed: checks }
   if e.is_a?(FivePM::SchemaError)

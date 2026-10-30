@@ -24,6 +24,18 @@ untracked, non-ignored files as `path`, NUL, byte length, NUL, then file bytes;
 `docs/live-validation-report.json` itself is excluded. It is development evidence,
 not the accepted-commit release evidence required by `bin/release-check`.
 
+The harness records successful transport operation names only, including calls made
+by the actual stdio process. With `--mutations`, it fails unless every one of the
+37 inventoried SDK operations was exercised. The report lists both verified and
+missing operations. It also requires a successful live call to every one of the
+16 tools advertised by the mutation-enabled MCP server (10 reads, six writes).
+No arguments, record IDs, return payloads or credentials enter this operation audit.
+
+The web UI normally shows only the original demo data after verification because
+all labelled test records are deleted. Write verification includes read-after-update
+assertions, post-delete failures and a final scan for leftover records; it does not
+depend on retaining records in the UI.
+
 ## Verified scope
 
 - Six account-specific WSDL POST operation inventories and the XSD model inventory

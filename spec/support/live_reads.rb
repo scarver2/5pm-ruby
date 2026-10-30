@@ -121,7 +121,8 @@ begin
   requests << { jsonrpc: "2.0", id: 8, method: "tools/call",
                 params: { name: "five_pm_delete_tasks", arguments: { id: 1, confirmed: true } } }
   stdout, stderr, status = Timeout.timeout(120) do
-    Open3.capture3(RbConfig.ruby, "-Ilib", "-Imcp/lib", "mcp/exe/five-pm-mcp",
+    Open3.capture3(RbConfig.ruby, "-Ilib", "-Imcp/lib", "-r", "./spec/support/live_operation_audit",
+                   "mcp/exe/five-pm-mcp",
                    stdin_data: "#{requests.map { |request| JSON.generate(request) }.join("\n")}\n")
   end
   raise "stdio process failed" unless status.success?
