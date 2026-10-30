@@ -18,7 +18,7 @@ module FivePM
 
       # approver is a trusted host callback, never an MCP argument. It receives an
       # immutable exact proposal and must obtain explicit user approval for that call.
-      def initialize(client:, allow_mutations: false, approver: nil, audit: ->(_event) {})
+      def initialize(client:, allow_mutations: false, approver: nil, audit: ->(_event) {}, allowed_tools: nil)
         unless [true, false].include?(allow_mutations) && audit.respond_to?(:call)
           raise ArgumentError, "invalid adapter configuration"
         end
@@ -37,7 +37,16 @@ module FivePM
                                           around_request: ->(_metadata, &block) { block.call },
                                           instrumentation_callback: method(:audit_rejection),
                                           validate_tool_call_arguments: true, validate_tool_call_results: true)
-        @server = ::MCP::Server.new(name: "five-pm", version: VERSION, tools: tools, configuration: config)
+        available = tools
+        unless allowed_tools.nil?
+          names = available.map(&:tool_name)
+          unless allowed_tools.is_a?(Array) && allowed_tools.all? { |name| names.include?(name) }
+            raise ArgumentError, "invalid tool allowlist"
+          end
+
+          available = available.select { |tool| allowed_tools.include?(tool.tool_name) }
+        end
+        @server = ::MCP::Server.new(name: "five-pm", version: VERSION, tools: available, configuration: config)
       end
 
       def open
@@ -143,6 +152,9 @@ module FivePM
                   resource.update(arguments.fetch("attributes").merge("id" => arguments.fetch("id")))
                 end
         raw = value.is_a?(FivePM::Response) ? value.to_h : value
+        operation = { "get" => "getById", "delete" => "remove", "create" => "add", "update" => "update" }.fetch(action)
+        wire_service = service == "project_groups" ? "projectsgroups" : service
+        raw = FivePM::Envelope.parts(raw, FivePM::OPERATIONS.fetch(wire_service).fetch(operation))
         raise FivePM::ProtocolError, "missing response envelope" unless raw.is_a?(Hash) && raw.key?(part)
 
         raw.fetch(part)
@@ -158,6 +170,9 @@ module FivePM
                   resource.list(filter: arguments["filter"], offset: offset, count: limit)
                 end
         raw = value.is_a?(FivePM::Response) ? value.to_h : value
+        wire_service = service == "project_groups" ? "projectsgroups" : service
+        operation = local ? "getAll" : "getList"
+        raw = FivePM::Envelope.parts(raw, FivePM::OPERATIONS.fetch(wire_service).fetch(operation))
         envelope = raw["list"] if raw.is_a?(Hash)
         items = envelope["items"] if envelope.is_a?(Hash)
         raise FivePM::ProtocolError, "missing list envelope" unless items.is_a?(Array)

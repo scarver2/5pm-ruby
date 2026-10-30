@@ -2,7 +2,9 @@
 
 Source: public demo account WSDLs fetched over HTTPS on 2026-10-28.
 
-These are upstream contracts, not recordings of successful API responses. Account-specific validation and sanitized JSON fixtures remain pending.
+These are upstream contracts, not response recordings. The account-specific WSDL/XSD
+inventories were compared successfully on 2026-10-30. See [live validation](live-validation.md)
+for JSON-envelope differences and sanitized regression fixtures.
 
 | Service | Operation | POST request parts | Response parts |
 | --- | --- | --- | --- |
@@ -52,8 +54,8 @@ These are upstream contracts, not recordings of successful API responses. Accoun
 - Help reference contains GET/POST path inconsistencies. Use WSDL POST bindings.
 - Activity getList help text calls its result GroupList; WSDL declares ActivityList.
 - Users getAll declares sessionId alongside list in its response. Preserve the whole response.
-- Error JSON envelopes and HTTP status behavior require sandbox observation.
-- No automatic pagination, date coercion, attachment streaming, or rate-limit replay until verified.
+- HTTP-200 numeric API errors, data wrappers and binary downloads are covered by live checks.
+- Pagination and read retries are bounded opt-ins. There is no date/time conversion or URL fetching.
 - No credentials were used to fetch these contracts.
 
 Sources: https://www.5pmweb.com/5pm_api.php and https://www.5pmweb.com/help/api_docs.php

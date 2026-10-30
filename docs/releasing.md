@@ -18,10 +18,27 @@ again, including changes to tests, packaging, the MCP adapter or release tooling
    Run `bundle exec ruby bin/sandbox-check`. It checks authentication and resource list
    envelopes without changing account data; it creates and closes a temporary session.
    Its redacted report is only `read_only_passed`, not full release evidence.
+   On failure, stderr includes a JSON diagnostic with a fixed operation stage and
+   error category (and numeric HTTP status when available). It never includes
+   exception messages, credentials or response bodies. `authentication_rejected`
+   indicates HTTP 401/403; `unexpected_response` indicates a JSON/contract mismatch,
+   which does not establish that the password is wrong. A cleanup failure does not
+   replace the diagnostic for an earlier failed operation.
+   Sign-in failures also report whether parsed JSON was received and its shape:
+   only fixed, known contract fields and JSON types are emitted, never arbitrary
+   keys, scalar values, tokens or server error text. This distinguishes a missing
+   authentication envelope from a transport JSON-decoding failure without dumping
+   the response body.
+   Typed validation failures include `schema_mismatch` with the declared field name,
+   expected schema type and actual JSON type. No field values are retained in that
+   error or printed. Nested errors identify the innermost invalid field.
 4. Record sanitized real success/error fixtures, including HTTP-200 errors if observed.
    Verify offsets, totals, dates, bool encoding, and attachments. Perform destructive
    create/update/delete checks only in that disposable account, explicitly enabled by
    the operator. Do not run these checks in CI or point them at production.
+   The reproducible `bin/live-check --mutations` suite requires both disposable-tenant
+   designation and `FIVE_PM_ALLOW_MUTATIONS=1`. See [live validation](live-validation.md).
+   Its dirty-worktree development report is not a substitute for accepted-commit evidence.
 5. Commit reviewed evidence in `docs/live-validation.json` with the tested `version`,
    full `evidence_commit`, `disposable_tenant: true`, `result: "passed"`, and separately
    verified `contract_verified`, `read_operations_verified`, `mutation_operations_verified`

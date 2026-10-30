@@ -37,13 +37,18 @@ RSpec.describe "typed client responses" do
 
   it "leaves raw mode responses identical to the transport payload" do
     raw = FivePM::Client.new(**options, response_mode: :raw)
-    payload = { "list" => [{ "id" => "7" }], "futureField" => true }
+    payload = { "data" => { "items" => [{ "id" => "7" }] }, "futureField" => true }
     expect(transport).to receive(:post).with("users", "getAll", anything).and_return(payload)
     expect(raw.users.list).to equal(payload)
   end
 
   it "does not replay a mutation when typed mapping fails" do
     expect(transport).to receive(:post).with("tasks", "add", anything).once.and_return("task" => { "id" => "bad" })
+    expect { client.tasks.create(name: "Synthetic") }.to raise_error(FivePM::ProtocolError)
+  end
+
+  it "does not replay a data-wrapped mutation when typed mapping fails" do
+    expect(transport).to receive(:post).with("tasks", "add", anything).once.and_return("data" => { "id" => "bad" })
     expect { client.tasks.create(name: "Synthetic") }.to raise_error(FivePM::ProtocolError)
   end
 

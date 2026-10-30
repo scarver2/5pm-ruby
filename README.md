@@ -2,9 +2,10 @@
 
 Ruby SDK for 5pm API v2. MIT licensed; Ruby 3.2+.
 
-Early development: public demo WSDLs are inventoried, but account-specific contracts,
-JSON response envelopes, and sandbox behavior still require verification. Do not deploy
-this version to production. The gem name was absent from RubyGems on 2026-10-29; availability must be rechecked before publication.
+Unreleased. Disposable-account verification covers account-specific contracts, JSON
+envelopes, resource CRUD, pagination, attachments and the standalone MCP adapter.
+See [live validation](docs/live-validation.md) for scope and reproducible checks.
+Publication still requires review and explicit approval.
 
 ## Development
 
@@ -46,8 +47,10 @@ project groups, `list` uses `getAll` and rejects unsupported filtering/paginatio
 Filters and other wire options retain their documented camelCase names.
 
 Responses retain their full JSON structure and unknown fields. The initial sign-in parser
-expects `auth.sessionId` from the WSDL; that JSON envelope is provisional pending sandbox
-observation. Pagination and read retries are explicit opt-ins; there is no date/time conversion. Caller-supplied
+accepts `data.sessionId`, observed in the disposable test account, and the original
+WSDL-shaped `auth.sessionId` envelope. Ambiguous envelopes are rejected; resource
+response mapping is exercised by the live suite. Pagination and read retries are explicit opt-ins;
+there is no date/time conversion. Caller-supplied
 parameters retain wire names and values. Authentication refresh is synchronized with a
 30-minute TTL and 30-second margin. Authentication HTTP failures invalidate the rejected session for the next explicit call without replay.
 All calls use form-encoded HTTPS POST; redirects and environment proxies are disabled.
@@ -88,6 +91,8 @@ Schema integers and finite floats accept JSON numbers or decimal strings. Schema
 booleans accept JSON booleans, integer 0/1, and strings `false`/`true`/`0`/`1`.
 String fields remain strings even if they look numeric or boolean. All date/time
 fields remain exact strings; no zone is inferred and no date parsing is attempted.
+Exception: `User.canViewProfiles` accepts both WSDL-declared strings and JSON booleans
+observed in the test account; its reader preserves either representation unchanged.
 Missing readers return nil; `key?` distinguishes missing fields from explicit null.
 Malformed known types raise `FivePM::ProtocolError` without including field values;
 these errors never trigger a replay of the request. Unknown fields are not validated.
@@ -97,9 +102,17 @@ input. `to_h`/`raw` return a frozen snapshot with original scalar values; typed 
 may return normalized values. Inspection omits all payloads, including unknown fields.
 Serialization deliberately includes the complete payload, which can contain secrets.
 
-The synthetic fixtures assume WSDL response part names form a JSON envelope and XSD
-lists use `items`/`count`/`total`. This is provisional until live validation. Typed mode
-rejects incompatible shapes rather than guessing envelope or singleton-list variants.
+Typed readers support both WSDL response part names and JSON `data` wrappers.
+For example, `{"data":{"id":"7"}}` for getAuthorizedUser maps to `response.user`,
+and a list operation's `data` maps to `response.list`. Scalar results, including false,
+map to the operation's declared part. `to_h`/`raw`/`to_json` retain the original wire
+envelope; raw client mode also stays unchanged. Ambiguous wrappers and error-marked
+data wrappers raise `ProtocolError`. Users' optional top-level `sessionId` remains
+separate from the list data. Pagination and MCP use the same envelope mapping.
+
+The `data` wrapper is covered by synthetic regressions and live operation checks. List models continue to
+require the XSD `items`/`count`/`total` structure; no singleton or flat-array conversion
+is inferred.
 
 ## Bounded pagination, retries and attachments
 
@@ -113,7 +126,7 @@ Enumerators request pages only as consumed, advance offset by received item coun
 and stop on empty or short pages. They reject oversized/repeated pages, incompatible
 `list.items` shapes and exhausted `max_pages` bounds rather than silently truncating.
 They do not rely on totals, assume a stable dataset, or guarantee a consistent snapshot
-while account data changes. Offset semantics still need live validation.
+while account data changes. Bounded offset pagination is exercised in live checks.
 
 `read_retries: 0` (default) disables application retries. Set 1–3 to enable retries only
 for the explicit read allowlist in `FivePM::RetryPolicy::READS`. Authentication sign-in,
@@ -125,13 +138,26 @@ There is no automatic replay after authentication or JSON/protocol failures.
 
 HTTP errors expose numeric `status`; `RateLimitError` also exposes `retry_after` and
 `retryable?`. `NotFoundError` and `ServerError` specialize `HTTPError`. Remote error
-bodies are never included in exceptions. HTTP-200 API error envelopes remain unverified.
+bodies are never included in exceptions. HTTP-200 numeric `code`/`message` error
+envelopes raise `APIError` with numeric `code`, including code 0 validation failures.
+Remote messages are discarded. These API errors never cause automatic retries.
+Deletion `status` readers preserve nonnegative integer markers as well as booleans;
+live project/task deletes return integer markers, whose meaning is not inferred.
 
 `authentication.authorized_user`, `users.find_by_email(email)`, and activity's `files`,
 `attach_files(activity_id:, files:)`, `delete_file(id)` and `download_file(id)` wrap
-verified POST bindings. Attachments preserve the WSDL FileList object representation;
-no binary encoding is inferred and returned URLs are never followed. Downloads request
-JSON (`stream: false`). Confirm upload/download content semantics in the test tenant.
+verified POST bindings. Attachments preserve the WSDL FileList representation.
+Live upload verification uses `files: { "items" => [{ "name" => "example.txt",
+"type" => "file", "content" => [bytes].pack("m0"), "size" => bytes.bytesize }] }`:
+the caller supplies base64 content explicitly. Downloads return a `FivePM::Download`
+in both response modes, with immutable binary `bytes`, optional `content_type`, and
+redacted inspection. They use the authenticated POST endpoint, share the HTTP response
+size limit, and never follow returned URLs. The live endpoint returns bytes despite
+the JSON option. Missing-file API error envelopes are raised rather than returned as files.
+
+User creation requires a symbolic `securityLevel` such as `"user"` in the tested
+account, even though returned records use numeric strings and the help reference
+lists numeric role codes. Request values are not silently translated.
 
 Request validation rejects missing required operation parameters, unsafe nested field
 names, arbitrary Ruby objects, cycles, invalid identifiers and invalid pagination bounds
@@ -144,11 +170,10 @@ Run `bundle exec ruby bin/package` to verify the actual built artifact. See
 
 ## Remaining release gates
 
-- Compare all contracts with a disposable account's WSDL and schema.
-- Record sanitized success and error JSON responses and verify authentication parsing.
-- Confirm typed response envelopes and safe automatic pagination against observed contracts.
-- Verify attachments, timezone behavior and rate-limit errors before exposing helpers.
-- Run opt-in sandbox tests and supported Ruby matrix in CI.
+- Review and merge the live-validated source; regenerate release evidence for the exact accepted commit.
+- Keep the supported Ruby matrix passing in hosted CI. Live checks remain opt-in and outside CI.
+- Date/time strings remain opaque; no timezone conversion or consistent-snapshot guarantee is offered.
+- Rate-limit and transient-network behavior is tested synthetically, without stressing the live account.
 - Verify RubyGems name availability and obtain explicit publication approval.
 
 Official sources: [developer guide](https://www.5pmweb.com/5pm_api.php),
@@ -163,5 +188,5 @@ runtime dependency only of that separate gem. Run `bundle exec five-pm-mcp` with
 the same injected environment variables, or see its README for host configuration.
 
 `bundle exec ruby bin/package-mcp` verifies both installed artifacts and the adapter
-protocol in an isolated temporary GEM_HOME. All tests remain synthetic until a test
-account is supplied; no gem publication is automated.
+protocol in an isolated temporary GEM_HOME. `bin/live-check` adds opt-in disposable
+account verification; no gem publication is automated.

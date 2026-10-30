@@ -84,6 +84,20 @@ RSpec.describe "bounded pagination" do
   let(:resource) { FivePM::Resource.new(client, "tasks") }
   let(:page) { { "list" => { "items" => [{ "id" => "1" }, { "id" => "2" }] } } }
 
+  it "paginates data wrappers in raw and typed modes without changing yielded wire JSON" do
+    source = { "data" => { "items" => [{ "id" => "7" }] }, "futureEnvelope" => true }
+    typed = FivePM::Response.new(source, contract: FivePM::OPERATIONS.dig("tasks", "getList"))
+    [source, typed].each do |response|
+      expect(client).to receive(:call).with("tasks", "getList", offset: 0, count: 2).twice.and_return(response)
+      expect(resource.each_page(count: 2).first).to equal(response)
+      items = resource.each_item(count: 2).to_a
+      expect(response.is_a?(FivePM::Response) ? items.first.id : items.first.fetch("id")).to eq(
+        response.is_a?(FivePM::Response) ? 7 : "7"
+      )
+    end
+    expect(typed.to_h).to eq(source)
+  end
+
   it "is lazy and advances offsets by received item count" do
     expect(client).to receive(:call).with("tasks", "getList", offset: 4, count: 2, filter: { projectId: 12 })
                                     .and_return(page)

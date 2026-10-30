@@ -3,13 +3,14 @@ require "five_pm"
 class SyntheticFivePMTransport
   def post(service, operation, _parameters)
     if service == "authentication" && operation == "signIn"
-      return { "auth" => { "sessionId" => "synthetic-token-secret" } }
+      return { "data" => { "sessionId" => "synthetic-token-secret" } }
     end
-    return { "signOutState" => true } if service == "authentication" && operation == "signOut"
+    return { "data" => true } if service == "authentication" && operation == "signOut"
     if service == "tasks" && operation == "getList"
-      return { "list" => { "items" => [{ "id" => "7", "name" => "Synthetic task" }], "count" => 1, "total" => 1 } }
+      return { "data" => { "items" => [{ "id" => "7", "name" => "Synthetic task" }], "count" => 1, "total" => 1 } }
     end
     raise FivePM::TransportError, "synthetic-password-secret" if service == "tasks" && operation == "getById"
+    return { "data" => true } if service == "tasks" && operation == "remove"
 
     raise "unconfigured synthetic operation; no network is permitted"
   end

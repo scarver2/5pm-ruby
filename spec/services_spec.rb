@@ -14,7 +14,7 @@ RSpec.describe "service-specific operations" do
     users.find_by_email("synthetic@example.com")
   end
 
-  it "preserves attachment inputs and requests JSON content without following attachment URLs" do
+  it "preserves attachment inputs and downloads through the bounded binary helper" do
     resource = FivePM::Activity.new(client, "activity")
     files = { "items" => [{ "name" => "synthetic.txt", "content" => "synthetic" }] }
     expect(client).to receive(:call).with("activity", "attachFiles", activityId: 7, files: files).twice
@@ -25,7 +25,7 @@ RSpec.describe "service-specific operations" do
     resource.files(filter: { taskId: 8 }, offset: 0, count: 10)
     expect(client).to receive(:call).with("activity", "removeFile", id: 9)
     resource.delete_file(9)
-    expect(client).to receive(:call).with("activity", "downloadFile", id: 9, stream: false)
+    expect(client).to receive(:download_file).with(9)
     resource.download_file(9)
   end
 
@@ -39,5 +39,18 @@ RSpec.describe "service-specific operations" do
                                        "FIVE_PM_SANDBOX_HOST" => "other.5pmweb.com" }, RbConfig.ruby, script)
     expect(status).not_to be_success
     expect(output).to include("must match")
+  end
+
+  it "gates the full live suite and requires separate mutation enablement" do
+    require "open3"
+    script = File.join(__dir__, "../bin/live-check")
+    output, status = Open3.capture2e({ "FIVE_PM_SANDBOX" => nil }, RbConfig.ruby, script)
+    expect(status).not_to be_success
+    expect(output).to include("designate a disposable tenant")
+    environment = { "FIVE_PM_SANDBOX" => "1", "FIVE_PM_HOST" => "synthetic.5pmweb.com",
+                    "FIVE_PM_SANDBOX_HOST" => "synthetic.5pmweb.com", "FIVE_PM_ALLOW_MUTATIONS" => nil }
+    output, status = Open3.capture2e(environment, RbConfig.ruby, script, "--mutations")
+    expect(status).not_to be_success
+    expect(output).to include("FIVE_PM_ALLOW_MUTATIONS=1")
   end
 end

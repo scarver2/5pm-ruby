@@ -34,6 +34,20 @@ module FivePM
     end
 
     def post(service, operation, parameters)
+      perform(service, operation, parameters, binary: false)
+    end
+
+    def download_file(parameters)
+      perform("activity", "downloadFile", parameters, binary: true)
+    end
+
+    def inspect
+      "#<FivePM::Transport>"
+    end
+
+    private
+
+    def perform(service, operation, parameters, binary:)
       raise ArgumentError, "unsupported 5pm operation" unless OPERATIONS.dig(service, operation)
 
       raise ArgumentError, "parameters must be an object" unless parameters.is_a?(Hash)
@@ -55,10 +69,14 @@ module FivePM
       request = Net::HTTP::Post.new("/api/v2/service/post/#{service}/#{operation}")
       request["Accept"] = "application/json"
       request.set_form_data(flatten(parameters.merge("retType" => "json")))
-      body = +""
+      body = +"".b
+      content_type = nil
+      disposition = nil
       http.start do |connection|
         connection.request(request) do |response|
           check_status!(response)
+          content_type = response["Content-Type"]
+          disposition = response["Content-Disposition"]
           response.read_body do |chunk|
             if body.bytesize + chunk.bytesize > @max_response_bytes
               raise ProtocolError,
@@ -69,18 +87,25 @@ module FivePM
           end
         end
       end
-      JSON.parse(body)
+      if binary
+        check_download_error!(body) unless disposition.to_s.match?(/\battachment\b/i)
+        Download.new(bytes: body, content_type: content_type)
+      else
+        APIResult.check!(JSON.parse(body))
+      end
     rescue JSON::ParserError
       raise ProtocolError, "5pm returned invalid JSON", cause: nil
     rescue SocketError, SystemCallError, IOError, Timeout::Error, OpenSSL::SSL::SSLError
       raise TransportError, "5pm connection failed", cause: nil
     end
 
-    def inspect
-      "#<FivePM::Transport>"
+    def check_download_error!(body)
+      payload = JSON.parse(body)
+      APIResult.check!(payload)
+    rescue JSON::ParserError
+      # Ordinary file bytes need not be JSON. Never decode or follow file URLs.
+      nil
     end
-
-    private
 
     def check_status!(response)
       status = response.code.to_i

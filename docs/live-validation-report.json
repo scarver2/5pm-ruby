@@ -1,0 +1,118 @@
+{
+  "result": "passed",
+  "version": "0.1.0",
+  "checked_at": "2026-10-30T17:33:37Z",
+  "evidence_commit": "1b01e86cb09d262452941ab9166ff003382d9086",
+  "worktree_dirty": true,
+  "source_sha256": "00727120ad75c0a616b6bc786879f1da94819344c0be77fae8087727067d9d26",
+  "disposable_tenant": true,
+  "mutations_enabled": true,
+  "release_evidence": false,
+  "reports": [
+    {
+      "check": "live_reads",
+      "passed": true,
+      "report": {
+        "result": "passed",
+        "checks": [
+          "contract.authentication",
+          "contract.projects",
+          "contract.tasks",
+          "contract.projectsgroups",
+          "contract.activity",
+          "contract.users",
+          "contract.schema",
+          "authentication.authorized_user",
+          "authentication.nop",
+          "authentication.isSsl",
+          "projects.list",
+          "projects.get",
+          "projects.pagination",
+          "project_groups.list",
+          "tasks.list",
+          "tasks.get",
+          "tasks.pagination",
+          "activity.list",
+          "activity.get",
+          "activity.pagination",
+          "users.list",
+          "users.get",
+          "projects.getAll",
+          "users.getAuthorizedUser",
+          "users.find_by_email",
+          "activity.files",
+          "mcp.stdio",
+          "cleanup.no_disposable_records"
+        ],
+        "mutations_tested": false
+      },
+      "diagnostics": []
+    },
+    {
+      "check": "live_mutations",
+      "passed": true,
+      "report": {
+        "result": "passed",
+        "checks": [
+          "project_groups.create",
+          "project_groups.update",
+          "projects.create",
+          "projects.update",
+          "tasks.create",
+          "tasks.update",
+          "activity.create",
+          "activity.update",
+          "project_groups.get",
+          "projects.get",
+          "tasks.get",
+          "activity.get",
+          "activity.delete",
+          "tasks.delete",
+          "projects.delete",
+          "project_groups.delete",
+          "mcp.approval",
+          "mcp.projects.create",
+          "mcp.tasks.create",
+          "mcp.projects.update",
+          "mcp.projects.get",
+          "mcp.tasks.update",
+          "mcp.tasks.get",
+          "mcp.tasks.delete_denied",
+          "mcp.tasks.delete",
+          "mcp.projects.delete_denied",
+          "mcp.projects.delete",
+          "mcp.audit"
+        ],
+        "cleanup": true
+      },
+      "diagnostics": []
+    },
+    {
+      "check": "live_attachments_users",
+      "passed": true,
+      "report": {
+        "result": "passed",
+        "checks": [
+          "users.create",
+          "users.update",
+          "users.get",
+          "users.delete",
+          "activity.attach_files",
+          "activity.files",
+          "activity.download_file",
+          "activity.delete_file"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "check": "live_cleanup",
+      "passed": true,
+      "report": {
+        "result": "passed",
+        "cleanup_verified": true
+      },
+      "diagnostics": []
+    }
+  ]
+}

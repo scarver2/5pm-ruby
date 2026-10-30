@@ -2,7 +2,7 @@
 
 Separate MIT-licensed MCP adapter for `five_pm`, using the official MCP Ruby SDK.
 Ruby 3.2+. The core SDK does not depend on MCP. This package is not yet published;
-live API validation is deferred until a disposable account is available.
+live disposable-account verification is documented in [the live validation guide](../docs/live-validation.md).
 
 ## Run from the checkout
 
@@ -61,6 +61,13 @@ response bodies at 5 MiB by default. Read retries stay disabled in the executabl
 
 ## Optional embedded mutation tools
 
+Embedding hosts can further restrict discovery and dispatch with
+`allowed_tools: ["five_pm_get_tasks", "five_pm_list_tasks"]` when constructing the
+server. Use full MCP tool names. An empty array exposes no tools; unknown names or
+mutation names without mutation enablement fail configuration. Omitting the option
+uses the fixed default read allowlist (plus mutations only when explicitly enabled).
+This host configuration cannot be changed by tool arguments.
+
 The executable always remains read-only. A trusted embedding host may explicitly
 construct `FivePM::MCPAdapter::Server` with `allow_mutations: true` and an `approver`
 callback. This adds six tools: create/update/delete for projects and tasks. No user,
@@ -99,7 +106,10 @@ From the root: `bundle exec rake`, `bundle exec rubocop`, and
 `bundle exec ruby bin/package-mcp`. The package check installs both built artifacts
 into an isolated temporary GEM_HOME, then exercises the installed adapter protocol.
 Tests include real stdio subprocesses backed by an explicitly synthetic transport,
+including successive denied/approved/denied writes to prove approval is per call,
 mutation denial/approval, immutable proposals, error redaction and audit-sink failure.
 
 Tracks [issue #4](https://github.com/scarver2/5pm-ruby/issues/4). Both packages remain
-subject to account-specific WSDL/JSON verification and explicit publication approval.
+subject to review of the tested source and explicit publication approval. Live checks
+exercise the actual read-only stdio executable, all project/task mutation tools in
+an embedding host, per-call approval denial, argument spoofing rejection and audit redaction.

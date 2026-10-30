@@ -2,6 +2,118 @@ require "spec_helper"
 require "rexml/document"
 
 RSpec.describe FivePM::Response do
+  it "maps sanitized live response shapes and rejects observed error envelopes" do
+    observed = lambda do |name|
+      JSON.parse(File.read(File.join(__dir__, "fixtures/observed/#{name}.json")))
+    end
+    auth = described_class.new(observed.call("sign_in"), contract: FivePM::OPERATIONS.dig("authentication", "signIn"))
+    expect(auth.auth.session_id).to eq("redacted-session-token")
+    user = described_class.new(observed.call("authorized_user"),
+                               contract: FivePM::OPERATIONS.dig("authentication", "getAuthorizedUser"))
+    expect(user.user.can_view_profiles).to be(true)
+    projects = described_class.new(observed.call("projects_list"),
+                                   contract: FivePM::OPERATIONS.dig("projects", "getList"))
+    expect(projects.list.first.id).to eq(123)
+    deletion = described_class.new(observed.call("delete_marker"), contract: FivePM::OPERATIONS.dig("tasks", "remove"))
+    expect(deletion.status).to eq(1_234_567_890)
+    %w[missing_record validation_error].each do |name|
+      expect do
+        described_class.new(observed.call(name), contract: FivePM::OPERATIONS.dig("tasks", "getById"))
+      end.to raise_error(FivePM::APIError)
+    end
+  end
+  it "preserves live integer deletion markers without relaxing record boolean fields" do
+    [true, false, 0, 1, 123_456].each do |value|
+      response = described_class.new({ "data" => value }, contract: FivePM::OPERATIONS.dig("tasks", "remove"))
+      expect(response.status).to eq(value)
+      expect(response.to_h).to eq("data" => value)
+    end
+    expect do
+      described_class.new({ "data" => -1 }, contract: FivePM::OPERATIONS.dig("projects", "remove"))
+    end.to raise_error(FivePM::SchemaError)
+    expect { FivePM::Models::Task.new({ "hidden" => 123_456 }) }.to raise_error(FivePM::SchemaError)
+  end
+  it "accepts live boolean and WSDL string canViewProfiles values without coercing other user fields" do
+    [true, false, "1", "0", "true", "false", nil].each do |value|
+      source = { "data" => { "id" => "7", "canViewProfiles" => value } }
+      response = described_class.new(source, contract: FivePM::OPERATIONS.dig("authentication", "getAuthorizedUser"))
+      expect(response.user.can_view_profiles).to eq(value)
+      expect(response.to_h).to eq(source)
+      expect(response.user.to_h.fetch("canViewProfiles")).to eq(value)
+    end
+    [0, 1, {}, []].each do |value|
+      expect { FivePM::Models::User.new({ "canViewProfiles" => value }) }.to raise_error(FivePM::SchemaError)
+    end
+    expect { FivePM::Models::User.new({ "firstName" => false }) }.to raise_error(FivePM::SchemaError)
+    list = described_class.new({ "data" => { "items" => [{ "canViewProfiles" => false }] } },
+                               contract: FivePM::OPERATIONS.dig("users", "getAll"))
+    expect(list.list.first.can_view_profiles).to be(false)
+  end
+
+  it "identifies the innermost invalid schema field without retaining its value or cause" do
+    source = { "data" => { "items" => [{ "id" => "private-secret" }] } }
+    contract = FivePM::OPERATIONS.dig("users", "getAll")
+    expect { described_class.new(source, contract: contract) }.to raise_error(FivePM::SchemaError) do |error|
+      expect([error.field, error.expected_type, error.actual_type]).to eq(%w[id integer string])
+      expect(error.message).not_to include("private-secret")
+      expect(error.instance_variables.map { |key| error.instance_variable_get(key) }).not_to include("private-secret")
+      expect(error.cause).to be_nil
+    end
+  end
+
+  it "maps data wrappers for every declared operation while retaining wire serialization" do
+    FivePM::OPERATIONS.each_value do |operations|
+      operations.each_value do |contract|
+        part, type = contract.fetch("response").except("sessionId").first
+        type = type.split(":").last
+        value = if FivePM::Models::TYPES.key?(type)
+                  type.end_with?("List") ? { "items" => [], "count" => 0, "total" => 0 } : { "id" => "7" }
+                else
+                  false
+                end
+        value = { "sessionId" => "synthetic-token" } if type == "AuthToken"
+        source = { "data" => value, "futureEnvelope" => { "unchanged" => true } }
+        response = described_class.new(source, contract: contract)
+        if FivePM::Models::TYPES.key?(type)
+          expect(response[part]).to be_a(FivePM::Models.const_get(type, false))
+          expect(response[part].to_h).to eq(value)
+        else
+          expect(response[part]).to be(false)
+        end
+        expect(response.to_h).to eq(source)
+        expect(JSON.parse(response.to_json)).to eq(source)
+        expect(response["futureEnvelope"]).to eq("unchanged" => true)
+      end
+    end
+  end
+
+  it "rejects ambiguous, error and malformed data wrappers without leaking values" do
+    contract = FivePM::OPERATIONS.dig("tasks", "getById")
+    [{ "data" => {}, "task" => {} }, { "data" => {}, "success" => false },
+     { "data" => {}, "error" => "private-secret" }, { "data" => "private-secret" },
+     { "data" => { "id" => "private-secret" } }].each do |payload|
+      expect { described_class.new(payload, contract: contract) }.to raise_error(FivePM::ProtocolError) do |error|
+        expect(error.message).not_to include("private-secret")
+      end
+    end
+    expect do
+      described_class.new({ "data" => { "items" => {} } }, contract: FivePM::OPERATIONS.dig("tasks", "getList"))
+    end.to raise_error(FivePM::ProtocolError)
+  end
+
+  it "keeps data-wrapper snapshots immutable and user-list session metadata separate" do
+    source = { "data" => { "items" => [{ "id" => "7", "firstName" => "Synthetic" }] },
+               "sessionId" => "synthetic-token" }
+    response = described_class.new(source, contract: FivePM::OPERATIONS.dig("users", "getAll"))
+    expect(response.session_id).to eq("synthetic-token")
+    expect(response.list.first.id).to eq(7)
+    source["data"]["items"].first["firstName"].replace("Changed")
+    expect(response.list.first.first_name).to eq("Synthetic")
+    expect(response.raw.dig("data", "items", 0, "firstName")).to eq("Synthetic")
+    expect { response["data"]["items"].clear }.to raise_error(FrozenError)
+    expect { response.list.first.first_name.replace("Changed") }.to raise_error(FrozenError)
+  end
+
   def fixture(name)
     JSON.parse(File.read(File.join(__dir__, "fixtures/synthetic/#{name}.json")))
   end
