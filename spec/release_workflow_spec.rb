@@ -34,6 +34,19 @@ RSpec.describe "trusted publishing preparation" do
     end
   end
 
+  it "uses only declared inputs of the reviewed official publishing action for both gems" do
+    contracts = JSON.parse(File.read(File.join(__dir__, "fixtures/release_action_inputs.json")))
+    %w[publish-core publish-mcp].each do |job|
+      step = workflow.dig("jobs", job, "steps").last
+      declared = contracts.fetch(step.fetch("uses")).fetch("inputs")
+      configured = step.fetch("with", {}).keys
+      expect(configured - declared).to be_empty
+      # Current upstream has no owner support. A future adoption must replace
+      # this reviewed snapshot as well as the pin, not invent an ignored input.
+      expect(declared).not_to include("owner")
+    end
+  end
+
   it "rejects automatic events and dispatch from other refs before any candidate operation" do
     candidate = workflow.dig("jobs", "prepare", "steps").find { |step| step["id"] == "candidate" }.fetch("run")
     # Execute the real shell guards only; candidate reads, Git writes and network
