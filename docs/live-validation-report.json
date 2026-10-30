@@ -1,10 +1,10 @@
 {
   "result": "passed",
   "version": "0.1.0",
-  "checked_at": "2026-10-30T17:33:37Z",
-  "evidence_commit": "1b01e86cb09d262452941ab9166ff003382d9086",
+  "checked_at": "2026-10-30T17:40:53Z",
+  "evidence_commit": "bc1c7757b9c681c58a679ab8627d920bef375633",
   "worktree_dirty": true,
-  "source_sha256": "00727120ad75c0a616b6bc786879f1da94819344c0be77fae8087727067d9d26",
+  "source_sha256": "9d3f99366098a0f5fefe2cecd746f939df6599de8a7224d90a0deb2fe92b2652",
   "disposable_tenant": true,
   "mutations_enabled": true,
   "release_evidence": false,
