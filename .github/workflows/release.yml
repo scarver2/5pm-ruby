@@ -71,7 +71,7 @@ jobs:
             commit="$(git rev-parse HEAD)"
           fi
           git fetch origin master:refs/remotes/origin/master --tags
-          ruby bin/release-check "$version" "$commit"
+          bin/release-check "$version" "$commit"
           {
             echo "version=$version"
             echo "commit=$commit"
@@ -99,9 +99,9 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-      - run: bundle exec rake
-      - run: bundle exec rubocop --cache false
-      - run: bundle exec ruby bin/package-mcp
+      - run: bin/spec
+      - run: bin/lint --cache false
+      - run: bin/package-mcp
 
   tag:
     name: Authorize and tag exact candidate
@@ -124,7 +124,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin master:refs/remotes/origin/master --tags
-          ruby bin/release-check "$VERSION" "$COMMIT"
+          bin/release-check "$VERSION" "$COMMIT"
           if ! git show-ref --verify --quiet "refs/tags/v$VERSION"; then
             gh api "repos/$GITHUB_REPOSITORY/git/refs" --method POST \
               -f "ref=refs/tags/v$VERSION" -f "sha=$COMMIT"
@@ -156,9 +156,13 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
       - run: git fetch origin master:refs/remotes/origin/master --tags
-      - run: bundle exec rake
-      - run: bundle exec rubocop --cache false
-      - run: bundle exec ruby bin/package-mcp
+      - run: bin/spec
+      - run: bin/lint --cache false
+      - run: bin/package-mcp
+      - name: Verify approved publication tag
+        run: bin/verify-release-tag
+        env:
+          RELEASE_TAG_REF: refs/tags/v${{ needs.prepare.outputs.version }}
       - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
 
   publish-mcp:
@@ -185,9 +189,13 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
       - run: git fetch origin master:refs/remotes/origin/master --tags
-      - run: bundle exec rake
-      - run: bundle exec rubocop --cache false
-      - run: bundle exec ruby bin/package-mcp
+      - run: bin/spec
+      - run: bin/lint --cache false
+      - run: bin/package-mcp
+      - name: Verify approved publication tag
+        run: bin/verify-release-tag
+        env:
+          RELEASE_TAG_REF: refs/tags/v${{ needs.prepare.outputs.version }}
       - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
         with:
           working-directory: mcp

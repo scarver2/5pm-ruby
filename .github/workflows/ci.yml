@@ -19,6 +19,6 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-      - run: bundle exec rake
-      - run: bundle exec rubocop
-      - run: bundle exec ruby bin/package-mcp
+      - run: bin/spec
+      - run: bin/lint
+      - run: bin/package-mcp

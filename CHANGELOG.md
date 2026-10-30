@@ -2,6 +2,9 @@
 
 ## 0.1.0 — unreleased
 
+- Align packaging/release bin scripts with abbu and printavo: shared Bash runner,
+  Ruby support helpers, pkg artifacts, isolated installs and read-only tag verification.
+
 - Name the packages `5pm` and `5pm-mcp`, with matching dependencies, builds and
   release configuration; retain the `FivePM` Ruby namespace and require paths.
 

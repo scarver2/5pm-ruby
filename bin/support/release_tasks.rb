@@ -23,7 +23,7 @@ module FivePMReleaseTasks
       end
       abort "publishing checkout must equal approved commit" unless Open3.capture2("git", "rev-parse",
                                                                                    "HEAD").first.strip == commit
-      unless system(RbConfig.ruby, File.join(root, "bin/release-check"), version, commit)
+      unless system("bash", File.join(root, "bin/release-check"), version, commit)
         abort "release candidate verification failed"
       end
       tag, status = Open3.capture2("git", "rev-parse", "--verify", "refs/tags/v#{version}^{commit}")

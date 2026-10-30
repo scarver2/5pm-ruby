@@ -1,7 +1,7 @@
 # Release preparation
 
 `bin/package` builds the gem, checks its exact file inventory and MIT license, then
-loads the extracted artifact in a subprocess outside Bundler's source checkout.
+loads the installed artifact in a subprocess outside Bundler's source checkout.
 It does not publish. `bin/release-check VERSION FULL_COMMIT_SHA` is also read-only.
 
 Before a release:
@@ -87,6 +87,29 @@ Recheck both names for availability before publication. Account setup must
 be completed by the authenticated RubyGems owner; repository configuration alone
 does not establish that connection.
 
+## Shared bin-script conventions
+
+Like abbu and printavo, Bash entrypoints source `bin/_lib.sh`, change to the
+repository root, and select Ruby through mise when available. Run them directly:
+
+```sh
+bin/spec
+bin/lint
+bin/package
+bin/package-mcp
+bin/release-check VERSION FULL_COMMIT_SHA
+```
+
+`bin/package` writes `pkg/5pm-VERSION.gem`; `bin/package-mcp` also writes
+`mcp/pkg/5pm-mcp-VERSION.gem`. Inventory checks live in `bin/verify-package.rb`;
+package installation, smoke checks, and release logic live in Ruby helpers under
+`bin/support/`, following printavo's layout. Temporary installs are removed on exit.
+Dependencies come from the verified bundle, as in abbu, without network installation.
+
+`bin/verify-release-tag` reads `RELEASE_TAG_REF` (or `GITHUB_REF` on tag events), requires `refs/tags/vVERSION`, and
+verifies that the tag matches HEAD and passes the accepted-commit preflight.
+It is read-only. Publication remains the protected workflow's `rake release`.
+
 ## Build and approve a release
 
 Standard Bundler tasks build the core and MCP artifacts respectively:
@@ -96,7 +119,7 @@ bundle exec rake build
 bundle exec rake -f mcp/Rakefile build
 bundle exec rake
 bundle exec rubocop --cache false
-bundle exec ruby bin/package-mcp
+bin/package-mcp
 ```
 
 The packaging checks inspect the actual installed artifacts. CI repeats validation

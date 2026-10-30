@@ -11,9 +11,9 @@ Publication still requires review and explicit approval.
 
 ```sh
 bundle install
-bundle exec rake
-bundle exec rubocop
-gem build 5pm.gemspec --strict
+bin/spec
+bin/lint
+bin/package-mcp
 ```
 
 ## Configuration and initial API
@@ -177,7 +177,7 @@ before authentication or I/O. Typed records can be passed to create/update helpe
 their original JSON fields. Model list `to_h` retains the JSON view despite Enumerable.
 Clients copy configuration strings and refuse Marshal serialization of credentials.
 
-Run `bundle exec ruby bin/package` to verify the actual built artifact. See
+Run `bin/package` to verify the actual built artifact. See
 [release preparation](docs/releasing.md) and [implementation guideposts](docs/implementation-guides.md).
 
 ## Remaining release gates
@@ -201,6 +201,6 @@ project/task mutation tools require trusted per-call operator approval. MCP is a
 runtime dependency only of that separate gem. Run `bundle exec five-pm-mcp` with
 the same injected environment variables, or see its README for host configuration.
 
-`bundle exec ruby bin/package-mcp` verifies both installed artifacts and the adapter
+`bin/package-mcp` verifies both installed artifacts and the adapter
 protocol in an isolated temporary GEM_HOME. `bin/live-check` adds opt-in disposable
 account verification; no gem publication is automated.
