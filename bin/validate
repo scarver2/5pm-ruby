@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# bin/validate
+
+source "$(dirname "$0")/_lib.sh"
+bundle_exec ruby "$BIN_DIR/support/cached_validation.rb" "$@"

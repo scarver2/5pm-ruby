@@ -16,6 +16,9 @@ bin/lint
 bin/package-mcp
 ```
 
+For repeatable macOS Keychain setup and cached contract/read checks, see
+[cached validation](docs/cached-validation.md) (`bin/validate --help`).
+
 ## Configuration and initial API
 
 Install from this checkout with Bundler (`gem "5pm", path: "/path/to/sdk"`).
