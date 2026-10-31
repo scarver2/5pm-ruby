@@ -14,12 +14,15 @@ abort "expected stable version and full commit SHA" unless ARGV.length == 2 && v
 Dir.chdir(File.expand_path("../..", __dir__)) do
   git = lambda do |*arguments|
     output, status = Open3.capture2e("git", *arguments)
-    abort "release Git check failed" unless status.success?
+    abort "release Git check failed (#{arguments.join(' ')}): #{output.strip}" unless status.success?
     output
   end
   abort "checkout must be clean" unless git.call("status", "--porcelain").empty?
   abort "expected an exact commit" unless git.call("rev-parse", "#{commit}^{commit}").strip == commit
-  git.call("merge-base", "--is-ancestor", commit, "refs/remotes/origin/master")
+  _, accepted = Open3.capture2e("git", "merge-base", "--is-ancestor", commit, "refs/remotes/origin/master")
+  unless accepted.success?
+    abort "candidate must be included in origin/master; fetch origin and merge the reviewed preparation first"
+  end
   source = git.call("show", "#{commit}:lib/five_pm/version.rb")
   abort "version mismatch" unless source.match?(/^\s*VERSION = "#{Regexp.escape(version)}"(?:\.freeze)?\s*$/)
   adapter = git.call("show", "#{commit}:mcp/lib/five_pm/mcp/version.rb")

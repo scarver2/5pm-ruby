@@ -138,27 +138,36 @@ logs, repository configuration, or agent input. Consult [RubyGems CLI](https://g
 bash <<'SHERIFF_ONLY'
 set -euo pipefail
 unset GEM_HOST_API_KEY RUBYGEMS_API_KEY BUNDLE_GEM__PUSH_KEY GEM_HOST_OTP_CODE
-source_dir=/private/tmp/5pm-maiden-voyage-0.1.0/source
-artifact_dir=/private/tmp/5pm-maiden-voyage-0.1.0/artifacts
-candidate_sha=9322e03f75604d7279775dc88c9192add840e76e
+# Set these in your terminal from the final reviewed acceptance packet.
+: "${SOURCE_DIR:?Set SOURCE_DIR to your clean local source worktree}"
+: "${ARTIFACT_DIR:?Set ARTIFACT_DIR to the final accepted artifact directory}"
+: "${CANDIDATE_SHA:?Set CANDIDATE_SHA to the final accepted full commit}"
+: "${CORE_SHA256:?Set CORE_SHA256 to the independently accepted core digest}"
+: "${MCP_SHA256:?Set MCP_SHA256 to the independently accepted MCP digest}"
+source_dir="$(cd "$SOURCE_DIR" && pwd -P)"
+artifact_dir="$(cd "$ARTIFACT_DIR" && pwd -P)"
+candidate_sha="$CANDIDATE_SHA"
+[[ "$CORE_SHA256" =~ ^[0-9a-f]{64}$ && "$MCP_SHA256" =~ ^[0-9a-f]{64}$ ]]
 cd "$source_dir"
 test "$(git rev-parse HEAD)" = "$candidate_sha"
-bin/release-check 0.1.0 "$candidate_sha"  # Currently fails; never bypass.
+mise exec -- bin/release-check 0.1.0 "$candidate_sha"  # Never bypass.
 # Guard against automatic credential issuance when local authentication is absent.
 # This reads only inside Sheriff's local process and prints no key.
-ruby -rrubygems/config_file -e 'abort "STOP: existing local RubyGems authentication required" if Gem.configuration.rubygems_api_key.to_s.empty?'
+mise exec -- ruby -rrubygems/config_file -e 'abort "STOP: existing local RubyGems authentication required" if Gem.configuration.rubygems_api_key.to_s.empty?'
 cd "$artifact_dir"
-shasum -a 256 -c SHA256SUMS
+# Digests must come from the independent acceptance packet, not this directory.
+printf '%s  %s\n' "$CORE_SHA256" '5pm-0.1.0.gem' \
+  "$MCP_SHA256" '5pm-mcp-0.1.0.gem' | shasum -a 256 -c -
 # Core first. These commands are not authorized until final acceptance/push approval.
-gem push --host https://rubygems.org "$artifact_dir/5pm-0.1.0.gem" </dev/tty
+mise exec -- gem push --host https://rubygems.org "$artifact_dir/5pm-0.1.0.gem" </dev/tty
 verification_dir="$(mktemp -d)"
 trap 'rm -rf -- "$verification_dir"' EXIT
 cd "$verification_dir"
-gem fetch 5pm --version 0.1.0 --clear-sources --source https://rubygems.org
+mise exec -- gem fetch 5pm --version 0.1.0 --clear-sources --source https://rubygems.org
 cmp "$artifact_dir/5pm-0.1.0.gem" 5pm-0.1.0.gem
 # Only after the exact core artifact is publicly available:
-gem push --host https://rubygems.org "$artifact_dir/5pm-mcp-0.1.0.gem" </dev/tty
-gem fetch 5pm-mcp --version 0.1.0 --clear-sources --source https://rubygems.org
+mise exec -- gem push --host https://rubygems.org "$artifact_dir/5pm-mcp-0.1.0.gem" </dev/tty
+mise exec -- gem fetch 5pm-mcp --version 0.1.0 --clear-sources --source https://rubygems.org
 cmp "$artifact_dir/5pm-mcp-0.1.0.gem" 5pm-mcp-0.1.0.gem
 SHERIFF_ONLY
 ```
@@ -173,3 +182,18 @@ release dispatches are included. No push commands above were executed by Cora.
 Default recommendation is HOLD, not a waiver. An [optional limited-release decision](limited-first-release-decision.md)
 is presented separately for Sheriff and Deputy; it is neither approved nor implemented.
 Current artifacts and the exact-source gate remain unchanged.
+
+## Local preparation status
+
+The historical hashes above remain provisional. Passing specs, lint and isolated
+package checks does not satisfy the live release gate. Skipping live qualification
+does not create passing evidence or approve a smaller supported API. Do not set the
+publication variables from those provisional hashes. After the final source is dated,
+reviewed and qualified, rebuild both gems, independently accept their new hashes,
+and provide those values through exported environment variables to the owner-only
+procedure. Keep credentials outside these variables and outside the repository.
+
+—
+Stan Carver II
+Made in Texas 🤠
+https://stancarver.com

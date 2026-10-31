@@ -45,13 +45,16 @@ RSpec.describe "read-only release preflight" do
       script = File.join(directory, "bin/release-check")
       output, status = Open3.capture2e("bash", script, "0.1.0", historical_commit)
       expect(status).not_to be_success
-      expect(output).to include("release Git check failed")
+      expect(output).to include("release Git check failed", "docs/live-validation.json")
       expect(run_git(directory, "tag", "--list")).to eq("")
       evidence[:evidence_commit] = historical_commit
       File.write(File.join(directory, "docs/live-validation.json"), JSON.generate(evidence))
       run_git(directory, "add", ".")
       run_git(directory, "commit", "-qm", "synthetic completed validation")
       candidate = run_git(directory, "rev-parse", "HEAD")
+      output, status = Open3.capture2e("bash", script, "0.1.0", candidate)
+      expect(status).not_to be_success
+      expect(output).to include("candidate must be included in origin/master")
       run_git(directory, "update-ref", "refs/remotes/origin/master", candidate)
       script = File.join(directory, "bin/release-check")
       output, status = Open3.capture2e("bash", script, "0.1.0", candidate)
