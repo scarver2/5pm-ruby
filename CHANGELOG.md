@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-10-30
 
 - Make live API validation optional and owner-controlled. Releases no longer require
   an active 5PM account or fresh live evidence; cached reports never expire or force

@@ -94,8 +94,8 @@ Verify it with `cd` to that directory, then `shasum -a 256 -c SHA256SUMS`.
 ## Preconditions before any push
 
 - Preserve historical API observations and failed receipts, including issue #14.
-  Cleanup of trial records can be handled separately by the owner; another live
-  session or qualification run is not a publication prerequisite.
+  Stan confirmed the leftover test User was deleted. Another live session or
+  qualification run is not a publication prerequisite.
 - Review a dated changelog and final exact source. Pass offline specs, lint, package
   checks, hosted CI and the read-only `bin/release-check VERSION SHA`.
 - Deputy accepts exact artifacts/source; Sheriff separately authorizes the final push.
