@@ -59,8 +59,8 @@ jobs:
           INPUT_COMMIT: ${{ inputs.commit }}
         run: |
           set -euo pipefail
-          [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]
-          [[ "$GITHUB_REF" == refs/heads/master ]]
+          [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]] || exit 1
+          [[ "$GITHUB_REF" == refs/heads/master ]] || exit 1
           version="$INPUT_VERSION"
           commit="$INPUT_COMMIT"
           git fetch origin master:refs/remotes/origin/master --tags

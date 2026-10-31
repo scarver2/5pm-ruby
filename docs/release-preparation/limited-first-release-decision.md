@@ -1,4 +1,8 @@
-# Optional limited-release policy decision — NOT APPROVED
+# Historical limited-release proposal — NOT APPROVED
+
+This proposal predates Stan's owner-controlled live-validation policy. It does not
+impose a current live qualification gate. No API exclusions below are implemented.
+See [current release policy](../releasing.md). The original proposal follows.
 
 Default recommendation: HOLD until current qualification gates pass. If Sheriff and
 Deputy instead want an intentionally limited first release, review this as a separate

@@ -1,5 +1,10 @@
 # Disposable-account validation
 
+Live validation is optional and runs only when Stan requests it. It is not a release
+or CI prerequisite and requires no ongoing subscription. Historical results remain
+valid records of their original runs. See [release policy](releasing.md) and
+[cached validation](cached-validation.md) for owner-controlled refreshes.
+
 Live validation on 2026-10-30 exercised both packages using a disposable tenant.
 Reports and fixtures exclude its hostname, credentials, session tokens, record IDs,
 account payloads and attachment contents.
@@ -44,7 +49,7 @@ The single JSON report identifies the base commit, dirty-worktree status and a
 SHA-256 digest of the tested source. The digest covers the sorted Git tracked and
 untracked, non-ignored files as `path`, NUL, byte length, NUL, then file bytes;
 `docs/live-validation-report.json` itself is excluded. It is development evidence,
-not the accepted-commit release evidence required by `bin/release-check`.
+not a fresh validation of a different source commit. `bin/release-check` does not require live evidence.
 
 The harness records successful transport operation names only, including calls made
 by the actual stdio process. With `--mutations`, it fails unless every one of the

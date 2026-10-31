@@ -1,9 +1,10 @@
 # Changelog
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-10-30
 
-- Preserve exact-commit live release qualification for every version; historical
-  development reports cannot replace candidate evidence.
+- Make live API validation optional and owner-controlled. Releases no longer require
+  an active 5PM account or fresh live evidence; cached reports never expire or force
+  a refresh after source changes. Offline tests and artifact checks remain required.
 
 - Restrict releases to manual dispatch from master for an explicitly approved
   version and exact commit; retain protected environment approval for tag/publish jobs.
