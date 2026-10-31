@@ -1,8 +1,27 @@
 # 5pm-mcp
 
 Separate MIT-licensed MCP adapter for `5pm`, using the official MCP Ruby SDK.
-Ruby 3.2+. The core SDK does not depend on MCP. This package is not yet published;
-live disposable-account verification is documented in [the live validation guide](../docs/live-validation.md).
+Ruby 3.2+. Version [0.1.0 is published on RubyGems](https://rubygems.org/gems/5pm-mcp/versions/0.1.0).
+The adapter installs the matching core SDK; the core SDK does not depend on MCP.
+See the [v0.1.0 release](https://github.com/scarver2/5pm-ruby/releases/tag/v0.1.0)
+for artifacts and checksums.
+
+## Installation and execution
+
+```sh
+mise exec -- gem install 5pm-mcp --version 0.1.0
+```
+
+Inject `FIVE_PM_HOST`, `FIVE_PM_LOGIN`, and `FIVE_PM_PASSWORD` through your environment
+or secret manager, then start the installed stdio server:
+
+```sh
+mise exec -- five-pm-mcp
+```
+
+For a Bundler application, add `gem "5pm-mcp", "~> 0.1.0"` to its Gemfile, run
+`mise exec -- bundle install`, then use `mise exec -- bundle exec five-pm-mcp`.
+Live API refreshes are optional; installation does not require live validation.
 
 ## Run from the checkout
 
@@ -22,15 +41,15 @@ For a host that supports the common `mcpServers` configuration structure:
 {
   "mcpServers": {
     "five-pm": {
-      "command": "bundle",
-      "args": ["exec", "five-pm-mcp"],
-      "env": {"BUNDLE_GEMFILE": "/absolute/path/to/5pm-ruby/sdk/Gemfile"}
+      "command": "mise",
+      "args": ["exec", "--", "five-pm-mcp"]
     }
   }
 }
 ```
 
-Start that host with the three 5pm variables already injected. Use its actual
+Ensure the host can find `mise` (use its absolute executable path if needed), and
+start it with the three 5pm variables already injected. Use its actual
 configuration format if it differs. Rodeo/A1Web integrations can launch this standard
 stdio server; no special integration or permission override is built into the SDK.
 
@@ -118,3 +137,8 @@ Tracks [issue #4](https://github.com/scarver2/5pm-ruby/issues/4). Both packages 
 subject to review of the tested source and explicit publication approval. Live checks
 exercise the actual read-only stdio executable, all project/task mutation tools in
 an embedding host, per-call approval denial, argument spoofing rejection and audit redaction.
+
+—
+Stan Carver II
+Made in Texas 🤠
+https://stancarver.com
