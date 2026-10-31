@@ -1,15 +1,16 @@
 # Sheriff-only manual first-publication preparation
 
-**STOP: preparation only. No publication is authorized.** This procedure does not
-waive the exact-source release gate. Deputy must accept the final source and exact
-artifact hashes, then Sheriff must separately authorize the final push.
+**Preparation only. Publication requires Stan's approval of the final source and
+exact artifact hashes.** Live API checks are optional at Stan's discretion. No
+active 5PM trial or subscription is required. The [release policy](../releasing.md)
+supersedes the historical live-test blockers recorded in the frozen manifest.
 
 ## Frozen proposed source and artifacts
 
 Proposed version: **0.1.0** for both gems. Frozen source baseline:
 `9322e03f75604d7279775dc88c9192add840e76e` (accepted master, not an accepted release).
 Changelog: **0.1.0 — unreleased**. Current artifacts are provisional and blocked.
-A dated changelog/source change requires rebuilding, requalification and new hashes;
+A dated changelog/source change requires rebuilding, offline verification and new hashes;
 do not publish these bytes after substituting a different candidate SHA.
 
 [Machine-readable provenance/inventories](0.1.0-manual-artifacts.json) records:
@@ -92,15 +93,11 @@ Verify it with `cd` to that directory, then `shasum -a 256 -c SHA256SUMS`.
 
 ## Preconditions before any push
 
-- Sheriff removes only the leftover newly labelled test User; Cora independently
-  verifies absence read-only. Do not repeat the failed User mutation.
-- PR #13 accurately retains the failed qualification receipts; exact-head review
-  and green checks are required before any authorized merge.
-- Resolve the actual-source qualification gap: User update code 8 and failed cleanup;
-  attachment checks not reached; no passing `docs/live-validation.json` for the final
-  source. Issue #14 remains the deferred investigation, not a gate waiver.
-- Review a dated changelog and final exact source, complete applicable qualification,
-  and pass the unchanged read-only `bin/release-check VERSION SHA`.
+- Preserve historical API observations and failed receipts, including issue #14.
+  Cleanup of trial records can be handled separately by the owner; another live
+  session or qualification run is not a publication prerequisite.
+- Review a dated changelog and final exact source. Pass offline specs, lint, package
+  checks, hosted CI and the read-only `bin/release-check VERSION SHA`.
 - Deputy accepts exact artifacts/source; Sheriff separately authorizes the final push.
 - Sheriff verifies his own existing local RubyGems authentication belongs to the
   intended account (immutable ID 239830), permits `push_rubygem`/first publication of
@@ -124,7 +121,7 @@ unchanged. This distinction does not waive source/evidence/publication approval.
 
 The following is a reviewed command specification, not a runnable automation added
 to the repository. Execute only after every precondition above and exact artifact
-acceptance. With today's candidate the release gate FAILS and this block must stop.
+acceptance. The frozen candidate has an undated changelog and is not a final release candidate.
 If candidate bytes/SHA change, replace the reviewed manifest/hashes only through new
 acceptance; do not edit these values to force an existing approval to match.
 
@@ -177,21 +174,17 @@ availability is confirmed; do not repeat an already successful push. Verify acco
 ownership on RubyGems after publication. No automatic retries, yanks, tags or GitHub
 release dispatches are included. No push commands above were executed by Cora.
 
-## Separate scope decision
+## Historical proposals and current preparation
 
-Default recommendation is HOLD, not a waiver. An [optional limited-release decision](limited-first-release-decision.md)
-is presented separately for Sheriff and Deputy; it is neither approved nor implemented.
-Current artifacts and the exact-source gate remain unchanged.
+The [limited-release proposal](limited-first-release-decision.md) and the frozen
+manifest are historical records, not current live-test requirements. Stan has
+removed the live API release gate; no fresh success report is required or fabricated.
+API observations remain documented without changing the supported API implicitly.
 
-## Local preparation status
-
-The historical hashes above remain provisional. Passing specs, lint and isolated
-package checks does not satisfy the live release gate. Skipping live qualification
-does not create passing evidence or approve a smaller supported API. Do not set the
-publication variables from those provisional hashes. After the final source is dated,
-reviewed and qualified, rebuild both gems, independently accept their new hashes,
-and provide those values through exported environment variables to the owner-only
-procedure. Keep credentials outside these variables and outside the repository.
+The historical hashes above remain provisional. After the final source is dated,
+reviewed and offline-tested, rebuild both gems, independently accept their new
+hashes, and provide those values through exported environment variables to the
+owner-only procedure. Keep credentials outside these variables and the repository.
 
 —
 Stan Carver II

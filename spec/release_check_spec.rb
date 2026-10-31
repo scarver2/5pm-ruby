@@ -11,7 +11,7 @@ RSpec.describe "read-only release preflight" do
     output.strip
   end
 
-  it "accepts only a clean accepted commit with dated version and explicit live evidence, without publishing" do
+  it "accepts clean reviewed source without live evidence or credentials, while retaining release safeguards" do
     Dir.mktmpdir("five-pm-release-test-") do |directory|
       FileUtils.mkdir_p(File.join(directory, "bin/support"))
       %w[_lib.sh support/release_check.rb verify-release-tag support/verify_release_tag.rb].each do |path|
@@ -29,28 +29,13 @@ RSpec.describe "read-only release preflight" do
       run_git(directory, "config", "user.email", "synthetic@example.com")
       run_git(directory, "add", ".")
       run_git(directory, "commit", "-qm", "synthetic evidence base")
-      evidence_commit = run_git(directory, "rev-parse", "HEAD")
-      evidence = { version: "0.1.0", evidence_commit: evidence_commit, disposable_tenant: true,
-                   result: "passed", contract_verified: true, read_operations_verified: true,
-                   mutation_operations_verified: true }
-      # Historical success and a policy manifest cannot replace exact-source evidence.
-      historical = evidence.merge(worktree_dirty: true, release_evidence: false)
-      File.write(File.join(directory, "docs/live-validation-report.json"), JSON.generate(historical))
-      File.write(File.join(directory, "docs/recorded-release-baseline.json"),
-                 JSON.generate(version: "0.1.0", mode: "recorded_baseline"))
+      earlier_commit = run_git(directory, "rev-parse", "HEAD")
+      run_git(directory, "update-ref", "refs/remotes/origin/master", earlier_commit)
+      # A new candidate is not accepted until it reaches origin/master.
+      File.write(File.join(directory, "lib/five_pm/changed.rb"), "# Offline-tested source change\n")
       run_git(directory, "add", ".")
-      run_git(directory, "commit", "-qm", "synthetic historical report only")
-      historical_commit = run_git(directory, "rev-parse", "HEAD")
-      run_git(directory, "update-ref", "refs/remotes/origin/master", historical_commit)
+      run_git(directory, "commit", "-qm", "synthetic release candidate")
       script = File.join(directory, "bin/release-check")
-      output, status = Open3.capture2e("bash", script, "0.1.0", historical_commit)
-      expect(status).not_to be_success
-      expect(output).to include("release Git check failed", "docs/live-validation.json")
-      expect(run_git(directory, "tag", "--list")).to eq("")
-      evidence[:evidence_commit] = historical_commit
-      File.write(File.join(directory, "docs/live-validation.json"), JSON.generate(evidence))
-      run_git(directory, "add", ".")
-      run_git(directory, "commit", "-qm", "synthetic completed validation")
       candidate = run_git(directory, "rev-parse", "HEAD")
       output, status = Open3.capture2e("bash", script, "0.1.0", candidate)
       expect(status).not_to be_success
@@ -73,19 +58,20 @@ RSpec.describe "read-only release preflight" do
       _, status = Open3.capture2e("bash", script, "0.1.0", candidate)
       expect(status).not_to be_success
       File.delete(File.join(directory, "dirty.txt"))
-      run_git(directory, "tag", "v0.1.0", evidence_commit)
+      run_git(directory, "tag", "v0.1.0", earlier_commit)
       output, status = Open3.capture2e("bash", script, "0.1.0", candidate)
       expect(status).not_to be_success
       expect(output).to include("tag points elsewhere")
       run_git(directory, "tag", "-d", "v0.1.0")
-      File.write(File.join(directory, "lib/five_pm/changed.rb"), "# Untested runtime change\n")
+      # Optional old/failed live reports do not block an offline release.
+      File.write(File.join(directory, "docs/live-validation.json"), "not release evidence")
       run_git(directory, "add", ".")
-      run_git(directory, "commit", "-qm", "untested change after validation")
+      run_git(directory, "commit", "-qm", "synthetic historical report")
       changed_candidate = run_git(directory, "rev-parse", "HEAD")
       run_git(directory, "update-ref", "refs/remotes/origin/master", changed_candidate)
       output, status = Open3.capture2e("bash", script, "0.1.0", changed_candidate)
-      expect(status).not_to be_success
-      expect(output).to include("differs from the live-validated commit")
+      expect(status).to be_success, output
+      expect(run_git(directory, "tag", "--list")).to eq("")
     end
   end
 

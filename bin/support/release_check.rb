@@ -1,10 +1,9 @@
 # Read-only checks. This command never tags, pushes, merges or publishes.
 require "open3"
-require "json"
 
 if ARGV == ["--help"]
   puts "Usage: bin/release-check VERSION FULL_COMMIT_SHA"
-  puts "Checks a clean, accepted master commit and live-validation evidence; never publishes."
+  puts "Checks clean accepted source, package versions, dated changelog and tag consistency; never publishes."
   exit
 end
 version, commit = ARGV
@@ -29,23 +28,6 @@ Dir.chdir(File.expand_path("../..", __dir__)) do
   abort "MCP version mismatch" unless adapter.match?(/^\s*VERSION = "#{Regexp.escape(version)}"(?:\.freeze)?\s*$/)
   changelog = git.call("show", "#{commit}:CHANGELOG.md")
   abort "missing dated changelog" unless changelog.match?(/^## #{Regexp.escape(version)} — \d{4}-\d{2}-\d{2}$/)
-  begin
-    evidence = JSON.parse(git.call("show", "#{commit}:docs/live-validation.json"))
-  rescue JSON::ParserError
-    abort "live-validation evidence is not valid JSON"
-  end
-  unless evidence["version"] == version && evidence["disposable_tenant"] == true &&
-         evidence["result"] == "passed" && evidence["contract_verified"] == true &&
-         evidence["read_operations_verified"] == true && evidence["mutation_operations_verified"] == true &&
-         evidence["evidence_commit"].is_a?(String) &&
-         /\A[0-9a-f]{40}\z/.match?(evidence["evidence_commit"])
-    abort "live-validation evidence is incomplete"
-  end
-  git.call("merge-base", "--is-ancestor", evidence.fetch("evidence_commit"), commit)
-  changed = git.call("diff", "--name-only", evidence.fetch("evidence_commit"), commit).lines.map(&:strip)
-  unless changed.all? { |path| path == "docs/live-validation.json" }
-    abort "candidate differs from the live-validated commit; validate the changed code again"
-  end
   _, tag_status = Open3.capture2e("git", "show-ref", "--verify", "refs/tags/v#{version}")
   if tag_status.success? && git.call("rev-parse", "refs/tags/v#{version}^{commit}").strip != commit
     abort "existing version tag points elsewhere"

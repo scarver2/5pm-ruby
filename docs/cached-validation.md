@@ -32,10 +32,11 @@ After a known 5PM API update, deliberately replace the cache:
 bin/validate --refresh --disposable
 ```
 
-Changes to SDK code, adapter code, bin commands or validation helpers invalidate the
-local fingerprint. The command refuses stale evidence until an explicit refresh;
-it does not silently send another request. Failed refreshes preserve the previous
-file, but stale files remain unusable. Updating credentials does not refresh evidence.
+Changes to SDK code, adapter code, bin commands or validation helpers set
+`source_matches: false` on a cached result. The old report remains usable as
+historical evidence, with its original commit and fingerprint. Source changes never
+force a live refresh. Failed refreshes preserve the previous file. Updating
+credentials does not refresh evidence.
 Use a distinct `--service NAME` per tenant; that also selects a separate default cache.
 
 The default cache is `~/Library/Caches/5pm-ruby/<service-sha256>.json`, outside the
@@ -45,8 +46,9 @@ It excludes remote responses, tenant details, tokens, credentials and record IDs
 
 Cached contract/read evidence has `release_evidence: false` and
 `mutations_verified: false`. It is reusable development evidence, not fabricated
-full release qualification. The existing exact-source release gate is unchanged;
-changing that policy requires a separate explicit release-policy decision.
+a fresh validation of changed source. Live evidence is optional for releases:
+Stan decides when a refresh is needed. No active account or subscription is required
+to run offline tests, package checks or release preflight.
 
 See [live validation](live-validation.md) and [release preparation](releasing.md).
 

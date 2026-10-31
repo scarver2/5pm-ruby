@@ -185,7 +185,7 @@ Run `bin/package` to verify the actual built artifact. See
 
 ## Remaining release gates
 
-- Review and merge the live-validated source; regenerate release evidence for the exact accepted commit.
+- Review and merge the offline-tested source; live API refreshes are optional and owner-controlled.
 - Keep the supported Ruby matrix passing in hosted CI. Live checks remain opt-in and outside CI.
 - Date/time strings remain opaque; no timezone conversion or consistent-snapshot guarantee is offered.
 - Rate-limit and transient-network behavior is tested synthetically, without stressing the live account.

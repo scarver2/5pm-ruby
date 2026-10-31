@@ -44,10 +44,10 @@ RSpec.describe FivePMCachedValidation do
     expect { validator.run(["--cache", cache]) }.to output(/"cached": true/).to_stdout
   end
 
-  it "refuses stale evidence without automatically refreshing" do
+  it "reuses older evidence after source changes without refreshing automatically" do
     File.write(cache, JSON.generate(format: 1, result: "passed", source_sha256: "old"))
     expect(Open3).not_to receive(:capture3)
-    expect { validator.run(["--cache", cache]) }.to raise_error(ArgumentError, /--refresh/)
+    expect { validator.run(["--cache", cache]) }.to output(/"source_matches": false/).to_stdout
   end
 
   it "preserves the previous cache if an explicit refresh fails" do

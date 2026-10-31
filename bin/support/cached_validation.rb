@@ -39,11 +39,12 @@ class FivePMCachedValidation
                                          "#{Digest::SHA256.hexdigest(options[:service])}.json")
     if File.exist?(cache) && !options[:refresh]
       report = JSON.parse(File.read(cache))
-      unless report["format"] == 1 && report["result"] == "passed" && report["source_sha256"] == fingerprint
-        raise ArgumentError, "cached evidence does not match this SDK/harness; review changes and use --refresh"
+      unless report["format"] == 1 && report["result"] == "passed"
+        raise ArgumentError, "invalid cached evidence; review the file or explicitly use --refresh"
       end
 
-      puts JSON.pretty_generate(report.merge("cached" => true))
+      puts JSON.pretty_generate(report.merge("cached" => true,
+                                             "source_matches" => report["source_sha256"] == fingerprint))
       return
     end
     raise ArgumentError, "live validation requires --disposable; no request was sent" unless options[:disposable]

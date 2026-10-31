@@ -4,60 +4,37 @@
 loads the installed artifact in a subprocess outside Bundler's source checkout.
 It does not publish. `bin/release-check VERSION FULL_COMMIT_SHA` is also read-only.
 
-The exact-commit live-validation gate applies to every version, including 0.1.0.
-Historical reports, recorded fixtures, report digests, offline CI and policy manifests
-do not substitute for fresh qualification of the actual source candidate. The
-historical `docs/live-validation-report.json` remains unchanged development evidence.
-Any weaker policy requires explicit Sheriff approval and separate Deputy review;
-there is no recorded-baseline bypass in the release check.
+## Owner-controlled live validation
+
+Stan Carver II decides when another live API check is useful. Live API access,
+an active trial or paid subscription, Keychain credentials, and fresh live evidence
+are not release prerequisites. The 15-day trial does not create an ongoing account
+requirement. Releases and CI use offline tests, stored contracts, package verification
+and maintainer acceptance of the exact candidate.
+
+Historical reports retain their actual outcomes and tested source. Do not relabel
+an old report as a fresh check. `bin/validate` reuses its local sanitized report
+without expiration or network requests, even if source changes; `source_matches`
+indicates whether its fingerprint still matches. Only an explicit owner-requested
+refresh contacts 5PM. See [cached validation](cached-validation.md).
 
 Before a release:
 
-Choose the release version and dated changelog before the final live-validation run.
-The candidate must have the same tracked tree as its tested commit, except for the
-`docs/live-validation.json` evidence file itself. Any other change requires validation
-again, including changes to tests, packaging, the MCP adapter or release tooling.
+1. Review the source and matching core/MCP versions, and date the changelog.
+2. Pass `bin/spec`, `bin/lint --cache false`, and `bin/package-mcp` offline.
+3. Merge reviewed changes through PRs with passing CI. Fetch origin/master and tags.
+4. Run `bin/release-check VERSION FULL_COMMIT_SHA` from a clean checkout. It checks
+   accepted source ancestry, matching versions, the dated changelog and conflicting
+   tags. It does not contact 5PM or require `docs/live-validation.json`.
+5. Rebuild from the accepted source, inspect both artifacts and independently accept
+   their hashes. Recheck gem-name availability and obtain maintainer publication
+   approval. Publish the exact accepted bytes, core first and then MCP.
 
-1. Merge reviewed changes through PRs with passing CI; do not change master directly.
-2. Obtain a disposable account and compare its six WSDLs and schema with the public snapshots.
-3. Inject credentials via the process environment. Designate the test tenant explicitly
-   with `FIVE_PM_SANDBOX=1` and `FIVE_PM_SANDBOX_HOST=$FIVE_PM_HOST`.
-   Run `bundle exec ruby bin/sandbox-check`. It checks authentication and resource list
-   envelopes without changing account data; it creates and closes a temporary session.
-   Its redacted report is only `read_only_passed`, not full release evidence.
-   On failure, stderr includes a JSON diagnostic with a fixed operation stage and
-   error category (and numeric HTTP status when available). It never includes
-   exception messages, credentials or response bodies. `authentication_rejected`
-   indicates HTTP 401/403; `unexpected_response` indicates a JSON/contract mismatch,
-   which does not establish that the password is wrong. A cleanup failure does not
-   replace the diagnostic for an earlier failed operation.
-   Sign-in failures also report whether parsed JSON was received and its shape:
-   only fixed, known contract fields and JSON types are emitted, never arbitrary
-   keys, scalar values, tokens or server error text. This distinguishes a missing
-   authentication envelope from a transport JSON-decoding failure without dumping
-   the response body.
-   Typed validation failures include `schema_mismatch` with the declared field name,
-   expected schema type and actual JSON type. No field values are retained in that
-   error or printed. Nested errors identify the innermost invalid field.
-4. Record sanitized real success/error fixtures, including HTTP-200 errors if observed.
-   Verify offsets, totals, dates, bool encoding, and attachments. Perform destructive
-   create/update/delete checks only in that disposable account, explicitly enabled by
-   the operator. Do not run these checks in CI or point them at production.
-   The reproducible `bin/live-check --mutations` suite requires both disposable-tenant
-   designation and `FIVE_PM_ALLOW_MUTATIONS=1`. See [live validation](live-validation.md).
-   Its dirty-worktree development report is not a substitute for accepted-commit evidence.
-5. Commit reviewed evidence in `docs/live-validation.json` with the tested `version`,
-   full `evidence_commit`, `disposable_tenant: true`, `result: "passed"`, and separately
-   verified `contract_verified`, `read_operations_verified`, `mutation_operations_verified`
-   booleans. Never include a tenant hostname, login, password, session token or account payload.
-   No success evidence is supplied in this repository until those checks actually happen.
-6. Pass CI and `bin/package` for the tested version and dated changelog, and merge the
-   release preparation through review. Fetch origin/master and tags, then run
-   `bin/release-check VERSION FULL_COMMIT_SHA` from a clean checkout. The command
-   requires the candidate to be accepted on origin/master and rejects conflicting tags.
-7. Recheck the RubyGems name and request explicit maintainer publication approval.
-   Publication must target the approved version and exact reviewed commit. Tag and
-   publish only after that approval using the protected workflow described below.
+Optional live checks remain available when the owner requests them. If used, keep
+them outside CI, designate a disposable tenant, and enable mutations separately.
+Record actual results and clean up labelled records; do not invent success receipts.
+See [live validation](live-validation.md). Outstanding API observations can be
+tracked as known issues without imposing a mandatory new live test campaign.
 
 ## Connect GitHub and RubyGems once
 
@@ -139,15 +116,14 @@ The packaging checks inspect the actual installed artifacts. CI repeats validati
 on Ruby 3.2, 3.3, 3.4 and 4.0. Release builds set `SOURCE_DATE_EPOCH` to the approved
 commit timestamp. Neither build task publishes.
 
-Before dispatch, complete the live evidence and dated changelog gates above. Both
-gem versions must match. The development report `docs/live-validation-report.json`
-does not satisfy `docs/live-validation.json`. Preparing this workflow does not
-advance the version, date the changelog or authorize publication.
+Before dispatch, complete the offline checks and dated changelog above. Both
+gem versions must match. Live reports are optional historical evidence. Preparing
+this workflow does not advance the version, date the changelog or authorize publication.
 
 After merging the workflow, open Actions → **Release gems** → **Run workflow** on
 `master`. Enter the explicitly approved stable version without `v` and its full
 40-character accepted commit SHA. The read-only preflight rejects an unaccepted
-commit, untested changes, incomplete evidence, mismatched versions or a conflicting tag.
+commit, a dirty checkout, an undated changelog, mismatched versions or a conflicting tag.
 Tag pushes never start publication. The only release entry point is manual dispatch
 from `master`; dispatch from any other branch or tag is rejected. Version and full
 commit inputs must identify the explicitly approved candidate.
@@ -170,3 +146,9 @@ provenance, fix the cause, and rerun only the failed jobs against the same appro
 candidate. Do not rerun an already-successful publish job, move the tag, overwrite a
 published version or automatically yank it. Code changes require a new reviewed
 candidate and fresh evidence; arrange a new version when the core is already published.
+
+
+—
+Stan Carver II
+Made in Texas 🤠
+https://stancarver.com
