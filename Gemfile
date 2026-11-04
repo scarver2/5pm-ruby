@@ -6,7 +6,7 @@ gem "rake", "~> 13.0"
 gem "rbs", "~> 3.10.0"
 gem "rexml", "~> 3.4"
 gem "rspec", "~> 3.13"
-gem "rubocop", "~> 1.75"
+gem "rubocop", "~> 1.92"
 gem "simplecov", "~> 1.2"
 
 # Integration-test the separate adapter without adding MCP to the core runtime.
