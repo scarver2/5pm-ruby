@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 — 2026-11-24
+
+- Add optional trusted `project_ids` scoping to the MCP adapter and
+  `FIVE_PM_PROJECT_IDS` to its executable. Scoped adapters expose five read tools,
+  require explicit project selection for multi-project task/activity lists, and
+  reject out-of-scope results before returning account data. The unscoped default
+  and its per-call mutation approval behavior remain supported.
+
 ## 0.1.0 — 2026-10-30
 
 - Make live API validation optional and owner-controlled. Releases no longer require
