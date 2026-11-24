@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "json"
 require "open3"
 require "spec_helper"
 require "tmpdir"
@@ -38,6 +39,19 @@ RSpec.describe "trusted publishing preparation" do
       job.fetch("steps", []).each do |step|
         expect(step.fetch("uses")).to match(/@[0-9a-f]{40}\z/) if step.key?("uses")
       end
+    end
+  end
+
+  it "uses only declared inputs of the reviewed official publishing action for both gems" do
+    contracts = JSON.parse(File.read(File.join(__dir__, "fixtures/release_action_inputs.json")))
+    %w[publish-core publish-mcp].each do |job|
+      step = workflow.dig("jobs", job, "steps").find { |entry| entry["uses"]&.start_with?("rubygems/release-gem@") }
+      declared = contracts.fetch(step.fetch("uses")).fetch("inputs")
+      configured = step.fetch("with", {}).keys
+      expect(configured - declared).to be_empty
+      # Both gems already exist with configured trusted publishers. Upstream's
+      # `owner` input (release-gem v1.5.0+) applies only to pending publishers.
+      expect(configured).not_to include("owner")
     end
   end
 
