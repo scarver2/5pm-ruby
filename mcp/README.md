@@ -118,3 +118,38 @@ Tracks [issue #4](https://github.com/scarver2/5pm-ruby/issues/4). Both packages 
 subject to review of the tested source and explicit publication approval. Live checks
 exercise the actual read-only stdio executable, all project/task mutation tools in
 an embedding host, per-call approval denial, argument spoofing rejection and audit redaction.
+
+## Trusted project scope (unreleased)
+
+Hosts may construct a read-only adapter with a nonempty allowlist of positive
+integer project IDs:
+
+```ruby
+FivePM::MCPAdapter::Server.new(client: client, project_ids: [12, 13])
+```
+
+The standalone executable accepts the same trusted configuration through
+`FIVE_PM_PROJECT_IDS='[12,13]'`. Supply this in the host environment, never as a
+tool argument. Missing configuration preserves the ten account-visible read
+tools. Invalid or empty configuration exits instead of falling back to unscoped
+access. The array is copied at construction; recreate the adapter after changing
+project membership. Up to 1,000 IDs are supported.
+
+Scoped adapters expose only `get_projects`, `get_tasks`, `list_tasks`,
+`get_activity` and `list_activity` (with the `five_pm_` prefix). Account-wide user,
+group and project-list tools are unavailable. Scoped mutations are unavailable,
+even with an approval callback; the existing approval contract still applies to
+unscoped embedded mutations.
+
+Task/activity lists inject the project filter when one project is configured.
+With multiple projects, each call must select an allowed `filter.projectId`;
+visit each project and its `next_offset` separately. Conflicting filters fail
+before API dispatch. Direct-ID reads, list pages, missing project identities,
+unexpected returned record IDs and nested `projectId` references are checked
+before data is returned. A mixed or out-of-scope page is rejected in full, rather
+than silently dropping rows and making pagination appear complete.
+
+This adapter boundary does not change the account's remote permissions. Use a
+least-privilege account. Unknown fields and account text remain untrusted data;
+project membership can change concurrently and requires an operator-controlled
+scope refresh. Published 0.1.0 does not include this feature.

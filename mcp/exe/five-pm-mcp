@@ -2,13 +2,17 @@
 require "five_pm/mcp"
 
 begin
+  if ENV.key?("FIVE_PM_PROJECT_IDS")
+    project_ids = JSON.parse(ENV.fetch("FIVE_PM_PROJECT_IDS"))
+    FivePM::MCPAdapter::ProjectScope.new(project_ids)
+  end
   client = FivePM::Client.new(host: ENV.fetch("FIVE_PM_HOST"), login: ENV.fetch("FIVE_PM_LOGIN"),
                               password: ENV.fetch("FIVE_PM_PASSWORD"), response_mode: :typed)
   # The executable always runs read-only. Hosts can embed the adapter with a trusted
   # per-call approval callback if they intentionally enable mutation tools.
   audit = ->(event) { $stderr.write("#{JSON.generate(event)}\n") }
-  FivePM::MCPAdapter::Server.new(client: client, audit: audit).open
-rescue FivePM::Error, KeyError
+  FivePM::MCPAdapter::Server.new(client: client, audit: audit, project_ids: project_ids).open
+rescue FivePM::Error, KeyError, ArgumentError, JSON::ParserError
   warn "5pm MCP configuration or connection failed; check injected environment variables."
   exit 1
 ensure

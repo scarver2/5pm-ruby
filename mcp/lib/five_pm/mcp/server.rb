@@ -1,4 +1,5 @@
 require "json"
+require_relative "project_scope"
 
 module FivePM
   module MCPAdapter
@@ -18,15 +19,18 @@ module FivePM
 
       # approver is a trusted host callback, never an MCP argument. It receives an
       # immutable exact proposal and must obtain explicit user approval for that call.
-      def initialize(client:, allow_mutations: false, approver: nil, audit: ->(_event) {}, allowed_tools: nil)
+      def initialize(client:, allow_mutations: false, approver: nil, audit: ->(_event) {}, allowed_tools: nil,
+                     project_ids: nil)
         unless [true, false].include?(allow_mutations) && audit.respond_to?(:call)
           raise ArgumentError, "invalid adapter configuration"
         end
         if allow_mutations && !approver.respond_to?(:call)
           raise ArgumentError, "mutations require a trusted per-call approval callback"
         end
+        raise ArgumentError, "project-scoped adapters are read-only" if project_ids && allow_mutations
 
         @client = client
+        @project_scope = ProjectScope.new(project_ids) unless project_ids.nil?
         @allow_mutations = allow_mutations
         @approver = approver
         @audit = audit
@@ -80,8 +84,12 @@ module FivePM
         reads = RESOURCES.flat_map do |service, (part, filters)|
           properties = { offset: { type: "integer", minimum: 0 }, limit: { type: "integer", minimum: 1, maximum: 100 } }
           properties[:filter] = filter_schema(filters) unless filters.empty?
-          [tool("list_#{service}", schema(properties), service, "list", part, false),
-           tool("get_#{service}", schema({ id: ID }, ["id"]), service, "get", part, false)]
+          %w[list get].filter_map do |action|
+            next if @project_scope && !@project_scope.visible?(service, action)
+
+            input = action == "list" ? schema(properties) : schema({ id: ID }, ["id"])
+            tool("#{action}_#{service}", input, service, action, part, false)
+          end
         end
         return reads unless @allow_mutations
 
@@ -116,6 +124,7 @@ module FivePM
       def respond(name, service, action, part, mutation, arguments)
         request_id = next_request_id
         wire_arguments = immutable(stringify(arguments))
+        wire_arguments = immutable(@project_scope.arguments(service, action, wire_arguments)) if @project_scope
         if mutation
           proposal = immutable({ "tool" => "five_pm_#{name}", "service" => service,
                                  "action" => action, "arguments" => wire_arguments, "request_id" => request_id })
@@ -126,6 +135,7 @@ module FivePM
         end
         dispatched = true
         data = dispatch(service, action, part, wire_arguments)
+        @project_scope&.result(service, action, wire_arguments, data)
         # A successful mutation must never look retryable if an audit sink fails.
         result = response({ data: sanitize(data) })
         audit(request_id, name, "success")
