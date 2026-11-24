@@ -42,6 +42,12 @@ Dir.chdir(root) do
         server = FivePM::MCPAdapter::Server.new(client: Object.new).server
         result = JSON.parse(server.handle_json(JSON.generate(jsonrpc: "2.0", id: 1, method: "tools/list")))
         abort "installed adapter failed protocol smoke test" unless result.fetch("result").fetch("tools").length == 10
+        scoped = FivePM::MCPAdapter::Server.new(client: Object.new, project_ids: [12]).server
+        scoped_result = JSON.parse(scoped.handle_json(JSON.generate(jsonrpc: "2.0", id: 2, method: "tools/list")))
+        unless scoped_result.fetch("result").fetch("tools").map { |tool| tool.fetch("name") }.sort ==
+               %w[five_pm_get_activity five_pm_get_projects five_pm_get_tasks five_pm_list_activity five_pm_list_tasks]
+          abort "installed adapter failed trusted-scope smoke test"
+        end
         # Resolve by gem name to verify the shipped manifest loads core signatures.
         abort "installed RBS validation failed" unless system(RbConfig.ruby, "-S", "rbs", "-r", "5pm-mcp", "validate")
       CODE

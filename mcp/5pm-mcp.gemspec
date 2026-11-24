@@ -14,6 +14,6 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["rubygems_mfa_required"] = "true"
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
-  spec.add_dependency "5pm", "~> 0.1.0"
-  spec.add_dependency "mcp", "~> 1.6.1"
+  spec.add_dependency "5pm", "~> 0.2.0"
+  spec.add_dependency "mcp", ">= 1.6.1", "< 1.12.0"
 end
