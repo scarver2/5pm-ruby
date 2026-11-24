@@ -119,7 +119,7 @@ subject to review of the tested source and explicit publication approval. Live c
 exercise the actual read-only stdio executable, all project/task mutation tools in
 an embedding host, per-call approval denial, argument spoofing rejection and audit redaction.
 
-## Trusted project scope (unreleased)
+## Trusted project scope (0.2.0)
 
 Hosts may construct a read-only adapter with a nonempty allowlist of positive
 integer project IDs:

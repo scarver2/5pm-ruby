@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-11-24
 
 - Add optional trusted `project_ids` scoping to the MCP adapter and
   `FIVE_PM_PROJECT_IDS` to its executable. Scoped adapters expose five read tools,
