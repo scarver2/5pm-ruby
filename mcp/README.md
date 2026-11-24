@@ -1,15 +1,15 @@
 # 5pm-mcp
 
 Separate MIT-licensed MCP adapter for `5pm`, using the official MCP Ruby SDK.
-Ruby 3.2+. Version [0.1.0 is published on RubyGems](https://rubygems.org/gems/5pm-mcp/versions/0.1.0).
+Ruby 3.2+. Version [0.2.0 is published on RubyGems](https://rubygems.org/gems/5pm-mcp/versions/0.2.0).
 The adapter installs the matching core SDK; the core SDK does not depend on MCP.
-See the [v0.1.0 release](https://github.com/scarver2/5pm-ruby/releases/tag/v0.1.0)
-for artifacts and checksums.
+See the [v0.2.0 release](https://github.com/scarver2/5pm-ruby/releases/tag/v0.2.0)
+for release notes.
 
 ## Installation and execution
 
 ```sh
-mise exec -- gem install 5pm-mcp --version 0.1.0
+mise exec -- gem install 5pm-mcp --version 0.2.0
 ```
 
 Inject `FIVE_PM_HOST`, `FIVE_PM_LOGIN`, and `FIVE_PM_PASSWORD` through your environment
@@ -19,7 +19,7 @@ or secret manager, then start the installed stdio server:
 mise exec -- five-pm-mcp
 ```
 
-For a Bundler application, add `gem "5pm-mcp", "~> 0.1.0"` to its Gemfile, run
+For a Bundler application, add `gem "5pm-mcp", "~> 0.2.0"` to its Gemfile, run
 `mise exec -- bundle install`, then use `mise exec -- bundle exec five-pm-mcp`.
 Live API refreshes are optional; installation does not require live validation.
 
