@@ -2,10 +2,37 @@
 
 Ruby SDK for 5pm API v2. MIT licensed; Ruby 3.2+.
 
-Unreleased. Disposable-account verification covers account-specific contracts, JSON
-envelopes, resource CRUD, pagination, attachments and the standalone MCP adapter.
-See [live validation](docs/live-validation.md) for scope and reproducible checks.
-Publication still requires review and explicit approval.
+Version **0.2.0** is published: [5pm](https://rubygems.org/gems/5pm/versions/0.2.0)
+and [5pm-mcp](https://rubygems.org/gems/5pm-mcp/versions/0.2.0).
+See the [GitHub release](https://github.com/scarver2/5pm-ruby/releases/tag/v0.2.0)
+and [CHANGELOG](CHANGELOG.md) for details. Live API refreshes are optional and owner-controlled.
+
+## Installation
+
+Install the core SDK:
+
+```sh
+gem install 5pm --version 0.2.0
+```
+
+For the standalone MCP server, install the adapter; it also installs the core SDK:
+
+```sh
+gem install 5pm-mcp --version 0.2.0
+```
+
+With Bundler, add the package you need to your Gemfile:
+
+```ruby
+gem "5pm", "~> 0.2.0"
+# For MCP applications, use this instead (it includes the core SDK):
+# gem "5pm-mcp", "~> 0.2.0"
+```
+
+Then run `bundle install`. Load the SDK with `require "five_pm"`;
+the optional adapter uses `require "five_pm/mcp"`. Both packages require Ruby 3.2+.
+If you manage Ruby with a version manager such as mise, run these commands through
+it (for example `gem install 5pm`); none is required.
 
 ## Development
 
@@ -16,9 +43,11 @@ bin/lint
 bin/package-mcp
 ```
 
+For repeatable macOS Keychain setup and cached contract/read checks, see
+[cached validation](docs/cached-validation.md) (`bin/validate --help`).
+
 ## Configuration and initial API
 
-Install from this checkout with Bundler (`gem "5pm", path: "/path/to/sdk"`).
 The gem name is `5pm`; load it with `require "five_pm"` and use the `FivePM` namespace.
 Provide `FIVE_PM_HOST`, `FIVE_PM_LOGIN`, and `FIVE_PM_PASSWORD` through your environment
 or a secret manager such as Infisical; no dotenv file is needed.
@@ -180,15 +209,16 @@ Clients copy configuration strings and refuse Marshal serialization of credentia
 Run `bin/package` to verify the actual built artifact. See
 [release preparation](docs/releasing.md) and [implementation guideposts](docs/implementation-guides.md).
 
-## Remaining release gates
+## Future releases
 
-- Review and merge the live-validated source; regenerate release evidence for the exact accepted commit.
+- Review and merge the offline-tested source; live API refreshes are optional and owner-controlled.
 - Keep the supported Ruby matrix passing in hosted CI. Live checks remain opt-in and outside CI.
 - Date/time strings remain opaque; no timezone conversion or consistent-snapshot guarantee is offered.
 - Rate-limit and transient-network behavior is tested synthetically, without stressing the live account.
-- Configure the protected `release` environment and both RubyGems trusted publishers
-  using [release preparation](docs/releasing.md); verify name availability and obtain
-  explicit approval for the version and exact commit before dispatching publication.
+- Releases publish through the existing protected `release` environment and both
+  RubyGems trusted publishers, first used for 0.2.0. Verify that configuration still
+  matches [release preparation](docs/releasing.md) and obtain explicit approval for
+  the version and exact commit before dispatching publication.
 
 Official sources: [developer guide](https://www.5pmweb.com/5pm_api.php),
 [API reference](https://www.5pmweb.com/help/api_docs.php).
@@ -203,4 +233,10 @@ the same injected environment variables, or see its README for host configuratio
 
 `bin/package-mcp` verifies both installed artifacts and the adapter
 protocol in an isolated temporary GEM_HOME. `bin/live-check` adds opt-in disposable
-account verification; no gem publication is automated.
+account verification. Publication runs only through the protected, manually
+dispatched release workflow described in [release preparation](docs/releasing.md).
+
+—
+Stan Carver II
+Made in Texas 🤠
+https://stancarver.com

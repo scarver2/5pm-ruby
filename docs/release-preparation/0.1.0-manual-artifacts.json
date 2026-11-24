@@ -1,0 +1,112 @@
+{
+  "status": "preparation_only_blocked",
+  "publication_authorized": false,
+  "proposed_version": "0.1.0",
+  "source_commit": "9322e03f75604d7279775dc88c9192add840e76e",
+  "source_date_epoch": 1793399403,
+  "source_worktree_clean": true,
+  "changelog_state": "0.1.0 \u2014 unreleased",
+  "runtime": {
+    "ruby": "4.0.9",
+    "rubygems": "4.0.23",
+    "bundler": "4.0.23"
+  },
+  "supported_ruby": [
+    "3.2",
+    "3.3",
+    "3.4",
+    "4.0"
+  ],
+  "source_ci_run": 41138526407,
+  "source_ci_conclusion": "success",
+  "independent_rebuild_byte_identical": true,
+  "isolated_install_and_load": "passed",
+  "names_public_api_status": {
+    "5pm": 404,
+    "5pm-mcp": 404
+  },
+  "manual_authentication": "Sheriff existing local credentials only; no Cora access or token issuance; actual account/key scopes unverified",
+  "blockers": [
+    "One leftover labelled User requires owner cleanup and independent read-only verification",
+    "users.update API code 8; attachments not qualified",
+    "Required exact-source docs/live-validation.json absent/incomplete",
+    "Changelog still unreleased; dated final source must be rebuilt and requalified",
+    "Final exact artifact/candidate acceptance and separate Sheriff push authorization absent"
+  ],
+  "artifacts": [
+    {
+      "name": "5pm",
+      "file": "5pm-0.1.0.gem",
+      "sha256": "160b09db75dd1cf0aebac21e64f0f6a1216ea437c3155816481a1c7f0faff0e6",
+      "files": [
+        "CHANGELOG.md",
+        "LICENSE",
+        "README.md",
+        "SECURITY.md",
+        "docs/api-support.md",
+        "docs/implementation-guides.md",
+        "docs/implementation-status.md",
+        "docs/live-validation-report.json",
+        "docs/live-validation.md",
+        "docs/mcp-plan.md",
+        "docs/releasing.md",
+        "examples/read_only.rb",
+        "lib/five_pm.rb",
+        "lib/five_pm/client.rb",
+        "lib/five_pm/download.rb",
+        "lib/five_pm/errors.rb",
+        "lib/five_pm/operations.json",
+        "lib/five_pm/pagination.rb",
+        "lib/five_pm/request.rb",
+        "lib/five_pm/resource.rb",
+        "lib/five_pm/response.rb",
+        "lib/five_pm/retry_policy.rb",
+        "lib/five_pm/services.rb",
+        "lib/five_pm/transport.rb",
+        "lib/five_pm/types.json",
+        "lib/five_pm/version.rb",
+        "sig/five_pm.rbs",
+        "sig/models.rbs"
+      ],
+      "dependencies": [
+        {
+          "name": "json",
+          "requirement": ">= 2.6, < 4"
+        },
+        {
+          "name": "net-http",
+          "requirement": ">= 0.3, < 1"
+        }
+      ],
+      "license": "MIT",
+      "required_ruby": ">= 3.2"
+    },
+    {
+      "name": "5pm-mcp",
+      "file": "5pm-mcp-0.1.0.gem",
+      "sha256": "8ac7c8a5dc175b7ecd4d934b3c720ee3d4b0f019deacd3c5e94d249a3e22d601",
+      "files": [
+        "LICENSE",
+        "README.md",
+        "exe/five-pm-mcp",
+        "lib/five_pm/mcp.rb",
+        "lib/five_pm/mcp/server.rb",
+        "lib/five_pm/mcp/version.rb",
+        "sig/five_pm-mcp.rbs",
+        "sig/manifest.yaml"
+      ],
+      "dependencies": [
+        {
+          "name": "5pm",
+          "requirement": "~> 0.1.0"
+        },
+        {
+          "name": "mcp",
+          "requirement": "~> 1.6.1"
+        }
+      ],
+      "license": "MIT",
+      "required_ruby": ">= 3.2"
+    }
+  ]
+}

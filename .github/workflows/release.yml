@@ -1,3 +1,4 @@
+# .github/workflows/release.yml
 name: Release gems
 run-name: Release ${{ inputs.version }} at ${{ inputs.commit }}
 
@@ -59,8 +60,8 @@ jobs:
           INPUT_COMMIT: ${{ inputs.commit }}
         run: |
           set -euo pipefail
-          [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]
-          [[ "$GITHUB_REF" == refs/heads/master ]]
+          [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]] || exit 1
+          [[ "$GITHUB_REF" == refs/heads/master ]] || exit 1
           version="$INPUT_VERSION"
           commit="$INPUT_COMMIT"
           git fetch origin master:refs/remotes/origin/master --tags
@@ -88,7 +89,7 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.commit }}
           persist-credentials: false
-      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
@@ -143,7 +144,7 @@ jobs:
           ref: ${{ needs.prepare.outputs.commit }}
           persist-credentials: false
           fetch-depth: 0
-      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1
         with:
           ruby-version: "3.3"
           bundler-cache: true
@@ -155,7 +156,43 @@ jobs:
         run: bin/verify-release-tag
         env:
           RELEASE_TAG_REF: refs/tags/v${{ needs.prepare.outputs.version }}
+      - name: Check whether the exact package is already published
+        id: published
+        working-directory: .
+        env:
+          GEM_NAME: 5pm
+        run: |
+          set -euo pipefail
+          bundle exec rake build
+          package="pkg/$GEM_NAME-$RELEASE_VERSION.gem"
+          url="https://rubygems.org/api/v2/rubygems/$GEM_NAME/versions/$RELEASE_VERSION.json"
+          status=$(curl --silent --show-error --retry 3 --output "$RUNNER_TEMP/published.json" --write-out '%{http_code}' "$url")
+          case "$status" in
+            200)
+              expected=$(shasum -a 256 "$package" | cut -d ' ' -f 1)
+              jq -e --arg sha "$expected" '.sha == $sha' "$RUNNER_TEMP/published.json"
+              echo 'exists=true' >> "$GITHUB_OUTPUT"
+              ;;
+            404) echo 'exists=false' >> "$GITHUB_OUTPUT" ;;
+            *) echo "RubyGems lookup failed: HTTP $status" >&2; exit 1 ;;
+          esac
       - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
+        if: steps.published.outputs.exists != 'true'
+        with:
+          # rubygems-await 0.5.4 is incompatible with current Bundler's compact index.
+          # Verify the downloaded package checksum directly below instead.
+          await-release: false
+          working-directory: .
+      - name: Verify published package bytes
+        working-directory: .
+        env:
+          GEM_NAME: 5pm
+        run: |
+          set -euo pipefail
+          package="$GEM_NAME-$RELEASE_VERSION.gem"
+          curl --fail --silent --show-error --retry 12 --retry-all-errors --retry-delay 5 \
+            "https://rubygems.org/downloads/$package" --output "$RUNNER_TEMP/$package"
+          cmp "pkg/$package" "$RUNNER_TEMP/$package"
 
   publish-mcp:
     name: Publish approved 5pm-mcp
@@ -166,6 +203,8 @@ jobs:
       contents: read
       id-token: write
     env:
+      # Use the locked bundle installed by setup-ruby even from the mcp directory.
+      BUNDLE_GEMFILE: ${{ github.workspace }}/Gemfile
       SOURCE_DATE_EPOCH: ${{ needs.prepare.outputs.epoch }}
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
@@ -175,7 +214,7 @@ jobs:
           ref: ${{ needs.prepare.outputs.commit }}
           persist-credentials: false
           fetch-depth: 0
-      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1
         with:
           ruby-version: "3.3"
           bundler-cache: true
@@ -187,6 +226,40 @@ jobs:
         run: bin/verify-release-tag
         env:
           RELEASE_TAG_REF: refs/tags/v${{ needs.prepare.outputs.version }}
+      - name: Check whether the exact package is already published
+        id: published
+        working-directory: mcp
+        env:
+          GEM_NAME: 5pm-mcp
+        run: |
+          set -euo pipefail
+          bundle exec rake build
+          package="pkg/$GEM_NAME-$RELEASE_VERSION.gem"
+          url="https://rubygems.org/api/v2/rubygems/$GEM_NAME/versions/$RELEASE_VERSION.json"
+          status=$(curl --silent --show-error --retry 3 --output "$RUNNER_TEMP/published.json" --write-out '%{http_code}' "$url")
+          case "$status" in
+            200)
+              expected=$(shasum -a 256 "$package" | cut -d ' ' -f 1)
+              jq -e --arg sha "$expected" '.sha == $sha' "$RUNNER_TEMP/published.json"
+              echo 'exists=true' >> "$GITHUB_OUTPUT"
+              ;;
+            404) echo 'exists=false' >> "$GITHUB_OUTPUT" ;;
+            *) echo "RubyGems lookup failed: HTTP $status" >&2; exit 1 ;;
+          esac
       - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
+        if: steps.published.outputs.exists != 'true'
         with:
+          # rubygems-await 0.5.4 is incompatible with current Bundler's compact index.
+          # Verify the downloaded package checksum directly below instead.
+          await-release: false
           working-directory: mcp
+      - name: Verify published package bytes
+        working-directory: mcp
+        env:
+          GEM_NAME: 5pm-mcp
+        run: |
+          set -euo pipefail
+          package="$GEM_NAME-$RELEASE_VERSION.gem"
+          curl --fail --silent --show-error --retry 12 --retry-all-errors --retry-delay 5 \
+            "https://rubygems.org/downloads/$package" --output "$RUNNER_TEMP/$package"
+          cmp "pkg/$package" "$RUNNER_TEMP/$package"

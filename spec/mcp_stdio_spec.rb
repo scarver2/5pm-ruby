@@ -73,4 +73,25 @@ RSpec.describe "official MCP SDK over stdio" do
     expect(stdout).to eq("")
     expect(stderr).to include("check injected environment")
   end
+
+  it "applies trusted scope at the executable boundary and rejects malformed scope without fallback" do
+    executable = File.join(__dir__, "../mcp/exe/five-pm-mcp")
+    environment = { "FIVE_PM_HOST" => "example.5pmweb.com", "FIVE_PM_LOGIN" => "synthetic-login",
+                    "FIVE_PM_PASSWORD" => "synthetic-password-secret", "FIVE_PM_PROJECT_IDS" => "[12,13]" }
+    input = "#{JSON.generate(jsonrpc: '2.0', id: 1, method: 'tools/list')}\n"
+    stdout, stderr, status = Timeout.timeout(15) do
+      Open3.capture3(environment, RbConfig.ruby, "-Imcp/lib", executable, stdin_data: input)
+    end
+    expect(status).to be_success
+    expect(JSON.parse(stdout).dig("result", "tools").size).to eq(5)
+    expect(stderr).to eq("")
+    ["null", "[]", "false", "[0]", "[\"12\"]", "invalid"].each do |scope|
+      stdout, stderr, status = Open3.capture3(environment.merge("FIVE_PM_PROJECT_IDS" => scope),
+                                              RbConfig.ruby, "-Imcp/lib", executable, stdin_data: input)
+      expect(status).not_to be_success
+      expect(stdout).to eq("")
+      expect(stderr).to include("check injected environment")
+      expect(stderr).not_to include("synthetic-password-secret")
+    end
+  end
 end
