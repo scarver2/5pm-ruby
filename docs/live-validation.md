@@ -124,9 +124,14 @@ attachments remained. Attachment qualification was not reached. Further writes
 stopped; no Administrator credentials or privilege changes were used. Sessions from
 the independent identity/inventory checks closed successfully.
 
-Overall qualification is **blocked** and cleanup is **not complete**. Sheriff must
-remove only the newly created `SDK disposable extra ...` User, preserving the
-dedicated qualification User and pre-existing records. Independent cleanup verification
-and Deputy's disposition of the failed User operation are required before retrying.
-This failure record is not `docs/live-validation.json`, does not weaken release checks
-and does not claim release readiness. Credentials, record IDs and payloads are excluded.
+The run's recorded outcome is **blocked**, with cleanup **not verified** at the time
+of the run. The receipts preserve that outcome unchanged; this is a historical failure
+record, not `docs/live-validation.json` or passing evidence. Credentials, record IDs and
+payloads are excluded.
+
+Disposition: Stan later deleted the leftover labelled test User; no independent
+post-deletion inventory is recorded here. Live qualification is no longer a release
+prerequisite (see [release policy](releasing.md)), and 0.1.0 and 0.2.0 were published
+on offline tests and package verification. The `users.update` API code 8 is an open API
+observation; any further live check, including a retry of the User/attachment suite,
+runs only when Stan requests it.
