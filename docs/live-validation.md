@@ -24,12 +24,13 @@ readbacks, zero labelled leftovers and session cleanup. Stop on unverified isola
 permissions or cleanup. Record failures and the exact tested commit without secrets
 or account payloads. Live testing remains opt-in and is never part of CI.
 
-On 2026-10-30 qualification stopped before the sandbox/contract/mutation suite:
+Earlier on 2026-10-30 qualification stopped before the sandbox/contract/mutation suite:
 the supplied test credential was Admin, the saved browser session was signed out,
 and independent isolation/record inventory could not be completed. Read-only
 role-verification sessions were closed. No new qualification success is claimed.
-A securely supplied standard User account and independent tenant verification are
-required to resume. The earlier historical report remains development evidence.
+That access blocker was later resolved through secure standard User provisioning;
+the newer run below records a separate User-operation and cleanup failure. The
+earlier historical report remains development evidence.
 
 ## Reproduce
 
@@ -107,3 +108,30 @@ Dates remain exact strings; no timezone inference or conversion is performed.
 Retries, rate limits, transport failures and malformed schemas are tested with
 synthetic responses rather than inducing failures or load on the live account.
 Publication, hosted-CI acceptance and accepted-commit release evidence remain separate gates.
+
+## Standard User qualification — 2026-10-30
+
+The [sanitized qualification receipts](live-qualification-2026-10-30.json) record a
+new run against clean source `9322e03f75604d7279775dc88c9192add840e76e`.
+Standard User identity, demo-record inventory, sandbox preflight, six WSDL inventories,
+XSD parity, read checks and core mutations passed. All 16 MCP tools were exercised
+successfully. The historical development report above remains unchanged.
+
+The User/attachment suite stopped after creating a labelled test User: `users.update`
+returned API code 8 and User cleanup failed. Independent inventory found one extra
+labelled User; project/task/activity/group counts returned to baseline and no test
+attachments remained. Attachment qualification was not reached. Further writes
+stopped; no Administrator credentials or privilege changes were used. Sessions from
+the independent identity/inventory checks closed successfully.
+
+The run's recorded outcome is **blocked**, with cleanup **not verified** at the time
+of the run. The receipts preserve that outcome unchanged; this is a historical failure
+record, not `docs/live-validation.json` or passing evidence. Credentials, record IDs and
+payloads are excluded.
+
+Disposition: Stan later deleted the leftover labelled test User; no independent
+post-deletion inventory is recorded here. Live qualification is no longer a release
+prerequisite (see [release policy](releasing.md)), and 0.1.0 and 0.2.0 were published
+on offline tests and package verification. The `users.update` API code 8 is an open API
+observation; any further live check, including a retry of the User/attachment suite,
+runs only when Stan requests it.
