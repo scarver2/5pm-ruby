@@ -1,6 +1,12 @@
-require "spec_helper"
-require "yaml"
+# spec/release_workflow_spec.rb
+# frozen_string_literal: true
+
+require "digest"
+require "json"
 require "open3"
+require "spec_helper"
+require "tmpdir"
+require "yaml"
 
 RSpec.describe "trusted publishing preparation" do
   let(:workflow) { YAML.load_file(File.expand_path("../.github/workflows/release.yml", __dir__)) }
@@ -25,7 +31,9 @@ RSpec.describe "trusted publishing preparation" do
       expect(jobs.dig(job, "permissions")).to eq("contents" => "read", "id-token" => "write")
     end
     expect(jobs.dig("publish-mcp", "needs")).to include("publish-core")
-    expect(jobs.dig("publish-mcp", "steps").last.dig("with", "working-directory")).to eq("mcp")
+    expect(jobs.dig("publish-mcp", "env", "BUNDLE_GEMFILE")).to eq("${{ github.workspace }}/Gemfile")
+    publish = jobs.dig("publish-mcp", "steps").find { |step| step["uses"]&.start_with?("rubygems/release-gem@") }
+    expect(publish.dig("with", "working-directory")).to eq("mcp")
     expect(workflow.to_yaml).not_to include("secrets.")
     jobs.each_value do |job|
       job.fetch("steps", []).each do |step|
@@ -37,13 +45,46 @@ RSpec.describe "trusted publishing preparation" do
   it "uses only declared inputs of the reviewed official publishing action for both gems" do
     contracts = JSON.parse(File.read(File.join(__dir__, "fixtures/release_action_inputs.json")))
     %w[publish-core publish-mcp].each do |job|
-      step = workflow.dig("jobs", job, "steps").last
+      step = workflow.dig("jobs", job, "steps").find { |entry| entry["uses"]&.start_with?("rubygems/release-gem@") }
       declared = contracts.fetch(step.fetch("uses")).fetch("inputs")
       configured = step.fetch("with", {}).keys
       expect(configured - declared).to be_empty
-      # Current upstream has no owner support. A future adoption must replace
-      # this reviewed snapshot as well as the pin, not invent an ignored input.
-      expect(declared).not_to include("owner")
+      # Both gems already exist with configured trusted publishers. Upstream's
+      # `owner` input (release-gem v1.5.0+) applies only to pending publishers.
+      expect(configured).not_to include("owner")
+    end
+  end
+
+  it "resumes only byte-identical published packages and fails closed on lookup errors" do
+    %w[publish-core publish-mcp].each do |job|
+      steps = workflow.dig("jobs", job, "steps")
+      check = steps.find { |step| step["id"] == "published" }.fetch("run")
+      publish = steps.find { |step| step["uses"]&.start_with?("rubygems/release-gem@") }
+      expect(publish["if"]).to eq("steps.published.outputs.exists != 'true'")
+      expect(publish.dig("with", "await-release")).to be(false)
+      Dir.mktmpdir do |directory|
+        Dir.mkdir(File.join(directory, "pkg"))
+        File.write(File.join(directory, "pkg/test-0.2.0.gem"), "approved package")
+        digest = Digest::SHA256.hexdigest("approved package")
+        [["200", digest, true, "true"], ["200", "different", false, nil],
+         ["404", nil, true, "false"], ["500", nil, false, nil]].each do |status, sha, accepted, exists|
+          output = File.join(directory, "output")
+          File.write(output, "")
+          # Stub only the build and HTTP boundaries; execute the real checksum/JSON guards.
+          prefix = <<~BASH
+            bundle() { :; }
+            curl() {
+              printf '%s' '{"sha":"#{sha}"}' > "$RUNNER_TEMP/published.json"
+              printf '%s' '#{status}'
+            }
+          BASH
+          environment = { "GEM_NAME" => "test", "RELEASE_VERSION" => "0.2.0",
+                          "RUNNER_TEMP" => directory, "GITHUB_OUTPUT" => output }
+          _, errors, result = Open3.capture3(environment, "bash", "-c", prefix + check, chdir: directory)
+          expect(result.success?).to eq(accepted), errors
+          expect(File.read(output)).to eq(exists ? "exists=#{exists}\n" : "")
+        end
+      end
     end
   end
 
@@ -77,6 +118,14 @@ RSpec.describe "trusted publishing preparation" do
                                          chdir: File.dirname(File.join(root, path)))
       expect(status).to be_success, errors
     end
+  end
+
+  it "builds the adapter from its directory using the root locked bundle" do
+    root = File.expand_path("..", __dir__)
+    environment = { "BUNDLE_GEMFILE" => File.join(root, "Gemfile") }
+    _, errors, status = Open3.capture3(environment, "bundle", "exec", "rake", "build", chdir: File.join(root, "mcp"))
+    expect(status).to be_success, errors
+    expect(File).to exist(File.join(root, "mcp/pkg/5pm-mcp-#{FivePM::VERSION}.gem"))
   end
 
   it "refuses publication tasks outside the protected workflow before any publishing action" do

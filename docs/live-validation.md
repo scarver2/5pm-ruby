@@ -1,5 +1,10 @@
 # Disposable-account validation
 
+Live validation is optional and runs only when Stan requests it. It is not a release
+or CI prerequisite and requires no ongoing subscription. Historical results remain
+valid records of their original runs. See [release policy](releasing.md) and
+[cached validation](cached-validation.md) for owner-controlled refreshes.
+
 Live validation on 2026-10-30 exercised both packages using a disposable tenant.
 Reports and fixtures exclude its hostname, credentials, session tokens, record IDs,
 account payloads and attachment contents.
@@ -19,12 +24,13 @@ readbacks, zero labelled leftovers and session cleanup. Stop on unverified isola
 permissions or cleanup. Record failures and the exact tested commit without secrets
 or account payloads. Live testing remains opt-in and is never part of CI.
 
-On 2026-10-30 qualification stopped before the sandbox/contract/mutation suite:
+Earlier on 2026-10-30 qualification stopped before the sandbox/contract/mutation suite:
 the supplied test credential was Admin, the saved browser session was signed out,
 and independent isolation/record inventory could not be completed. Read-only
 role-verification sessions were closed. No new qualification success is claimed.
-A securely supplied standard User account and independent tenant verification are
-required to resume. The earlier historical report remains development evidence.
+That access blocker was later resolved through secure standard User provisioning;
+the newer run below records a separate User-operation and cleanup failure. The
+earlier historical report remains development evidence.
 
 ## Reproduce
 
@@ -44,7 +50,7 @@ The single JSON report identifies the base commit, dirty-worktree status and a
 SHA-256 digest of the tested source. The digest covers the sorted Git tracked and
 untracked, non-ignored files as `path`, NUL, byte length, NUL, then file bytes;
 `docs/live-validation-report.json` itself is excluded. It is development evidence,
-not the accepted-commit release evidence required by `bin/release-check`.
+not a fresh validation of a different source commit. `bin/release-check` does not require live evidence.
 
 The harness records successful transport operation names only, including calls made
 by the actual stdio process. With `--mutations`, it fails unless every one of the
@@ -102,3 +108,30 @@ Dates remain exact strings; no timezone inference or conversion is performed.
 Retries, rate limits, transport failures and malformed schemas are tested with
 synthetic responses rather than inducing failures or load on the live account.
 Publication, hosted-CI acceptance and accepted-commit release evidence remain separate gates.
+
+## Standard User qualification — 2026-10-30
+
+The [sanitized qualification receipts](live-qualification-2026-10-30.json) record a
+new run against clean source `9322e03f75604d7279775dc88c9192add840e76e`.
+Standard User identity, demo-record inventory, sandbox preflight, six WSDL inventories,
+XSD parity, read checks and core mutations passed. All 16 MCP tools were exercised
+successfully. The historical development report above remains unchanged.
+
+The User/attachment suite stopped after creating a labelled test User: `users.update`
+returned API code 8 and User cleanup failed. Independent inventory found one extra
+labelled User; project/task/activity/group counts returned to baseline and no test
+attachments remained. Attachment qualification was not reached. Further writes
+stopped; no Administrator credentials or privilege changes were used. Sessions from
+the independent identity/inventory checks closed successfully.
+
+The run's recorded outcome is **blocked**, with cleanup **not verified** at the time
+of the run. The receipts preserve that outcome unchanged; this is a historical failure
+record, not `docs/live-validation.json` or passing evidence. Credentials, record IDs and
+payloads are excluded.
+
+Disposition: Stan later deleted the leftover labelled test User; no independent
+post-deletion inventory is recorded here. Live qualification is no longer a release
+prerequisite (see [release policy](releasing.md)), and 0.1.0 and 0.2.0 were published
+on offline tests and package verification. The `users.update` API code 8 is an open API
+observation; any further live check, including a retry of the User/attachment suite,
+runs only when Stan requests it.

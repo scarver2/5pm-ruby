@@ -1,0 +1,318 @@
+{
+  "version": "0.1.0",
+  "checked_at": "2026-10-30T22:43:45Z",
+  "evidence_commit": "9322e03f75604d7279775dc88c9192add840e76e",
+  "worktree_dirty_at_test": false,
+  "source_sha256": "069b6678733a463557bd3e6d72bb17c296b342870b3937d99f18d02a01085c5b",
+  "result": "blocked",
+  "release_evidence": false,
+  "disposable_tenant_owner_confirmed": true,
+  "standard_user_verified": true,
+  "production_accessed": false,
+  "contract_verified": true,
+  "read_operations_verified": true,
+  "mutation_operations_verified": false,
+  "cleanup_verified": false,
+  "remaining_labelled_test_records": {
+    "users": 1,
+    "projects": 0,
+    "tasks": 0,
+    "activity": 0,
+    "project_groups": 0
+  },
+  "attachment_qualification": "not_reached",
+  "remaining_test_attachments": 0,
+  "failure": {
+    "stage": "users.update",
+    "category": "FivePM::APIError",
+    "api_code": 8,
+    "cleanup_failure_service": "users",
+    "remote_message_retained": false
+  },
+  "stop_action": "Stopped subsequent writes; independent read-only cleanup/inventory checks only. No administrative substitution.",
+  "required_owner_action": "Remove only the newly created SDK disposable extra labelled User; do not remove the dedicated qualification User or pre-existing records. Independently verify cleanup before any further mutation run.",
+  "publication_authorized": false,
+  "receipts": {
+    "identity": {
+      "process_success": true,
+      "stage": "identity",
+      "report": {
+        "result": "read_only_inventory_observed",
+        "stage": "inventory",
+        "production_accessed": false,
+        "standard_user_verified": true,
+        "identity_matches": true,
+        "counts": {
+          "projects": 1,
+          "tasks": 9,
+          "activity": 19,
+          "project_groups": 0,
+          "users": 2
+        },
+        "demo_project_only": true,
+        "unclassified_tasks": 0,
+        "prior_labelled_test_records": 0,
+        "tasks_outside_demo_project": 0,
+        "activity_outside_demo_records": 0,
+        "existing_activity_attachment_count": 0,
+        "project_group_count": 0,
+        "tenant_endpoint_verified": true,
+        "session_cleanup_verified": true
+      },
+      "stderr_present": false
+    },
+    "sandbox": {
+      "process_success": true,
+      "stage": "sandbox",
+      "report": {
+        "version": "0.1.0",
+        "evidence_commit": "9322e03f75604d7279775dc88c9192add840e76e",
+        "disposable_tenant": true,
+        "result": "read_only_passed",
+        "checks": [
+          "authentication.getAuthorizedUser",
+          "projects.list",
+          "project_groups.list",
+          "tasks.list",
+          "activity.list",
+          "users.list"
+        ],
+        "contract_verified": false,
+        "read_operations_verified": false,
+        "mutation_operations_verified": false
+      },
+      "stderr_present": false
+    },
+    "reads": {
+      "process_success": true,
+      "stage": "reads",
+      "report": {
+        "result": "passed",
+        "version": "0.1.0",
+        "checked_at": "2026-10-30T22:43:45Z",
+        "evidence_commit": "9322e03f75604d7279775dc88c9192add840e76e",
+        "worktree_dirty": false,
+        "source_sha256": "069b6678733a463557bd3e6d72bb17c296b342870b3937d99f18d02a01085c5b",
+        "disposable_tenant": true,
+        "mutations_enabled": false,
+        "release_evidence": false,
+        "api_operations_verified": [
+          "activity.getById",
+          "activity.getFilesList",
+          "activity.getList",
+          "authentication.getAuthorizedUser",
+          "authentication.isSsl",
+          "authentication.nop",
+          "authentication.signIn",
+          "authentication.signOut",
+          "projects.getAll",
+          "projects.getById",
+          "projects.getList",
+          "projectsgroups.getAll",
+          "tasks.getById",
+          "tasks.getList",
+          "users.getAll",
+          "users.getAuthorizedUser",
+          "users.getByEmail",
+          "users.getById"
+        ],
+        "api_operations_missing": [
+          "activity.add",
+          "activity.attachFiles",
+          "activity.downloadFile",
+          "activity.remove",
+          "activity.removeFile",
+          "activity.update",
+          "projects.add",
+          "projects.remove",
+          "projects.update",
+          "projectsgroups.add",
+          "projectsgroups.getById",
+          "projectsgroups.remove",
+          "projectsgroups.update",
+          "tasks.add",
+          "tasks.remove",
+          "tasks.update",
+          "users.add",
+          "users.remove",
+          "users.update"
+        ],
+        "reports": [
+          {
+            "check": "live_reads",
+            "passed": true,
+            "report": {
+              "result": "passed",
+              "checks": [
+                "contract.authentication",
+                "contract.projects",
+                "contract.tasks",
+                "contract.projectsgroups",
+                "contract.activity",
+                "contract.users",
+                "contract.schema",
+                "authentication.authorized_user",
+                "authentication.nop",
+                "authentication.isSsl",
+                "projects.list",
+                "projects.get",
+                "projects.pagination",
+                "project_groups.list",
+                "tasks.list",
+                "tasks.get",
+                "tasks.pagination",
+                "activity.list",
+                "activity.get",
+                "activity.pagination",
+                "users.list",
+                "users.get",
+                "projects.getAll",
+                "users.getAuthorizedUser",
+                "users.find_by_email",
+                "activity.files",
+                "mcp.stdio",
+                "cleanup.no_disposable_records"
+              ],
+              "mutations_tested": false
+            },
+            "diagnostics": []
+          }
+        ]
+      },
+      "stderr_present": false
+    },
+    "core-mutations": {
+      "process_success": true,
+      "stage": "core-mutations",
+      "report": {
+        "result": "passed",
+        "checks": [
+          "project_groups.create",
+          "project_groups.update",
+          "projects.create",
+          "projects.update",
+          "tasks.create",
+          "tasks.update",
+          "activity.create",
+          "activity.update",
+          "project_groups.get",
+          "projects.get",
+          "tasks.get",
+          "activity.get",
+          "mcp.all_read_tools",
+          "activity.delete",
+          "tasks.delete",
+          "projects.delete",
+          "project_groups.delete",
+          "mcp.approval",
+          "mcp.projects.create",
+          "mcp.tasks.create",
+          "mcp.projects.update",
+          "mcp.projects.get",
+          "mcp.tasks.update",
+          "mcp.tasks.get",
+          "mcp.tasks.delete_denied",
+          "mcp.tasks.delete",
+          "mcp.projects.delete_denied",
+          "mcp.projects.delete",
+          "mcp.audit"
+        ],
+        "mcp_tools_verified": [
+          "five_pm_create_projects",
+          "five_pm_create_tasks",
+          "five_pm_delete_projects",
+          "five_pm_delete_tasks",
+          "five_pm_get_activity",
+          "five_pm_get_project_groups",
+          "five_pm_get_projects",
+          "five_pm_get_tasks",
+          "five_pm_get_users",
+          "five_pm_list_activity",
+          "five_pm_list_project_groups",
+          "five_pm_list_projects",
+          "five_pm_list_tasks",
+          "five_pm_list_users",
+          "five_pm_update_projects",
+          "five_pm_update_tasks"
+        ],
+        "cleanup": true
+      },
+      "stderr_present": false,
+      "diagnostics": []
+    },
+    "attachments-users": {
+      "process_success": false,
+      "stage": "attachments-users",
+      "report": {
+        "result": "failed",
+        "diagnostics": [
+          {
+            "result": "failed",
+            "stage": "users.update",
+            "category": "FivePM::APIError",
+            "passed": [
+              "users.create"
+            ],
+            "api_code": 8
+          },
+          {
+            "result": "cleanup_failed",
+            "service": "users"
+          }
+        ]
+      },
+      "stderr_present": true,
+      "diagnostics": [
+        {
+          "result": "failed",
+          "stage": "users.update",
+          "category": "FivePM::APIError",
+          "passed": [
+            "users.create"
+          ],
+          "api_code": 8
+        },
+        {
+          "result": "cleanup_failed",
+          "service": "users"
+        }
+      ]
+    },
+    "post-failure-cleanup": {
+      "stage": "cleanup",
+      "process_success": false,
+      "report": {
+        "result": "cleanup_unverified"
+      },
+      "stderr_present": true
+    },
+    "post-failure-identity": {
+      "stage": "identity",
+      "process_success": true,
+      "report": {
+        "result": "read_only_inventory_observed",
+        "stage": "inventory",
+        "production_accessed": false,
+        "standard_user_verified": true,
+        "identity_matches": true,
+        "counts": {
+          "projects": 1,
+          "tasks": 9,
+          "activity": 19,
+          "project_groups": 0,
+          "users": 3
+        },
+        "demo_project_only": true,
+        "unclassified_tasks": 0,
+        "prior_labelled_test_records": 1,
+        "tasks_outside_demo_project": 0,
+        "activity_outside_demo_records": 0,
+        "existing_activity_attachment_count": 0,
+        "project_group_count": 0,
+        "tenant_endpoint_verified": true,
+        "session_cleanup_verified": true
+      },
+      "stderr_present": false
+    }
+  }
+}
