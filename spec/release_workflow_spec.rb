@@ -30,6 +30,7 @@ RSpec.describe "trusted publishing preparation" do
       expect(jobs.dig(job, "permissions")).to eq("contents" => "read", "id-token" => "write")
     end
     expect(jobs.dig("publish-mcp", "needs")).to include("publish-core")
+    expect(jobs.dig("publish-mcp", "env", "BUNDLE_GEMFILE")).to eq("${{ github.workspace }}/Gemfile")
     publish = jobs.dig("publish-mcp", "steps").find { |step| step["uses"]&.start_with?("rubygems/release-gem@") }
     expect(publish.dig("with", "working-directory")).to eq("mcp")
     expect(workflow.to_yaml).not_to include("secrets.")
@@ -103,6 +104,14 @@ RSpec.describe "trusted publishing preparation" do
                                          chdir: File.dirname(File.join(root, path)))
       expect(status).to be_success, errors
     end
+  end
+
+  it "builds the adapter from its directory using the root locked bundle" do
+    root = File.expand_path("..", __dir__)
+    environment = { "BUNDLE_GEMFILE" => File.join(root, "Gemfile") }
+    _, errors, status = Open3.capture3(environment, "bundle", "exec", "rake", "build", chdir: File.join(root, "mcp"))
+    expect(status).to be_success, errors
+    expect(File).to exist(File.join(root, "mcp/pkg/5pm-mcp-#{FivePM::VERSION}.gem"))
   end
 
   it "refuses publication tasks outside the protected workflow before any publishing action" do
