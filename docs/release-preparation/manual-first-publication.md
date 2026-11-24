@@ -17,9 +17,9 @@ The GitHub release contains both gems and `SHA256SUMS`.
 ## Installation
 
 ```sh
-mise exec -- gem install 5pm --version 0.1.0
+gem install 5pm --version 0.1.0
 # For the MCP server, this also installs the core SDK:
-mise exec -- gem install 5pm-mcp --version 0.1.0
+gem install 5pm-mcp --version 0.1.0
 ```
 
 For a Bundler application, add the package you need:
@@ -30,8 +30,8 @@ gem "5pm", "~> 0.1.0"
 # gem "5pm-mcp", "~> 0.1.0"
 ```
 
-Run `mise exec -- bundle install`. Require `five_pm` for the SDK or `five_pm/mcp`
-for the adapter. The standalone executable is `mise exec -- five-pm-mcp`.
+Run `bundle install`. Require `five_pm` for the SDK or `five_pm/mcp`
+for the adapter. The standalone executable is `five-pm-mcp`.
 Both gems support Ruby 3.2+.
 
 ## Final artifact verification

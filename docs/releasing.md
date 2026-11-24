@@ -20,13 +20,13 @@ through RubyGems trusted publishing, from accepted commit
 - [Successful release workflow run](https://github.com/scarver2/5pm-ruby/actions/runs/45461974540)
 
 ```sh
-mise exec -- gem install 5pm --version 0.2.0
+gem install 5pm --version 0.2.0
 # Install this for MCP support; it includes the core SDK:
-mise exec -- gem install 5pm-mcp --version 0.2.0
+gem install 5pm-mcp --version 0.2.0
 ```
 
 Bundler applications use `gem "5pm", "~> 0.2.0"` or
-`gem "5pm-mcp", "~> 0.2.0"`, followed by `mise exec -- bundle install`.
+`gem "5pm-mcp", "~> 0.2.0"`, followed by `bundle install`.
 Version 0.2.0 is immutable: do not repeat its pushes or move its tag.
 
 ### 0.1.0

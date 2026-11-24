@@ -9,18 +9,18 @@ for release notes.
 ## Installation and execution
 
 ```sh
-mise exec -- gem install 5pm-mcp --version 0.2.0
+gem install 5pm-mcp --version 0.2.0
 ```
 
 Inject `FIVE_PM_HOST`, `FIVE_PM_LOGIN`, and `FIVE_PM_PASSWORD` through your environment
 or secret manager, then start the installed stdio server:
 
 ```sh
-mise exec -- five-pm-mcp
+five-pm-mcp
 ```
 
 For a Bundler application, add `gem "5pm-mcp", "~> 0.2.0"` to its Gemfile, run
-`mise exec -- bundle install`, then use `mise exec -- bundle exec five-pm-mcp`.
+`bundle install`, then use `bundle exec five-pm-mcp`.
 Live API refreshes are optional; installation does not require live validation.
 
 ## Run from the checkout
@@ -41,14 +41,15 @@ For a host that supports the common `mcpServers` configuration structure:
 {
   "mcpServers": {
     "five-pm": {
-      "command": "mise",
-      "args": ["exec", "--", "five-pm-mcp"]
+      "command": "five-pm-mcp"
     }
   }
 }
 ```
 
-Ensure the host can find `mise` (use its absolute executable path if needed), and
+Ensure the host can find `five-pm-mcp` (use its absolute path, from `which five-pm-mcp`,
+if the host's `PATH` differs; with a version manager such as mise, set `command` to
+`mise` and `args` to `["exec", "--", "five-pm-mcp"]`), and
 start it with the three 5pm variables already injected. Use its actual
 configuration format if it differs. Rodeo/A1Web integrations can launch this standard
 stdio server; no special integration or permission override is built into the SDK.
@@ -133,8 +134,9 @@ Tests include real stdio subprocesses backed by an explicitly synthetic transpor
 including successive denied/approved/denied writes to prove approval is per call,
 mutation denial/approval, immutable proposals, error redaction and audit-sink failure.
 
-Tracks [issue #4](https://github.com/scarver2/5pm-ruby/issues/4). Both packages remain
-subject to review of the tested source and explicit publication approval. Live checks
+Tracks [issue #4](https://github.com/scarver2/5pm-ruby/issues/4). Both packages are
+published (see the top of this README); each future release still requires review
+of the tested source and explicit publication approval. Live checks
 exercise the actual read-only stdio executable, all project/task mutation tools in
 an embedding host, per-call approval denial, argument spoofing rejection and audit redaction.
 
