@@ -203,6 +203,8 @@ jobs:
       contents: read
       id-token: write
     env:
+      # Use the locked bundle installed by setup-ruby even from the mcp directory.
+      BUNDLE_GEMFILE: ${{ github.workspace }}/Gemfile
       SOURCE_DATE_EPOCH: ${{ needs.prepare.outputs.epoch }}
       RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
