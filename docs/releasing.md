@@ -1,8 +1,50 @@
-# Release preparation
+<!-- docs/releasing.md -->
+# Releases
 
 `bin/package` builds the gem, checks its exact file inventory and MIT license, then
 loads the installed artifact in a subprocess outside Bundler's source checkout.
 It does not publish. `bin/release-check VERSION FULL_COMMIT_SHA` is also read-only.
+
+
+## Published releases
+
+### 0.2.0
+
+Both gems were published on 2026-11-24 by the protected **Release gems** workflow
+through RubyGems trusted publishing, from accepted commit
+`b6325c87f660624c4dac4abf1e3639ca8b673231`, tagged `v0.2.0`.
+
+- [5pm 0.2.0](https://rubygems.org/gems/5pm/versions/0.2.0)
+- [5pm-mcp 0.2.0](https://rubygems.org/gems/5pm-mcp/versions/0.2.0)
+- [GitHub release notes](https://github.com/scarver2/5pm-ruby/releases/tag/v0.2.0)
+- [Successful release workflow run](https://github.com/scarver2/5pm-ruby/actions/runs/45461974540)
+
+```sh
+gem install 5pm --version 0.2.0
+# Install this for MCP support; it includes the core SDK:
+gem install 5pm-mcp --version 0.2.0
+```
+
+Bundler applications use `gem "5pm", "~> 0.2.0"` or
+`gem "5pm-mcp", "~> 0.2.0"`, followed by `bundle install`.
+Version 0.2.0 is immutable: do not repeat its pushes or move its tag.
+
+### 0.1.0
+
+Both gems were published on 2026-10-30 from accepted commit
+`0a48bcd297a28e0ee7c22be8bc594daad4a88511`, tagged `v0.1.0`.
+
+- [5pm 0.1.0](https://rubygems.org/gems/5pm/versions/0.1.0)
+- [5pm-mcp 0.1.0](https://rubygems.org/gems/5pm-mcp/versions/0.1.0)
+- [GitHub release, artifacts and SHA256SUMS](https://github.com/scarver2/5pm-ruby/releases/tag/v0.1.0)
+
+The owner completed manual RubyGems publication with security-key approval, core
+first and MCP second. Both public downloads matched the final build byte for byte;
+a fresh isolated installation and loading of both gems succeeded. Offline validation
+passed 149 specs, 98.19% coverage, lint, RBS, package checks and four-version hosted CI.
+See the [completed first-publication record](release-preparation/manual-first-publication.md).
+Version 0.1.0 is immutable: do not repeat its pushes or move its tag. The procedures
+below apply to future versions.
 
 ## Owner-controlled live validation
 
@@ -59,23 +101,14 @@ candidate; they are not independent authorization. GitHub's required-reviewer
 approval gate and RubyGems' matching OIDC publisher policies enforce authorization.
 
 The workflow checks these protections before building or tagging. Missing protection
-or inaccessible environment metadata stops the run. The current GitHub connection
-cannot create this environment: GitHub returned HTTP 403, administrator rights required.
+or inaccessible environment metadata stops the run. The first release (0.1.0) used manual publication. Release 0.2.0 was the first
+automated publication through this workflow, confirming that the protected
+environment and both trusted publishers are configured.
 
-Sign into RubyGems.org and create two
-[pending trusted publishers](https://rubygems.org/profile/oidc/pending_trusted_publishers)
-for the first publication:
-
-| Gem name | GitHub owner | Repository | Workflow filename | Environment |
-| --- | --- | --- | --- | --- |
-| `5pm` | `scarver2` | `5pm-ruby` | `release.yml` | `release` |
-| `5pm-mcp` | `scarver2` | `5pm-ruby` | `release.yml` | `release` |
-
-These are separate gem registrations using the same workflow identity. For an
-already-owned gem, configure its trusted publisher instead of a pending publisher.
-Recheck both names for availability before publication. Account setup must
-be completed by the authenticated RubyGems owner; repository configuration alone
-does not establish that connection.
+Each existing gem (`5pm` and `5pm-mcp`) has a RubyGems trusted publisher using
+GitHub owner `scarver2`, repository `5pm-ruby`, workflow `release.yml`, and
+environment `release`. Keep these in sync if the workflow filename or environment
+changes; repository configuration alone does not establish RubyGems authorization.
 
 ## Shared bin-script conventions
 
