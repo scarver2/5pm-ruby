@@ -42,6 +42,17 @@ RSpec.describe "trusted publishing preparation" do
     end
   end
 
+  it "posts GitHub release notes only after both gems are published, without publishing rights" do
+    job = workflow.dig("jobs", "github-release")
+    expect(job.fetch("needs")).to include("publish-mcp")
+    expect(job.fetch("permissions")).to eq("contents" => "write")
+    expect(job).not_to have_key("environment")
+    script = job.fetch("steps").find { |step| step["name"] == "Create release notes from the changelog" }.fetch("run")
+    expect(script).to include('[[ "$(git rev-parse "refs/tags/$tag^{commit}")" == "$RELEASE_COMMIT" ]]',
+                              "bin/release-notes", "gh release create", "--verify-tag")
+    expect(script.index("gh release view")).to be < script.index("gh release create")
+  end
+
   it "uses only declared inputs of the reviewed official publishing action for both gems" do
     contracts = JSON.parse(File.read(File.join(__dir__, "fixtures/release_action_inputs.json")))
     %w[publish-core publish-mcp].each do |job|

@@ -8,6 +8,9 @@ It does not publish. `bin/release-check VERSION FULL_COMMIT_SHA` is also read-on
 
 ## Published releases
 
+From 0.2.2 on, the workflow creates each version's GitHub release from its
+changelog section after both gems are published; that release is the record.
+
 ### 0.2.1
 
 Both gems were published on 2026-11-25 by the protected **Release gems** workflow
@@ -81,17 +84,32 @@ without expiration or network requests, even if source changes; `source_matches`
 indicates whether its fingerprint still matches. Only an explicit owner-requested
 refresh contacts 5PM. See [cached validation](cached-validation.md).
 
-Before a release:
+## Releasing a new version
 
-1. Review the source and matching core/MCP versions, and date the changelog.
-2. Pass `bin/spec`, `bin/lint --cache false`, and `bin/package-mcp` offline.
-3. Merge reviewed changes through PRs with passing CI. Fetch origin/master and tags.
-4. Run `bin/release-check VERSION FULL_COMMIT_SHA` from a clean checkout. It checks
-   accepted source ancestry, matching versions, the dated changelog and conflicting
-   tags. It does not contact 5PM or require `docs/live-validation.json`.
-5. Rebuild from the accepted source, inspect both artifacts and independently accept
-   their hashes. Recheck gem-name availability and obtain maintainer publication
-   approval. Publish the exact accepted bytes, core first and then MCP.
+Record user-visible changes under `## Unreleased` in `CHANGELOG.md` as they merge.
+Then, with explicit maintainer approval for the version:
+
+1. From a clean `master` that matches `origin/master`, run
+   `bin/release-prepare VERSION` (add `--date YYYY-MM-DD` to date it for another
+   day). On a new `VERSION` branch it bumps both gem versions, moves the Unreleased
+   entries under `## VERSION — DATE`, keeps the adapter's `5pm` requirement on the
+   same minor series, updates both lockfiles and the install instructions in both
+   READMEs. It refuses a dirty or stale checkout, an existing tag, a version that is
+   not greater, or an empty Unreleased section. It never commits, pushes, tags or
+   publishes.
+2. Review the diff, run `bin/spec`, `bin/lint --cache false` and `bin/package-mcp`,
+   commit (`chore: prepare VERSION release`), and open a pull request titled
+   `feat: vVERSION — SUMMARY`. Merge it only after review at its exact head.
+3. Fetch `origin/master` and tags, then run `bin/release-check VERSION MERGE_SHA`.
+   It checks accepted source ancestry, matching versions, the dated changelog and
+   conflicting tags. It does not contact 5PM or require live evidence.
+4. Dispatch **Release gems** with that version and merge SHA, the same day as the
+   changelog date. The maintainer approves the protected tag job and each publish
+   job. The final job posts the GitHub release notes from the changelog; preview
+   them with `bin/release-notes VERSION` once the tag exists.
+
+If the release slips past the changelog date, re-date it in a follow-up pull request
+and use that merge commit instead.
 
 Optional live checks remain available when the owner requests them. If used, keep
 them outside CI, designate a disposable tenant, and enable mutations separately.
@@ -142,6 +160,8 @@ bin/lint
 bin/package
 bin/package-mcp
 bin/release-check VERSION FULL_COMMIT_SHA
+bin/release-prepare VERSION [--date YYYY-MM-DD]
+bin/release-notes VERSION [--run-url URL]
 ```
 
 `bin/package` writes `pkg/5pm-VERSION.gem`; `bin/package-mcp` also writes
@@ -153,6 +173,10 @@ Dependencies come from the verified bundle, as in abbu, without network installa
 `bin/verify-release-tag` reads `RELEASE_TAG_REF` (or `GITHUB_REF` on tag events), requires `refs/tags/vVERSION`, and
 verifies that the tag matches HEAD and passes the accepted-commit preflight.
 It is read-only. Publication remains the protected workflow's `rake release`.
+
+`bin/release-prepare` edits only local files on a new branch (see above).
+`bin/release-notes` prints the GitHub release notes for an existing tag from its
+changelog section and the gemspecs, and is read-only.
 
 ## Build and approve a release
 
@@ -170,9 +194,9 @@ The packaging checks inspect the actual installed artifacts. CI repeats validati
 on Ruby 3.2, 3.3, 3.4 and 4.0. Release builds set `SOURCE_DATE_EPOCH` to the approved
 commit timestamp. Neither build task publishes.
 
-Before dispatch, complete the offline checks and dated changelog above. Both
-gem versions must match. Live reports are optional historical evidence. Preparing
-this workflow does not advance the version, date the changelog or authorize publication.
+Before dispatch, merge the `bin/release-prepare` pull request and complete the
+offline checks above. Both gem versions must match. Live reports are optional
+historical evidence. Preparing a release does not authorize publication.
 
 After merging the workflow, open Actions → **Release gems** → **Run workflow** on
 `master`. Enter the explicitly approved stable version without `v` and its full
@@ -191,8 +215,9 @@ action is disabled. Local publishing tasks refuse to run outside this workflow.
 
 The pinned `rubygems/release-gem` action invokes `bundle exec rake release` for the
 core gem, waits for RubyGems availability, then does the same in `mcp/`. The MCP
-package depends on the matching core version. The workflow does not create a GitHub
-Release. No workflow should be dispatched merely to test the connection: a successful
+package depends on the matching core version. After both gems are published and
+byte-verified, a final Contents-write job without publishing rights creates the
+`vVERSION` GitHub release from the changelog, unless that release already exists. No workflow should be dispatched merely to test the connection: a successful
 run publishes both gems.
 
 If core publication succeeds and MCP fails, inspect the published core version and
