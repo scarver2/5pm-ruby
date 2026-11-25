@@ -179,8 +179,8 @@ jobs:
       - uses: rubygems/release-gem@5c53f5308233b7c0f47411f0471b3faae6fa57b2 # v1
         if: steps.published.outputs.exists != 'true'
         with:
-          # rubygems-await 0.5.4 is incompatible with current Bundler's compact index.
-          # Verify the downloaded package checksum directly below instead.
+          # The next step waits for the package and verifies its exact checksum,
+          # which is stricter than release-gem's availability wait.
           await-release: false
           working-directory: .
       - name: Verify published package bytes
@@ -249,8 +249,8 @@ jobs:
       - uses: rubygems/release-gem@5c53f5308233b7c0f47411f0471b3faae6fa57b2 # v1
         if: steps.published.outputs.exists != 'true'
         with:
-          # rubygems-await 0.5.4 is incompatible with current Bundler's compact index.
-          # Verify the downloaded package checksum directly below instead.
+          # The next step waits for the package and verifies its exact checksum,
+          # which is stricter than release-gem's availability wait.
           await-release: false
           working-directory: mcp
       - name: Verify published package bytes
