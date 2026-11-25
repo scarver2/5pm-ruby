@@ -41,10 +41,46 @@ temporary API sessions, which the suite closes.
 
 For explicitly authorized disposable CRUD checks, also set
 `FIVE_PM_ALLOW_MUTATIONS=1` and run `bundle exec ruby bin/live-check --mutations`.
-This creates labelled temporary records, a reserved-domain test user, and a tiny
-synthetic text attachment. It deletes those records, checks the attachment's exact
-bytes, verifies missing-record errors and confirms no labelled records remain.
-Never enable this against a production tenant. Live tests are not part of CI.
+This creates labelled temporary records and a tiny synthetic text attachment. It
+deletes those records, checks the attachment's exact bytes, verifies missing-record
+errors and confirms no labelled records remain. Never enable this against a
+production tenant. Live tests are not part of CI.
+
+Suites run in this order: reads, core/MCP mutations, attachments, User management
+(only when enabled, see below), then a read-only scan for leftover labelled records.
+After the first failed suite, later write suites are skipped and reported with
+`skipped_after`; the leftover scan still runs. Attachment qualification has its own
+suite, so a User-management failure no longer hides attachment coverage.
+
+### User-management permission boundary
+
+5PM's [role reference](https://www.5pmweb.com/help/using_5pm.php) says a standard
+User can add other users but cannot modify existing profiles other than their own;
+only Administrators have unlimited rights. The API reference documents no
+permissions or error codes for `users.add`, `users.update` or `users.remove`.
+This matches the 2026-10-30 run below: `users.add` succeeded, then `users.update`
+returned API code 8 and cleanup of the new User failed. Code 8 is undocumented,
+so it is recorded as consistent with a role restriction, not as a confirmed meaning.
+
+User administration is therefore excluded from standard-User qualification. The
+User suite runs only with `FIVE_PM_LIVE_USER_ADMIN=1`, using an Administrator
+account on a disposable tenant. It first confirms the authorized user's
+`securityLevel` is `0` (admin) and stops before creating anything otherwise.
+Without the flag, the report lists `users.add`, `users.update` and `users.remove`
+under `api_operations_excluded` instead of failing them as missing. The SDK sends
+these calls as given and does not check roles itself.
+
+### Cleanup ledger
+
+The attachment and User suites record every created record in a local cleanup
+ledger before doing anything else with it, and remove the entry only after deletion
+and absence are confirmed. The ledger defaults to
+`~/.local/state/five-pm-ruby/live-cleanup-ledger.json` (override with
+`FIVE_PM_LIVE_LEDGER`). It must be outside the repository, is written atomically
+with owner-only permissions, and is refused if other users can read it. It holds
+record IDs, so it is never copied into reports; the tenant host is stored only as a
+SHA-256 digest. Each suite first retries cleanup of earlier entries for the same
+tenant, and stops before creating new records if any still cannot be removed.
 
 The single JSON report identifies the base commit, dirty-worktree status and a
 SHA-256 digest of the tested source. The digest covers the sorted Git tracked and
@@ -54,7 +90,8 @@ not a fresh validation of a different source commit. `bin/release-check` does no
 
 The harness records successful transport operation names only, including calls made
 by the actual stdio process. With `--mutations`, it fails unless every one of the
-37 inventoried SDK operations was exercised. The report lists both verified and
+37 inventoried SDK operations was exercised, apart from the three User write
+operations listed in `api_operations_excluded` when the User suite is not enabled. The report lists both verified and
 missing operations. It also requires a successful live call to every one of the
 16 tools advertised by the mutation-enabled MCP server (10 reads, six writes).
 No arguments, record IDs, return payloads or credentials enter this operation audit.
@@ -132,6 +169,7 @@ payloads are excluded.
 Disposition: Stan later deleted the leftover labelled test User; no independent
 post-deletion inventory is recorded here. Live qualification is no longer a release
 prerequisite (see [release policy](releasing.md)), and 0.1.0 and 0.2.0 were published
-on offline tests and package verification. The `users.update` API code 8 is an open API
-observation; any further live check, including a retry of the User/attachment suite,
-runs only when Stan requests it.
+on offline tests and package verification. The `users.update` API code 8
+matches the documented standard-User restriction (see the User-management permission
+boundary above); any further live check, including the separated attachment and
+Administrator-only User suites, runs only when Stan requests it.
