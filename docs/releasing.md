@@ -8,6 +8,27 @@ It does not publish. `bin/release-check VERSION FULL_COMMIT_SHA` is also read-on
 
 ## Published releases
 
+### 0.2.1
+
+Both gems were published on 2026-11-25 by the protected **Release gems** workflow
+through RubyGems trusted publishing, from accepted commit
+`e1bc8a1743c8cb3ae36f93ae0f579d7a952ff705`, tagged `v0.2.1`. It widens the `mcp`
+dependency of `5pm-mcp`; the core gem has no code changes.
+
+- [5pm 0.2.1](https://rubygems.org/gems/5pm/versions/0.2.1)
+- [5pm-mcp 0.2.1](https://rubygems.org/gems/5pm-mcp/versions/0.2.1)
+- [Successful release workflow run](https://github.com/scarver2/5pm-ruby/actions/runs/45686308853)
+
+```sh
+gem install 5pm --version 0.2.1
+# Install this for MCP support; it includes the core SDK:
+gem install 5pm-mcp --version 0.2.1
+```
+
+Bundler applications use `gem "5pm", "~> 0.2.1"` or
+`gem "5pm-mcp", "~> 0.2.1"`, followed by `bundle install`.
+Version 0.2.1 is immutable: do not repeat its pushes or move its tag.
+
 ### 0.2.0
 
 Both gems were published on 2026-11-24 by the protected **Release gems** workflow
