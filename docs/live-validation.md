@@ -76,11 +76,30 @@ The attachment and User suites record every created record in a local cleanup
 ledger before doing anything else with it, and remove the entry only after deletion
 and absence are confirmed. The ledger defaults to
 `~/.local/state/five-pm-ruby/live-cleanup-ledger.json` (override with
-`FIVE_PM_LIVE_LEDGER`). It must be outside the repository, is written atomically
-with owner-only permissions, and is refused if other users can read it. It holds
-record IDs, so it is never copied into reports; the tenant host is stored only as a
-SHA-256 digest. Each suite first retries cleanup of earlier entries for the same
-tenant, and stops before creating new records if any still cannot be removed.
+`FIVE_PM_LIVE_LEDGER`). It holds record IDs, so it is never copied into reports; the
+tenant host is stored only as a SHA-256 digest.
+
+The ledger fails closed rather than repairing unsafe state:
+
+- Its path, after resolving symlinks, must be outside the repository.
+- Its directory must be a real directory owned by you with mode `0700`. An existing
+  directory with group or other access is refused, not tightened.
+- The path may pass only through root-owned system symlinks (such as `/var` on
+  macOS), and every parent must be owned by root or you and not writable by others
+  unless sticky.
+- The ledger and its lock are opened without following symlinks and must be regular
+  files readable only by you.
+- Writes go to a fresh, exclusively created temporary file that is renamed into
+  place, so a leftover file is never reused.
+
+Each suite first retries cleanup of its own earlier entries for the same tenant,
+and stops before creating new records if any still cannot be removed. Entries from
+other suites are left alone, so a User only an Administrator can delete does not
+block attachment checks.
+
+The ledger covers the attachment and User suites only. The core/MCP mutation suite
+still keeps its created records in a per-process temporary file, which supports
+cleanup within a run but not recovery after a crash.
 
 The single JSON report identifies the base commit, dirty-worktree status and a
 SHA-256 digest of the tested source. The digest covers the sorted Git tracked and
@@ -170,6 +189,6 @@ Disposition: Stan later deleted the leftover labelled test User; no independent
 post-deletion inventory is recorded here. Live qualification is no longer a release
 prerequisite (see [release policy](releasing.md)), and 0.1.0 and 0.2.0 were published
 on offline tests and package verification. The `users.update` API code 8
-matches the documented standard-User restriction (see the User-management permission
-boundary above); any further live check, including the separated attachment and
+is undocumented but consistent with the standard-User restriction described under
+User-management permission boundary above; any further live check, including the separated attachment and
 Administrator-only User suites, runs only when Stan requests it.
