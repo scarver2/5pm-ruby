@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Split the opt-in live attachment checks from User management, and run the User
+  suite only with `FIVE_PM_LIVE_USER_ADMIN=1` and a verified Administrator account.
+  Without it, User write operations are reported as excluded, not missing.
+- Skip later live write suites after the first failure while still scanning for
+  leftover records.
+- Track records created by the live attachment and User suites in a protected local
+  cleanup ledger outside the repository. It refuses symlinks, loose permissions,
+  untrusted parents and any malformed or ambiguous entry, and each suite finishes its
+  own earlier cleanup before creating new records. Run one live check at a time.
+- Document the standard-User restriction behind the 2026-10-30 `users.update`
+  API code 8. These changes affect only the opt-in live harness, not the gems.
+
 ## 0.2.0 — 2026-11-24
 
 - Add optional trusted `project_ids` scoping to the MCP adapter and

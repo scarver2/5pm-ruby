@@ -199,6 +199,9 @@ the JSON option. Missing-file API error envelopes are raised rather than returne
 User creation requires a symbolic `securityLevel` such as `"user"` in the tested
 account, even though returned records use numeric strings and the help reference
 lists numeric role codes. Request values are not silently translated.
+5PM's role rules let a standard User add users but not modify or remove other
+profiles; updating or removing Users needs an Administrator account. The SDK does
+not check roles itself. See [User-management permission boundary](docs/live-validation.md#user-management-permission-boundary).
 
 Request validation rejects missing required operation parameters, unsafe nested field
 names, arbitrary Ruby objects, cycles, invalid identifiers and invalid pagination bounds
