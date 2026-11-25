@@ -5,17 +5,37 @@ abort "set FIVE_PM_ALLOW_MUTATIONS=1 for disposable mutation checks" unless ENV[
 require "five_pm"
 require "five_pm/mcp"
 require "securerandom"
-require "tmpdir"
+require_relative "live_cleanup_ledger"
 require_relative "live_record_checks"
 
+SUITE = "live_mutations".freeze
 checks = []
 created = []
 stage = "configuration"
 client = FivePM::Client.new(host: ENV.fetch("FIVE_PM_HOST"), login: ENV.fetch("FIVE_PM_LOGIN"),
                             password: ENV.fetch("FIVE_PM_PASSWORD"))
 prefix = "SDK disposable validation #{SecureRandom.hex(6)}"
-state_path = File.join(Dir.tmpdir, "five-pm-live-created-#{Process.pid}.json")
-save = -> { File.write(state_path, JSON.generate(created)) }
+ledger = nil
+contract_for = lambda do |service, operation|
+  FivePM::OPERATIONS.fetch(service.to_s == "project_groups" ? "projectsgroups" : service.to_s).fetch(operation)
+end
+# Deletes a record if it still exists and confirms it is gone. Used for earlier
+# ledger entries and for cleanup after a failure.
+cleanup = lambda do |service, id|
+  LiveRecordChecks.cleanup!(client.public_send(service), id: id, contract: contract_for.call(service, "remove"),
+                                                         service: service)
+end
+# Every confirmed create is kept in memory and in the ledger before anything else
+# uses it; the entry is resolved only after deletion and absence are confirmed.
+track = lambda do |service, id|
+  FivePM::Request.identifier!(id)
+  created << { "service" => service.to_s, "id" => id }
+  ledger.record(service, id, suite: SUITE)
+end
+untrack = lambda do |service, id|
+  ledger.resolve(service, id)
+  created.reject! { |record| record["service"] == service.to_s && record["id"] == id }
+end
 validate = lambda do |service, operation, raw|
   wire = service == :project_groups ? "projectsgroups" : service.to_s
   FivePM::Response.new(raw, contract: FivePM::OPERATIONS.fetch(wire).fetch(operation))
@@ -25,22 +45,25 @@ add = lambda do |service, part, attributes|
   wire = service == :project_groups ? "projectsgroups" : service.to_s
   record = FivePM::Envelope.parts(raw, FivePM::OPERATIONS.fetch(wire).fetch("add")).fetch(part)
   id = record.fetch("id")
-  FivePM::Request.identifier!(id)
-  created << { "service" => service.to_s, "id" => id }
-  save.call
+  track.call(service, id)
   response = validate.call(service, "add", raw)
   raise "create identity mismatch" unless response.public_send(part).id == Integer(id)
 
   id
 end
 remove = lambda do |service, id|
-  wire = service == :project_groups ? "projectsgroups" : service.to_s
-  contract = FivePM::OPERATIONS.fetch(wire).fetch("remove")
-  LiveRecordChecks.remove!(client.public_send(service), id: id, contract: contract, service: service)
-  created.reject! { |record| record["service"] == service.to_s && record["id"] == id }
-  save.call
+  LiveRecordChecks.remove!(client.public_send(service), id: id, contract: contract_for.call(service, "remove"),
+                                                        service: service)
+  untrack.call(service, id)
 end
 begin
+  # The failure report reads `stage`; RuboCop's flow analysis misses that read here.
+  # rubocop:disable Lint/UselessAssignment
+  stage = "ledger.open"
+  ledger = LiveCleanupLedger.new(LiveCleanupLedger.path, host: ENV.fetch("FIVE_PM_HOST"))
+  stage = "ledger.pending_cleanup"
+  # rubocop:enable Lint/UselessAssignment
+  ledger.drain!(suite: SUITE) { |service, id| cleanup.call(service.to_sym, id) }
   stage = "project_groups.create"
   group_id = add.call(:project_groups, "group", { name: "#{prefix} group" })
   checks << stage
@@ -147,8 +170,7 @@ begin
   raise "MCP create failed" if result["isError"]
 
   mcp_project = result.fetch("structuredContent").fetch("data").fetch("id")
-  created << { "service" => "projects", "id" => mcp_project }
-  save.call
+  track.call(:projects, mcp_project)
   checks << stage
   stage = "mcp.tasks.create"
   decisions << true
@@ -157,8 +179,7 @@ begin
   raise "MCP task create failed" if result["isError"]
 
   mcp_task = result.fetch("structuredContent").fetch("data").fetch("id")
-  created << { "service" => "tasks", "id" => mcp_task }
-  save.call
+  track.call(:tasks, mcp_task)
   checks << stage
   { projects: mcp_project, tasks: mcp_task }.each do |service, id|
     stage = "mcp.#{service}.update"
@@ -188,8 +209,7 @@ begin
     raise "MCP delete failed" unless marker == true || (marker.is_a?(Integer) && marker.positive?)
 
     LiveRecordChecks.absent!(client.public_send(service), id, service: service)
-    created.reject! { |record| record["service"] == service.to_s && record["id"] == id }
-    save.call
+    untrack.call(service, id)
     checks << stage
   end
   stage = "mcp.audit"
@@ -217,17 +237,14 @@ rescue StandardError => e
   warn JSON.generate(report)
   exit 1
 ensure
-  created.reverse.dup.each do |record|
+  created.reverse.each do |record|
     service = record.fetch("service")
-    wire = service == "project_groups" ? "projectsgroups" : service
-    contract = FivePM::OPERATIONS.fetch(wire).fetch("remove")
-    LiveRecordChecks.cleanup!(client.public_send(service), id: record.fetch("id"), contract: contract, service: service)
-    created.delete(record)
-    save.call
+    cleanup.call(service, record.fetch("id"))
+    untrack.call(service, record.fetch("id"))
   rescue StandardError
-    warn JSON.generate(result: "cleanup_failed", service: record.fetch("service"))
+    # The ledger entry stays so the next run finishes this cleanup first.
+    warn JSON.generate(result: "cleanup_failed", service: service, retained_in_ledger: true)
   end
-  File.delete(state_path) if created.empty? && File.exist?(state_path)
   begin
     client.sign_out
   rescue FivePM::Error

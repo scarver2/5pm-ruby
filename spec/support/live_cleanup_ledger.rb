@@ -23,7 +23,8 @@ class LiveCleanupLedger
   ROOT_UID = 0
   VERSION = 1
   # Each suite may only record (and later delete) these services.
-  SUITE_SERVICES = { "live_attachments" => %w[projects tasks activity], "live_users" => %w[users] }.freeze
+  SUITE_SERVICES = { "live_mutations" => %w[project_groups projects tasks activity],
+                     "live_attachments" => %w[projects tasks activity], "live_users" => %w[users] }.freeze
   ENTRY_KEYS = %w[id recorded_at service suite tenant].freeze
   TENANT_DIGEST = /\A\h{64}\z/
   IDENTIFIER = /\A[1-9][0-9]{0,18}\z/
