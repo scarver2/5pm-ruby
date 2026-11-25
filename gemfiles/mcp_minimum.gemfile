@@ -1,0 +1,6 @@
+# gemfiles/mcp_minimum.gemfile
+# Runs the suite against the lowest mcp release 5pm-mcp supports, so the
+# gemspec's lower bound stays tested as the main lockfile moves forward.
+eval_gemfile File.expand_path("../Gemfile", __dir__)
+
+gem "mcp", "1.6.1"
