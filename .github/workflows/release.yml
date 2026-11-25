@@ -263,3 +263,40 @@ jobs:
           curl --fail --silent --show-error --retry 12 --retry-all-errors --retry-delay 5 \
             "https://rubygems.org/downloads/$package" --output "$RUNNER_TEMP/$package"
           cmp "pkg/$package" "$RUNNER_TEMP/$package"
+
+  github-release:
+    # Runs only after both gems are published and byte-verified; it changes no
+    # code, tags or packages. Contents-write is needed to create the release.
+    name: Publish GitHub release notes
+    needs: [prepare, publish-mcp]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1
+        with:
+          ruby-version: "3.3"
+      - name: Create release notes from the changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          tag="v$RELEASE_VERSION"
+          git fetch origin "refs/tags/$tag:refs/tags/$tag"
+          [[ "$(git rev-parse "refs/tags/$tag^{commit}")" == "$RELEASE_COMMIT" ]]
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "Release $tag already exists; leaving it unchanged."
+            exit 0
+          fi
+          bin/release-notes "$RELEASE_VERSION" --run-url "$RUN_URL" > "$RUNNER_TEMP/notes.md"
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --verify-tag \
+            --title "$tag" --notes-file "$RUNNER_TEMP/notes.md"
