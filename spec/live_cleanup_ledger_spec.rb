@@ -93,6 +93,20 @@ RSpec.describe LiveCleanupLedger do
       expect(ledger.pending.map { |entry| entry["id"] }).to eq(%w[1 2])
     end
 
+    it "stops on unexpected callback errors instead of counting them as failed deletions" do
+      ledger.record(:projects, 1, suite: "live_attachments")
+      ledger.record(:tasks, 2, suite: "live_attachments")
+      calls = 0
+      expect do
+        ledger.drain!(suite: "live_attachments") do |_service, _id|
+          calls += 1
+          raise NoMethodError, "harness bug"
+        end
+      end.to raise_error(NoMethodError, "harness bug")
+      expect(calls).to eq(1)
+      expect(ledger.pending.length).to eq(2)
+    end
+
     it "refuses an unsafe ledger raised from the deletion callback without continuing" do
       ledger.record(:projects, 1, suite: "live_attachments")
       ledger.record(:tasks, 2, suite: "live_attachments")

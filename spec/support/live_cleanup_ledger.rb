@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "five_pm"
 require "json"
 require "securerandom"
 require "time"
@@ -78,16 +79,15 @@ class LiveCleanupLedger
   # child records go before their parents. Other suites' entries are left alone, so a
   # User only an Administrator can delete never blocks attachment checks. Entries
   # whose deletion cannot be confirmed stay; the method then raises so the caller
-  # creates nothing new. Only failures from the deletion callback are counted and
-  # skipped; ledger safety errors stop the drain immediately.
+  # creates nothing new. Only expected 5PM failures (FivePM::Error) from the deletion
+  # callback are counted and skipped; ledger safety errors and any unexpected error
+  # stop the drain immediately with their original cause.
   def drain!(suite:)
     failures = 0
     pending(suite: suite).reverse_each do |entry|
       begin
         yield entry.fetch("service"), entry.fetch("id")
-      rescue UnsafeLedgerError
-        raise
-      rescue StandardError
+      rescue FivePM::Error
         failures += 1
         next
       end
