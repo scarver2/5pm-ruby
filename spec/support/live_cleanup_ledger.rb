@@ -134,14 +134,20 @@ class LiveCleanupLedger
   end
 
   # Creates missing components owner-only, refusing symlinks that are not owned by
-  # root (system links such as /var or /tmp on macOS are acceptable).
+  # root (system links such as /var or /tmp on macOS are acceptable). Before each
+  # directory is created, its canonical location is checked against the repository
+  # and its parents are checked for trust, so an unsafe path never creates anything.
   def create_directory!(directory)
+    repository = File.realpath(@repository_root)
     current = File::SEPARATOR
     directory.split(File::SEPARATOR).reject(&:empty?).each do |component|
       current = File.join(current, component)
       begin
         stat = File.lstat(current)
       rescue Errno::ENOENT
+        target = File.join(File.realpath(File.dirname(current)), component)
+        self.class.reject_inside!(target, repository)
+        trusted_ancestors!(target)
         Dir.mkdir(current, 0o700)
         next
       end
@@ -175,10 +181,20 @@ class LiveCleanupLedger
     raise UnsafeLedgerError, "#{label} must be a regular file readable only by you"
   end
 
+  # A Hash that refuses a repeated key, so JSON.parse cannot silently keep only the
+  # last of two "entries" arrays or two values for one entry field.
+  class UniqueKeyHash < Hash
+    def []=(key, value)
+      raise UnsafeLedgerError, "cleanup ledger has duplicate keys" if key?(key)
+
+      super
+    end
+  end
+
   def read_entries(path)
     document = File.open(path, File::RDONLY | NOFOLLOW) do |file|
       owner_only_file!(file, "cleanup ledger")
-      JSON.parse(file.read)
+      JSON.parse(file.read, object_class: UniqueKeyHash)
     end
     validate_document!(document)
   rescue Errno::ENOENT

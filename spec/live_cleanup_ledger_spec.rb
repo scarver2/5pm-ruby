@@ -139,6 +139,21 @@ RSpec.describe LiveCleanupLedger do
       expect_refused_without_mutation("version" => 1, "entries" => [valid_entry, valid_entry])
     end
 
+    it "refuses duplicate JSON keys instead of keeping only the last value" do
+      entry = JSON.generate(valid_entry)
+      [%({"version":1,"entries":[],"entries":[#{entry}]}),
+       %({"version":1,"entries":[#{entry.sub('"id":"42"', '"id":"42","id":"43"')}]})].each do |content|
+        Dir.mkdir(state, 0o700) unless File.directory?(state)
+        File.write(path, content, perm: 0o600)
+        yielded = []
+        expect { ledger.drain!(suite: "live_users") { |*item| yielded << item } }
+          .to unsafe(/malformed|duplicate/)
+        expect { ledger.record(:users, 44, suite: "live_users") }.to unsafe(/malformed|duplicate/)
+        expect(yielded).to be_empty
+        expect(File.read(path)).to eq(content)
+      end
+    end
+
     it "refuses unsupported or missing versions" do
       [2, "1", nil].each do |version|
         expect_refused_without_mutation("version" => version, "entries" => [valid_entry])
@@ -221,6 +236,7 @@ RSpec.describe LiveCleanupLedger do
       File.chmod(0o777, shared)
       nested = described_class.new(File.join(shared, "state", "ledger.json"), host: "sandbox.example.invalid")
       expect { nested.record(:users, 42, suite: "live_users") }.to unsafe(/untrusted parent/)
+      expect(Dir.children(shared)).to be_empty
     end
 
     it "refuses repository paths, including traversal and symlinks that resolve into the repository" do
@@ -238,6 +254,19 @@ RSpec.describe LiveCleanupLedger do
       File.symlink(inside_real, state)
       redirected = described_class.new(path, host: "sandbox.example.invalid", repository_root: fake_root)
       expect { redirected.pending }.to unsafe(/outside the repository|through a symlink/)
+    end
+
+    it "creates nothing when a trusted symlink would redirect a missing directory into the repository" do
+      # Treat the current user like root so this symlink counts as a trusted system link.
+      stub_const("LiveCleanupLedger::ROOT_UID", Process.uid)
+      fake_root = File.join(@directory, "repository")
+      Dir.mkdir(fake_root, 0o700)
+      link = File.join(@directory, "system-link")
+      File.symlink(fake_root, link)
+      redirected = described_class.new(File.join(link, "new-state", "ledger.json"),
+                                       host: "sandbox.example.invalid", repository_root: fake_root)
+      expect { redirected.record(:users, 42, suite: "live_users") }.to unsafe(/outside the repository/)
+      expect(Dir.children(fake_root)).to be_empty
     end
 
     it "never reuses a leftover temporary file" do
