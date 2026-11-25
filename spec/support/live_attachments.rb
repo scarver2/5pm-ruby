@@ -36,7 +36,7 @@ begin
   stage = "ledger.open"
   ledger = LiveCleanupLedger.new(LiveCleanupLedger.path, host: ENV.fetch("FIVE_PM_HOST"))
   stage = "ledger.pending_cleanup"
-  ledger.drain! { |service, id| remove.call(service.to_sym, id) }
+  ledger.drain!(suite: SUITE) { |service, id| remove.call(service.to_sym, id) }
   stage = "attachment.setup"
   project_id = track.call(:projects, client.projects.create(name: prefix, notifyProjectTeam: false,
                                                             notifyClient: false))

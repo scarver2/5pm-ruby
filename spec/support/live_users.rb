@@ -41,7 +41,11 @@ begin
 
   checks << stage
   stage = "ledger.pending_cleanup"
-  ledger.drain! { |service, id| service == "users" ? remove.call(id) : raise(FivePM::ProtocolError, "not a User") }
+  ledger.drain!(suite: SUITE) do |service, id|
+    raise FivePM::ProtocolError, "unexpected ledger entry" unless service == "users"
+
+    remove.call(id)
+  end
   stage = "users.create"
   result = client.users.create(firstName: prefix, lastName: "Test", email: "sdk-#{SecureRandom.hex(6)}@example.invalid",
                                password: "#{SecureRandom.hex(6)}Aa!", securityLevel: "user")

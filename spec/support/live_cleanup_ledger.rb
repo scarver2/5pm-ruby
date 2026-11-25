@@ -2,40 +2,52 @@
 # frozen_string_literal: true
 
 require "digest"
-require "fileutils"
 require "json"
+require "securerandom"
 require "time"
 
 # A protected, local-only record of live test records awaiting confirmed deletion.
 # It survives crashes and failed runs so the next run can finish cleanup before it
 # creates anything new. It holds record IDs, so it must stay outside the repository
 # and is never copied into reports. The tenant host is stored only as a SHA-256 digest.
+#
+# Storage fails closed: the ledger directory must be a real (non-symlink) directory
+# owned by the current user with no group/other access, every ancestor must be a
+# trusted directory, and the ledger and lock must be regular owner-only files opened
+# without following symlinks. Invalid state raises before anything is written.
 class LiveCleanupLedger
   DEFAULT_PATH = File.join(Dir.home, ".local", "state", "five-pm-ruby", "live-cleanup-ledger.json")
   REPOSITORY_ROOT = File.expand_path("../..", __dir__)
+  NOFOLLOW = File.const_defined?(:NOFOLLOW) ? File::NOFOLLOW : 0
+  ROOT_UID = 0
 
   class UnsafeLedgerError < StandardError; end
 
   def self.path(environment = ENV, repository_root: REPOSITORY_ROOT)
     path = File.expand_path(environment.fetch("FIVE_PM_LIVE_LEDGER", DEFAULT_PATH))
-    root = File.expand_path(repository_root)
-    if path == root || path.start_with?("#{root}#{File::SEPARATOR}")
-      raise UnsafeLedgerError, "cleanup ledger must be outside the repository"
-    end
-
+    reject_inside!(path, File.expand_path(repository_root))
     path
+  end
+
+  def self.reject_inside!(path, root)
+    return unless path == root || path.start_with?("#{root}#{File::SEPARATOR}")
+
+    raise UnsafeLedgerError, "cleanup ledger must be outside the repository"
   end
 
   attr_reader :path
 
-  def initialize(path, host:)
-    @path = path
+  def initialize(path, host:, repository_root: REPOSITORY_ROOT)
+    @path = File.expand_path(path)
+    @repository_root = repository_root
     @tenant = Digest::SHA256.hexdigest(host.to_s.downcase)
   end
 
-  # Entries for this tenant, oldest first.
-  def pending
-    synchronize(write: false) { |entries| entries.select { |entry| entry["tenant"] == @tenant } }
+  # Entries for this tenant (optionally one suite), oldest first.
+  def pending(suite: nil)
+    synchronize(write: false) do |entries|
+      entries.select { |entry| entry["tenant"] == @tenant && (suite.nil? || entry["suite"] == suite.to_s) }
+    end
   end
 
   def record(service, id, suite:)
@@ -53,12 +65,14 @@ class LiveCleanupLedger
     nil
   end
 
-  # Confirms deletion of every pending entry for this tenant, newest first so child
-  # records go before their parents. Entries whose deletion cannot be confirmed stay
-  # in the ledger; the method then raises so the caller creates nothing new.
-  def drain!
+  # Confirms deletion of this suite's pending entries for this tenant, newest first so
+  # child records go before their parents. Other suites' entries are left alone, so a
+  # User only an Administrator can delete never blocks attachment checks. Entries
+  # whose deletion cannot be confirmed stay; the method then raises so the caller
+  # creates nothing new.
+  def drain!(suite:)
     failures = 0
-    pending.reverse_each do |entry|
+    pending(suite: suite).reverse_each do |entry|
       yield entry.fetch("service"), entry.fetch("id")
       resolve(entry.fetch("service"), entry.fetch("id"))
     rescue StandardError
@@ -78,40 +92,104 @@ class LiveCleanupLedger
   # Reads under an exclusive lock. With write: true the block's returned entries are
   # written back atomically with owner-only permissions.
   def synchronize(write: true)
-    directory = File.dirname(@path)
-    FileUtils.mkdir_p(directory, mode: 0o700)
-    File.open("#{@path}.lock", File::RDWR | File::CREAT, 0o600) do |lock|
+    directory = secure_directory!
+    path = File.join(directory, File.basename(@path))
+    File.open("#{path}.lock", File::RDWR | File::CREAT | NOFOLLOW, 0o600) do |lock|
+      owner_only_file!(lock, "cleanup ledger lock")
       lock.flock(File::LOCK_EX)
-      entries = read_entries
+      entries = read_entries(path)
       result = yield entries.map(&:dup)
-      write_entries(result) if write && result != entries
+      write_entries(directory, path, result) if write && result != entries
       result
+    end
+  rescue Errno::ELOOP
+    raise UnsafeLedgerError, "cleanup ledger files must not be symlinks"
+  end
+
+  # Returns the canonical ledger directory after checking every component.
+  def secure_directory!
+    directory = File.dirname(@path)
+    self.class.reject_inside!(directory, File.expand_path(@repository_root))
+    create_directory!(directory)
+    real = File.realpath(directory)
+    self.class.reject_inside!(real, File.realpath(@repository_root))
+    trusted_ancestors!(real)
+    stat = File.lstat(real)
+    unless stat.directory? && stat.uid == Process.uid && stat.mode.nobits?(0o077)
+      raise UnsafeLedgerError, "cleanup ledger directory must be owned by you with mode 0700"
+    end
+
+    real
+  end
+
+  # Creates missing components owner-only, refusing symlinks that are not owned by
+  # root (system links such as /var or /tmp on macOS are acceptable).
+  def create_directory!(directory)
+    current = File::SEPARATOR
+    directory.split(File::SEPARATOR).reject(&:empty?).each do |component|
+      current = File.join(current, component)
+      begin
+        stat = File.lstat(current)
+      rescue Errno::ENOENT
+        Dir.mkdir(current, 0o700)
+        next
+      end
+      next unless stat.symlink?
+      next if stat.uid == ROOT_UID
+
+      raise UnsafeLedgerError, "cleanup ledger path must not pass through a symlink"
     end
   end
 
-  def read_entries
-    return [] unless File.exist?(@path)
+  # Each ancestor of the canonical directory must be owned by root or you, and not
+  # writable by others unless sticky (as /tmp is).
+  def trusted_ancestors!(real)
+    ancestor = File.dirname(real)
+    loop do
+      stat = File.lstat(ancestor)
+      writable_by_others = stat.mode.anybits?(0o022) && !stat.sticky?
+      if ![ROOT_UID, Process.uid].include?(stat.uid) || writable_by_others
+        raise UnsafeLedgerError, "cleanup ledger directory has an untrusted parent"
+      end
+      break if ancestor == File::SEPARATOR
 
-    unless File.stat(@path).mode.nobits?(0o077)
-      raise UnsafeLedgerError, "cleanup ledger must not be readable by other users"
+      ancestor = File.dirname(ancestor)
     end
+  end
 
-    document = JSON.parse(File.read(@path))
+  def owner_only_file!(file, label)
+    stat = file.stat
+    return if stat.file? && stat.uid == Process.uid && stat.mode.nobits?(0o077)
+
+    raise UnsafeLedgerError, "#{label} must be a regular file readable only by you"
+  end
+
+  def read_entries(path)
+    document = File.open(path, File::RDONLY | NOFOLLOW) do |file|
+      owner_only_file!(file, "cleanup ledger")
+      JSON.parse(file.read)
+    end
     entries = document.is_a?(Hash) ? document["entries"] : nil
     raise UnsafeLedgerError, "cleanup ledger is malformed" unless entries.is_a?(Array)
 
     entries
+  rescue Errno::ENOENT
+    []
+  rescue JSON::ParserError
+    raise UnsafeLedgerError, "cleanup ledger is malformed"
   end
 
-  def write_entries(entries)
-    temporary = "#{@path}.#{Process.pid}.tmp"
-    File.open(temporary, File::WRONLY | File::CREAT | File::TRUNC, 0o600) do |file|
+  def write_entries(directory, path, entries)
+    # A fresh, exclusively created name: a leftover or pre-created file is never reused.
+    temporary = File.join(directory, ".#{File.basename(path)}.#{SecureRandom.hex(8)}.tmp")
+    File.open(temporary, File::WRONLY | File::CREAT | File::EXCL | NOFOLLOW, 0o600) do |file|
+      file.chmod(0o600)
       file.write(JSON.pretty_generate("version" => 1, "entries" => entries))
       file.flush
       file.fsync
     end
-    File.rename(temporary, @path)
+    File.rename(temporary, path)
   ensure
-    FileUtils.rm_f(temporary) if temporary && File.exist?(temporary)
+    File.unlink(temporary) if temporary && File.exist?(temporary)
   end
 end
