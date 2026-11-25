@@ -1,4 +1,5 @@
 require "bundler"
+require_relative "isolated_gem_path"
 require "rubygems/package"
 require "tmpdir"
 require "fileutils"
@@ -22,7 +23,8 @@ Dir.chdir(root) do
   end
   abort "missing adapter RBS signatures" unless package.spec.files.include?("sig/five_pm-mcp.rbs")
   abort "missing RBS dependency manifest" unless package.spec.files.include?("sig/manifest.yaml")
-  dependency_path = Bundler.load.specs.map(&:base_dir).uniq.join(File::PATH_SEPARATOR)
+  dependencies = Dir.mktmpdir("five-pm-mcp-dependencies-")
+  dependency_path = IsolatedGemPath.build(Bundler.load.specs, dependencies)
   Dir.mktmpdir("five-pm-mcp-package-") do |directory|
     environment = { "GEM_HOME" => directory, "GEM_PATH" => dependency_path }
     Bundler.with_unbundled_env do
@@ -55,4 +57,6 @@ Dir.chdir(root) do
     end
   end
   puts "Verified core and standalone MCP packages"
+ensure
+  FileUtils.remove_entry(dependencies) if dependencies
 end

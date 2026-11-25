@@ -2,6 +2,7 @@ require "tmpdir"
 require "fileutils"
 require "rbconfig"
 require "bundler"
+require_relative "isolated_gem_path"
 
 root = File.expand_path("../..", __dir__)
 Dir.chdir(root) do
@@ -11,8 +12,9 @@ Dir.chdir(root) do
                                          "--output", "pkg/5pm-#{FivePM::VERSION}.gem")
   path = "pkg/5pm-#{FivePM::VERSION}.gem"
   abort "package inspection failed" unless system(RbConfig.ruby, "bin/verify-package.rb", path)
+  dependencies = Dir.mktmpdir("five-pm-dependencies-")
+  dependency_path = IsolatedGemPath.build(Bundler.load.specs, dependencies)
   Dir.mktmpdir("five-pm-package-") do |directory|
-    dependency_path = Bundler.load.specs.map(&:base_dir).uniq.join(File::PATH_SEPARATOR)
     environment = { "GEM_HOME" => directory, "GEM_PATH" => dependency_path }
     installer = "Gem::Installer.at(ARGV.fetch(0), install_dir: ARGV.fetch(1), " \
                 "ignore_dependencies: true, document: []).install"
@@ -38,4 +40,6 @@ Dir.chdir(root) do
     end
   end
   puts "Verified #{path}"
+ensure
+  FileUtils.remove_entry(dependencies) if dependencies
 end
