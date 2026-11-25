@@ -91,6 +91,21 @@ The ledger fails closed rather than repairing unsafe state:
   files readable only by you.
 - Writes go to a fresh, exclusively created temporary file that is renamed into
   place, so a leftover file is never reused.
+- The whole document is validated before any entry is filtered, deleted or added:
+  version `1`, exactly the expected fields, a tenant digest, a positive integer ID,
+  a timestamp, no duplicates, and a known suite with its own services only
+  (`live_attachments`: projects, tasks, activity; `live_users`: users). A malformed
+  or ambiguous ledger is refused and left unchanged; nothing is deleted or created.
+- Platforms without `O_NOFOLLOW` are refused.
+
+Limits:
+
+- Run one live check at a time per ledger. The lock covers each ledger update,
+  not a whole run.
+- Crash recovery is not complete. A record is added to the ledger only after 5PM
+  confirms the create, so a crash in that window leaves an untracked record. The
+  final leftover scan still reports any labelled records, which then need manual
+  removal.
 
 Each suite first retries cleanup of its own earlier entries for the same tenant,
 and stops before creating new records if any still cannot be removed. Entries from

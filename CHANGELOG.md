@@ -8,9 +8,9 @@
 - Skip later live write suites after the first failure while still scanning for
   leftover records.
 - Track records created by the live attachment and User suites in a protected local
-  cleanup ledger outside the repository. It refuses symlinks, loose permissions and
-  untrusted parents, and each suite finishes its own earlier cleanup before creating
-  new records.
+  cleanup ledger outside the repository. It refuses symlinks, loose permissions,
+  untrusted parents and any malformed or ambiguous entry, and each suite finishes its
+  own earlier cleanup before creating new records. Run one live check at a time.
 - Document the standard-User restriction behind the 2026-10-30 `users.update`
   API code 8. These changes affect only the opt-in live harness, not the gems.
 
