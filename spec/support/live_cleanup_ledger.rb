@@ -78,14 +78,20 @@ class LiveCleanupLedger
   # child records go before their parents. Other suites' entries are left alone, so a
   # User only an Administrator can delete never blocks attachment checks. Entries
   # whose deletion cannot be confirmed stay; the method then raises so the caller
-  # creates nothing new.
+  # creates nothing new. Only failures from the deletion callback are counted and
+  # skipped; ledger safety errors stop the drain immediately.
   def drain!(suite:)
     failures = 0
     pending(suite: suite).reverse_each do |entry|
-      yield entry.fetch("service"), entry.fetch("id")
+      begin
+        yield entry.fetch("service"), entry.fetch("id")
+      rescue UnsafeLedgerError
+        raise
+      rescue StandardError
+        failures += 1
+        next
+      end
       resolve(entry.fetch("service"), entry.fetch("id"))
-    rescue StandardError
-      failures += 1
     end
     raise FivePM::ProtocolError, "earlier live records still await cleanup" if failures.positive?
 
@@ -244,7 +250,7 @@ class LiveCleanupLedger
     temporary = File.join(directory, ".#{File.basename(path)}.#{SecureRandom.hex(8)}.tmp")
     File.open(temporary, File::WRONLY | File::CREAT | File::EXCL | NOFOLLOW, 0o600) do |file|
       file.chmod(0o600)
-      file.write(JSON.pretty_generate("version" => 1, "entries" => entries))
+      file.write(JSON.pretty_generate("version" => VERSION, "entries" => entries))
       file.flush
       file.fsync
     end

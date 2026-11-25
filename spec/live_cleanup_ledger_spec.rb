@@ -78,6 +78,34 @@ RSpec.describe LiveCleanupLedger do
       expect(ledger.pending.map { |entry| entry.values_at("service", "id") }).to eq([%w[users 42]])
     end
 
+    it "stops draining at once when the ledger becomes unsafe instead of counting it as a failed deletion" do
+      ledger.record(:projects, 1, suite: "live_attachments")
+      ledger.record(:tasks, 2, suite: "live_attachments")
+      removed = []
+      expect do
+        ledger.drain!(suite: "live_attachments") do |service, id|
+          removed << [service, id]
+          File.chmod(0o644, path)
+        end
+      end.to unsafe(/readable only by you/)
+      expect(removed).to eq([%w[tasks 2]])
+      File.chmod(0o600, path)
+      expect(ledger.pending.map { |entry| entry["id"] }).to eq(%w[1 2])
+    end
+
+    it "refuses an unsafe ledger raised from the deletion callback without continuing" do
+      ledger.record(:projects, 1, suite: "live_attachments")
+      ledger.record(:tasks, 2, suite: "live_attachments")
+      calls = 0
+      expect do
+        ledger.drain!(suite: "live_attachments") do |_service, _id|
+          calls += 1
+          raise described_class::UnsafeLedgerError, "unsafe"
+        end
+      end.to unsafe(/unsafe/)
+      expect(calls).to eq(1)
+    end
+
     it "rejects malformed ledgers instead of discarding their entries" do
       Dir.mkdir(state, 0o700)
       ["[]", "{not json"].each do |content|
