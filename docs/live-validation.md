@@ -81,7 +81,9 @@ tenant host is stored only as a SHA-256 digest.
 
 The ledger fails closed rather than repairing unsafe state:
 
-- Its path, after resolving symlinks, must be outside the repository.
+- Its path, after resolving symlinks, must be outside the repository. Each missing
+  directory is checked against the repository and its parents before it is
+  created, so an unsafe path creates nothing.
 - Its directory must be a real directory owned by you with mode `0700`. An existing
   directory with group or other access is refused, not tightened.
 - The path may pass only through root-owned system symlinks (such as `/var` on
@@ -93,7 +95,7 @@ The ledger fails closed rather than repairing unsafe state:
   place, so a leftover file is never reused.
 - The whole document is validated before any entry is filtered, deleted or added:
   version `1`, exactly the expected fields, a tenant digest, a positive integer ID,
-  a timestamp, no duplicates, and a known suite with its own services only
+  a timestamp, no duplicate entries or JSON keys, and a known suite with its own services only
   (`live_attachments`: projects, tasks, activity; `live_users`: users). A malformed
   or ambiguous ledger is refused and left unchanged; nothing is deleted or created.
 - Platforms without `O_NOFOLLOW` are refused.
