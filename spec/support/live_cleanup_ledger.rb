@@ -18,8 +18,14 @@ require "time"
 class LiveCleanupLedger
   DEFAULT_PATH = File.join(Dir.home, ".local", "state", "five-pm-ruby", "live-cleanup-ledger.json")
   REPOSITORY_ROOT = File.expand_path("../..", __dir__)
-  NOFOLLOW = File.const_defined?(:NOFOLLOW) ? File::NOFOLLOW : 0
+  NOFOLLOW = File.const_defined?(:NOFOLLOW) ? File::NOFOLLOW : nil
   ROOT_UID = 0
+  VERSION = 1
+  # Each suite may only record (and later delete) these services.
+  SUITE_SERVICES = { "live_attachments" => %w[projects tasks activity], "live_users" => %w[users] }.freeze
+  ENTRY_KEYS = %w[id recorded_at service suite tenant].freeze
+  TENANT_DIGEST = /\A\h{64}\z/
+  IDENTIFIER = /\A[1-9][0-9]{0,18}\z/
 
   class UnsafeLedgerError < StandardError; end
 
@@ -45,6 +51,8 @@ class LiveCleanupLedger
 
   # Entries for this tenant (optionally one suite), oldest first.
   def pending(suite: nil)
+    raise ArgumentError, "unknown live suite" unless suite.nil? || SUITE_SERVICES.key?(suite.to_s)
+
     synchronize(write: false) do |entries|
       entries.select { |entry| entry["tenant"] == @tenant && (suite.nil? || entry["suite"] == suite.to_s) }
     end
@@ -53,6 +61,7 @@ class LiveCleanupLedger
   def record(service, id, suite:)
     entry = { "tenant" => @tenant, "service" => service.to_s, "id" => id.to_s, "suite" => suite.to_s,
               "recorded_at" => Time.now.utc.iso8601 }
+    validate_entry!(entry)
     synchronize do |entries|
       entries << entry unless entries.any? { |existing| same?(existing, service, id) }
       entries
@@ -92,6 +101,8 @@ class LiveCleanupLedger
   # Reads under an exclusive lock. With write: true the block's returned entries are
   # written back atomically with owner-only permissions.
   def synchronize(write: true)
+    raise UnsafeLedgerError, "cleanup ledger needs O_NOFOLLOW support" unless NOFOLLOW
+
     directory = secure_directory!
     path = File.join(directory, File.basename(@path))
     File.open("#{path}.lock", File::RDWR | File::CREAT | NOFOLLOW, 0o600) do |lock|
@@ -169,14 +180,47 @@ class LiveCleanupLedger
       owner_only_file!(file, "cleanup ledger")
       JSON.parse(file.read)
     end
-    entries = document.is_a?(Hash) ? document["entries"] : nil
-    raise UnsafeLedgerError, "cleanup ledger is malformed" unless entries.is_a?(Array)
-
-    entries
+    validate_document!(document)
   rescue Errno::ENOENT
     []
   rescue JSON::ParserError
     raise UnsafeLedgerError, "cleanup ledger is malformed"
+  end
+
+  # Validates the whole document before any entry is filtered, deleted or added, so a
+  # malformed or ambiguous entry can never be silently skipped or routed to the wrong
+  # suite's deletion code. Invalid ledgers are refused and left unchanged.
+  def validate_document!(document)
+    unless document.is_a?(Hash) && document.keys.sort == %w[entries version] && document["version"] == VERSION
+      raise UnsafeLedgerError, "cleanup ledger is malformed or an unsupported version"
+    end
+
+    entries = document["entries"]
+    raise UnsafeLedgerError, "cleanup ledger is malformed" unless entries.is_a?(Array)
+
+    entries.each { |entry| validate_entry!(entry) }
+    keys = entries.map { |entry| entry.values_at("tenant", "service", "id") }
+    raise UnsafeLedgerError, "cleanup ledger has duplicate entries" unless keys.uniq.length == keys.length
+
+    entries
+  end
+
+  def validate_entry!(entry)
+    valid = entry.is_a?(Hash) && entry.keys.sort == ENTRY_KEYS &&
+            entry.values.all?(String) && TENANT_DIGEST.match?(entry["tenant"]) &&
+            IDENTIFIER.match?(entry["id"]) &&
+            SUITE_SERVICES.fetch(entry["suite"], []).include?(entry["service"]) &&
+            valid_time?(entry["recorded_at"])
+    raise UnsafeLedgerError, "cleanup ledger has an invalid entry" unless valid
+
+    entry
+  end
+
+  def valid_time?(value)
+    Time.iso8601(value)
+    true
+  rescue ArgumentError
+    false
   end
 
   def write_entries(directory, path, entries)

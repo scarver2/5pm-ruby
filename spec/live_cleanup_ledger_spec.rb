@@ -1,7 +1,9 @@
 # spec/live_cleanup_ledger_spec.rb
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
+require "json"
 require "spec_helper"
 require "tmpdir"
 require_relative "support/live_cleanup_ledger"
@@ -86,7 +88,78 @@ RSpec.describe LiveCleanupLedger do
     end
   end
 
+  describe "document validation" do
+    let(:tenant) { Digest::SHA256.hexdigest("sandbox.example.invalid") }
+    let(:valid_entry) do
+      { "tenant" => tenant, "service" => "users", "id" => "42", "suite" => "live_users",
+        "recorded_at" => "2026-11-25T00:00:00Z" }
+    end
+
+    def write_document(document)
+      FileUtils.mkdir_p(state, mode: 0o700)
+      File.write(path, JSON.generate(document), perm: 0o600)
+      File.read(path)
+    end
+
+    def expect_refused_without_mutation(document)
+      before = write_document(document)
+      yielded = []
+      %w[live_users live_attachments].each do |suite|
+        expect { ledger.drain!(suite: suite) { |*entry| yielded << entry } }
+          .to unsafe(/malformed|invalid|version|duplicate/)
+      end
+      expect { ledger.record(:projects, 7, suite: "live_attachments") }.to unsafe(/malformed|invalid|version|duplicate/)
+      expect { ledger.resolve(:users, 42) }.to unsafe(/malformed|invalid|version|duplicate/)
+      expect(yielded).to be_empty
+      expect(File.read(path)).to eq(before)
+    end
+
+    it "accepts a well-formed document" do
+      write_document("version" => 1, "entries" => [valid_entry])
+      expect(ledger.pending(suite: "live_users")).to eq([valid_entry])
+    end
+
+    it "refuses an entry with a missing suite instead of silently skipping its cleanup" do
+      expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.except("suite")])
+    end
+
+    it "refuses a service outside its suite's allowlist, so attachments never delete Users" do
+      expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("suite" => "live_attachments")])
+      expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("service" => "projects")])
+      expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("suite" => "live_mutations")])
+    end
+
+    it "refuses invalid identifiers, tenants and metadata" do
+      ["0", "-1", "abc", "42; drop", "", 42].each do |id|
+        expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("id" => id)])
+      end
+      expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("tenant" => "sandbox")])
+      expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("recorded_at" => "yesterday")])
+      expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("extra" => "x")])
+      expect_refused_without_mutation("version" => 1, "entries" => [valid_entry, valid_entry])
+    end
+
+    it "refuses unsupported or missing versions" do
+      [2, "1", nil].each do |version|
+        expect_refused_without_mutation("version" => version, "entries" => [valid_entry])
+      end
+      expect_refused_without_mutation("entries" => [valid_entry])
+    end
+
+    it "refuses to record a service outside the suite's allowlist" do
+      expect { ledger.record(:users, 42, suite: "live_attachments") }.to unsafe(/invalid entry/)
+      expect { ledger.pending(suite: "live_mutations") }.to raise_error(ArgumentError)
+      expect(File.exist?(path)).to be(false)
+    end
+  end
+
   describe "storage safety" do
+    it "fails closed when the platform cannot open files without following symlinks" do
+      stub_const("LiveCleanupLedger::NOFOLLOW", nil)
+      expect { ledger.record(:users, 42, suite: "live_users") }.to unsafe(/O_NOFOLLOW/)
+      expect(File.exist?(state)).to be(false)
+    end
+
     it "rejects a ledger or lock that other users can read" do
       ledger.record(:users, 42, suite: "live_users")
       File.chmod(0o644, path)
