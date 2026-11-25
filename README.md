@@ -2,31 +2,31 @@
 
 Ruby SDK for 5pm API v2. MIT licensed; Ruby 3.2+.
 
-Version **0.2.0** is published: [5pm](https://rubygems.org/gems/5pm/versions/0.2.0)
-and [5pm-mcp](https://rubygems.org/gems/5pm-mcp/versions/0.2.0).
-See the [GitHub release](https://github.com/scarver2/5pm-ruby/releases/tag/v0.2.0)
-and [CHANGELOG](CHANGELOG.md) for details. Live API refreshes are optional and owner-controlled.
+Version **0.2.1** is published: [5pm](https://rubygems.org/gems/5pm/versions/0.2.1)
+and [5pm-mcp](https://rubygems.org/gems/5pm-mcp/versions/0.2.1), tagged
+[`v0.2.1`](https://github.com/scarver2/5pm-ruby/tree/v0.2.1).
+See the [CHANGELOG](CHANGELOG.md) for details. Live API refreshes are optional and owner-controlled.
 
 ## Installation
 
 Install the core SDK:
 
 ```sh
-gem install 5pm --version 0.2.0
+gem install 5pm --version 0.2.1
 ```
 
 For the standalone MCP server, install the adapter; it also installs the core SDK:
 
 ```sh
-gem install 5pm-mcp --version 0.2.0
+gem install 5pm-mcp --version 0.2.1
 ```
 
 With Bundler, add the package you need to your Gemfile:
 
 ```ruby
-gem "5pm", "~> 0.2.0"
+gem "5pm", "~> 0.2.1"
 # For MCP applications, use this instead (it includes the core SDK):
-# gem "5pm-mcp", "~> 0.2.0"
+# gem "5pm-mcp", "~> 0.2.1"
 ```
 
 Then run `bundle install`. Load the SDK with `require "five_pm"`;
