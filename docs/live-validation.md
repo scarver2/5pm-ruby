@@ -72,8 +72,8 @@ these calls as given and does not check roles itself.
 
 ### Cleanup ledger
 
-The attachment and User suites record every created record in a local cleanup
-ledger before doing anything else with it, and remove the entry only after deletion
+The mutation, attachment and User suites record every created record, including
+records created through MCP tools, in a local cleanup ledger before doing anything else with it, and remove the entry only after deletion
 and absence are confirmed. The ledger defaults to
 `~/.local/state/five-pm-ruby/live-cleanup-ledger.json` (override with
 `FIVE_PM_LIVE_LEDGER`). It holds record IDs, so it is never copied into reports; the
@@ -96,7 +96,8 @@ The ledger fails closed rather than repairing unsafe state:
 - The whole document is validated before any entry is filtered, deleted or added:
   version `1`, exactly the expected fields, a tenant digest, a positive integer ID,
   a timestamp, no duplicate entries or JSON keys, and a known suite with its own services only
-  (`live_attachments`: projects, tasks, activity; `live_users`: users). A malformed
+  (`live_mutations`: project groups, projects, tasks, activity; `live_attachments`:
+  projects, tasks, activity; `live_users`: users). A malformed
   or ambiguous ledger is refused and left unchanged; nothing is deleted or created.
 - Platforms without `O_NOFOLLOW` are refused.
 
@@ -112,11 +113,7 @@ Limits:
 Each suite first retries cleanup of its own earlier entries for the same tenant,
 and stops before creating new records if any still cannot be removed. Entries from
 other suites are left alone, so a User only an Administrator can delete does not
-block attachment checks.
-
-The ledger covers the attachment and User suites only. The core/MCP mutation suite
-still keeps its created records in a per-process temporary file, which supports
-cleanup within a run but not recovery after a crash.
+block attachment or mutation checks.
 
 The single JSON report identifies the base commit, dirty-worktree status and a
 SHA-256 digest of the tested source. The digest covers the sorted Git tracked and

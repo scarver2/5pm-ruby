@@ -171,6 +171,14 @@ RSpec.describe LiveCleanupLedger do
       expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("suite" => "live_mutations")])
     end
 
+    it "lets the mutation suite record project groups but keeps them out of the attachment suite" do
+      ledger.record(:project_groups, 5, suite: "live_mutations")
+      expect(ledger.pending(suite: "live_mutations").map { |entry| entry.values_at("service", "id") })
+        .to eq([%w[project_groups 5]])
+      expect(ledger.pending(suite: "live_attachments")).to be_empty
+      expect { ledger.record(:project_groups, 6, suite: "live_attachments") }.to unsafe(/invalid entry/)
+    end
+
     it "refuses invalid identifiers, tenants and metadata" do
       ["0", "-1", "abc", "42; drop", "", 42].each do |id|
         expect_refused_without_mutation("version" => 1, "entries" => [valid_entry.merge("id" => id)])
@@ -205,7 +213,8 @@ RSpec.describe LiveCleanupLedger do
 
     it "refuses to record a service outside the suite's allowlist" do
       expect { ledger.record(:users, 42, suite: "live_attachments") }.to unsafe(/invalid entry/)
-      expect { ledger.pending(suite: "live_mutations") }.to raise_error(ArgumentError)
+      expect { ledger.record(:users, 42, suite: "live_mutations") }.to unsafe(/invalid entry/)
+      expect { ledger.pending(suite: "live_unknown") }.to raise_error(ArgumentError)
       expect(File.exist?(path)).to be(false)
     end
   end

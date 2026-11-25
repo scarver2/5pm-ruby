@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The opt-in core/MCP mutation suite now uses the protected cleanup ledger, like the
+  attachment and User suites, instead of a per-process temporary file. It finishes
+  cleanup of its own earlier records before creating anything, records every create
+  (including MCP-created projects and tasks), and keeps an entry until deletion and
+  absence are confirmed, so a crashed or failed run can be cleaned up by the next one.
 - `bin/package` and `bin/package-mcp` no longer put whole shared gem directories on
   the smoke tests' gem path. They link only the bundle's dependencies, so a published
   `5pm` or `5pm-mcp` installed on the machine can no longer be loaded in place of the
