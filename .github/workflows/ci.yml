@@ -28,6 +28,8 @@ jobs:
     timeout-minutes: 15
     env:
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/mcp_minimum.gemfile
+      # One install path for both bundles, so specs can switch to the root bundle.
+      BUNDLE_PATH: ${{ github.workspace }}/vendor/bundle
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1
