@@ -1,7 +1,10 @@
 # spec/release_notes_spec.rb
 # frozen_string_literal: true
 
+require "fileutils"
+require "open3"
 require "spec_helper"
+require "tmpdir"
 require_relative "../bin/support/release_notes"
 
 RSpec.describe ReleaseNotes do
@@ -38,5 +41,31 @@ RSpec.describe ReleaseNotes do
     expect(described_class.ruby_requirement(File.read(File.join(root, "5pm.gemspec")))).to eq("Ruby 3.2 or newer")
     expect(described_class.adapter_dependencies(File.read(File.join(root, "mcp/5pm-mcp.gemspec"))))
       .to match([/\A5pm ~> \d+\.\d+\.0\z/, /\Amcp >= [\d.]+, < [\d.]+\z/])
+  end
+
+  it "reads the changelog and gemspecs from the tagged commit, not the working tree" do
+    Dir.mktmpdir("five-pm-notes-") do |directory|
+      git = lambda do |*arguments|
+        output, status = Open3.capture2e("git", "-C", directory, *arguments)
+        raise "fixture Git failed: #{output}" unless status.success?
+      end
+      FileUtils.mkdir_p([File.join(directory, "bin/support"), File.join(directory, "mcp")])
+      %w[_lib.sh release-notes support/release_notes.rb].each do |path|
+        FileUtils.cp(File.join(__dir__, "../bin", path), File.join(directory, "bin", path))
+      end
+      File.write(File.join(directory, "5pm.gemspec"), %(  spec.required_ruby_version = ">= 3.2"\n))
+      File.write(File.join(directory, "mcp/5pm-mcp.gemspec"), %(  spec.add_dependency "5pm", "~> 0.2.0"\n))
+      File.write(File.join(directory, "CHANGELOG.md"), "# Changelog\n\n## 0.2.2 — 2026-12-01\n\n- Released fix.\n")
+      git.call("init", "-q", "-b", "master")
+      git.call("-c", "user.name=T", "-c", "user.email=t@example.com", "add", ".")
+      git.call("-c", "user.name=T", "-c", "user.email=t@example.com", "commit", "-qm", "release")
+      git.call("tag", "v0.2.2")
+      File.write(File.join(directory, "CHANGELOG.md"), "# Changelog\n\n## 0.2.2 — 2026-12-01\n\n- Edited later.\n")
+
+      output, status = Open3.capture2e("bash", File.join(directory, "bin/release-notes"), "0.2.2")
+      expect(status).to be_success, output
+      expect(output).to include("- Released fix.")
+      expect(output).not_to include("Edited later.")
+    end
   end
 end

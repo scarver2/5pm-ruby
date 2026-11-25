@@ -42,7 +42,9 @@ RSpec.describe ReleasePreparation do
       expect { described_class.changelog(empty, "0.2.2", "2026-12-01") }.to raise_error(/no entries/)
       expect { described_class.changelog("# Changelog\n\n## 0.2.1 — 2026-11-25\n", "0.2.2", "2026-12-01") }
         .to raise_error(/no ## Unreleased/)
-      expect { described_class.changelog("## Unreleased\n\n- New.\n", "0.2.2", "12/01/2026") }.to raise_error(/date/)
+      %w[12/01/2026 2026-02-31 2026-13-01 2026-00-10].each do |date|
+        expect { described_class.changelog("## Unreleased\n\n- New.\n", "0.2.2", date) }.to raise_error(/date/)
+      end
       expect { described_class.changelog("## Unreleased\n\n- New.\n\n## 0.2.2 — x\n", "0.2.2", "2026-12-01") }
         .to raise_error(/already has/)
     end

@@ -1,6 +1,7 @@
 # bin/support/release_preparation.rb
 # frozen_string_literal: true
 
+require "date"
 require "rubygems"
 
 # Pure text transformations behind bin/release-prepare. Each method returns the
@@ -35,7 +36,8 @@ module ReleasePreparation
 
   # Moves the Unreleased entries under a dated heading for the new version.
   def changelog(text, version, date)
-    raise Error, "expected a YYYY-MM-DD release date" unless DATE.match?(date)
+    real = DATE.match?(date) && Date.valid_date?(*date.split("-").map(&:to_i))
+    raise Error, "expected a real YYYY-MM-DD release date" unless real
     raise Error, "CHANGELOG.md already has a #{version} section" if text.match?(/^## #{Regexp.escape(version)}\b/)
 
     heading = text.match(UNRELEASED)

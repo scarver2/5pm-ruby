@@ -89,11 +89,19 @@ if $PROGRAM_NAME == __FILE__
   Dir.chdir(File.expand_path("../..", __dir__)) do
     commit, status = Open3.capture2e("git", "rev-parse", "--verify", "refs/tags/v#{version}^{commit}")
     abort "tag v#{version} does not exist" unless status.success?
+    commit = commit.strip
+    # Read every source from the tagged commit, never the working tree, so the
+    # notes always describe exactly what was released.
+    tagged = lambda do |path|
+      text, shown = Open3.capture2e("git", "show", "#{commit}:#{path}")
+      abort "cannot read #{path} at v#{version}" unless shown.success?
+      text
+    end
     tags, = Open3.capture2("git", "tag", "--list", "v*")
-    puts ReleaseNotes.build(changelog: File.read("CHANGELOG.md"), version: version, commit: commit.strip,
+    puts ReleaseNotes.build(changelog: tagged.call("CHANGELOG.md"), version: version, commit: commit,
                             previous: ReleaseNotes.previous_tag(tags.split, version),
-                            ruby: ReleaseNotes.ruby_requirement(File.read("5pm.gemspec")),
-                            adapter_dependencies: ReleaseNotes.adapter_dependencies(File.read("mcp/5pm-mcp.gemspec")),
+                            ruby: ReleaseNotes.ruby_requirement(tagged.call("5pm.gemspec")),
+                            adapter_dependencies: ReleaseNotes.adapter_dependencies(tagged.call("mcp/5pm-mcp.gemspec")),
                             run_url: run_url)
   rescue ReleaseNotes::Error => e
     abort "release notes failed: #{e.message}"
