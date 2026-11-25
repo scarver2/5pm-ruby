@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `bin/release-prepare VERSION`, which prepares a release on a new branch: both
+  gem versions, the dated changelog section, the adapter's core requirement, both
+  lockfiles and the install instructions. Add `bin/release-notes VERSION`, and have
+  the release workflow create the GitHub release from the changelog after both gems
+  are published. Document the process for people and agents in `AGENTS.md`.
 - The opt-in core/MCP mutation suite now uses the protected cleanup ledger, like the
   attachment and User suites, instead of a per-process temporary file. It finishes
   cleanup of its own earlier records before creating anything, records every create
