@@ -6,6 +6,7 @@ require "timeout"
 require "digest"
 require "tmpdir"
 require_relative "../lib/five_pm/version"
+require_relative "../spec/support/live_plan"
 require_relative "../spec/support/live_subprocess"
 
 abort "usage: ruby bin/live-check [--mutations]" unless [[], ["--mutations"]].include?(ARGV)
@@ -17,14 +18,15 @@ mutations = ARGV == ["--mutations"]
 if mutations && ENV["FIVE_PM_ALLOW_MUTATIONS"] != "1"
   abort "set FIVE_PM_ALLOW_MUTATIONS=1 for disposable mutation checks"
 end
+# User update/remove need an Administrator; see docs/live-validation.md.
+user_admin = mutations && ENV["FIVE_PM_LIVE_USER_ADMIN"] == "1"
 root = File.expand_path("..", __dir__)
 Dir.chdir(root) do
   Dir.mktmpdir("five-pm-operation-audit-") do |audit_directory|
     audit_path = File.join(audit_directory, "operations.jsonl")
     File.write(audit_path, "", mode: "w", perm: 0o600)
-    scripts = ["live_reads"]
-    scripts += %w[live_mutations live_attachments_users live_cleanup] if mutations
-    reports = scripts.map do |script|
+    scripts = LivePlan.suites(mutations: mutations, user_admin: user_admin)
+    reports = LivePlan.run(scripts) do |script|
       stdout, stderr, status = LiveSubprocess.capture(
         { "FIVE_PM_LIVE_AUDIT" => audit_path }, RbConfig.ruby, "-Ilib", "-Imcp/lib",
         "-r", "./spec/support/live_operation_audit", "spec/support/#{script}.rb", timeout: 300
@@ -58,14 +60,17 @@ Dir.chdir(root) do
     inventory = JSON.parse(File.read("lib/five_pm/operations.json")).flat_map do |service, methods|
       methods.keys.map { |operation| "#{service}.#{operation}" }
     end.sort
-    missing = inventory - operations
+    excluded = LivePlan.excluded_operations(mutations: mutations, user_admin: user_admin)
+    missing = inventory - operations - excluded
     passed &&= missing.empty? if mutations
     puts JSON.pretty_generate(result: passed ? "passed" : "failed", version: FivePM::VERSION,
                               checked_at: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
                               evidence_commit: commit.strip, worktree_dirty: !dirty.empty?,
                               source_sha256: digest.hexdigest,
-                              disposable_tenant: true, mutations_enabled: mutations, release_evidence: false,
+                              disposable_tenant: true, mutations_enabled: mutations,
+                              user_admin_checks_enabled: user_admin, release_evidence: false,
                               api_operations_verified: operations, api_operations_missing: missing,
+                              api_operations_excluded: excluded,
                               reports: reports)
     exit(passed ? 0 : 1)
   end

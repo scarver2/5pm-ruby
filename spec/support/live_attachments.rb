@@ -1,3 +1,8 @@
+# spec/support/live_attachments.rb
+# frozen_string_literal: true
+
+# Opt-in attachment qualification. Independent of User management, so a User-suite
+# failure cannot hide attachment coverage.
 abort "designate a disposable tenant with FIVE_PM_SANDBOX=1 and matching FIVE_PM_SANDBOX_HOST" unless
   ENV["FIVE_PM_SANDBOX"] == "1" && ENV.fetch("FIVE_PM_HOST", "") != "" &&
   ENV["FIVE_PM_SANDBOX_HOST"] == ENV["FIVE_PM_HOST"]
@@ -5,43 +10,42 @@ abort "set FIVE_PM_ALLOW_MUTATIONS=1 for disposable mutation checks" unless ENV[
 require "five_pm"
 require "securerandom"
 require_relative "live_attachment_checks"
+require_relative "live_cleanup_ledger"
 require_relative "live_record_checks"
+
+SUITE = "live_attachments"
 client = FivePM::Client.new(host: ENV.fetch("FIVE_PM_HOST"), login: ENV.fetch("FIVE_PM_LOGIN"),
                             password: ENV.fetch("FIVE_PM_PASSWORD"))
 created = []
 checks = []
 stage = "configuration"
-prefix = "SDK disposable extra #{SecureRandom.hex(6)}"
+prefix = "SDK disposable attachment #{SecureRandom.hex(6)}"
+ledger = nil
+remove = lambda do |service, id|
+  contract = FivePM::OPERATIONS.fetch(service.to_s).fetch("remove")
+  LiveRecordChecks.cleanup!(client.public_send(service), id: id, contract: contract, service: service)
+end
+track = lambda do |service, raw|
+  id = raw.fetch("data").fetch("id")
+  FivePM::Request.identifier!(id)
+  created << [service, id]
+  ledger.record(service, id, suite: SUITE)
+  id
+end
 begin
-  stage = "users.create"
-  result = client.users.create(firstName: prefix, lastName: "Test", email: "sdk-#{SecureRandom.hex(6)}@example.invalid",
-                               password: "#{SecureRandom.hex(6)}Aa!", securityLevel: "user")
-  user_id = result.fetch("data").fetch("id")
-  created << [:users, user_id]
-  checks << stage
-  stage = "users.update"
-  result = client.users.update(id: user_id, lastName: "Updated")
-  response = FivePM::Response.new(result, contract: FivePM::OPERATIONS.dig("users", "update"))
-  raise "user update failed" unless response.user.last_name == "Updated"
-
-  checks << stage
-  stage = "users.get"
-  response = FivePM::Response.new(client.users.get(user_id), contract: FivePM::OPERATIONS.dig("users", "getById"))
-  raise "user get failed" unless response.user.id == Integer(user_id)
-
-  checks << stage
-  stage = "users.delete"
-  LiveRecordChecks.remove!(client.users, id: user_id, contract: FivePM::OPERATIONS.dig("users", "remove"),
-                                         service: :users)
-  created.delete([:users, user_id])
-  checks << stage
+  stage = "ledger.open"
+  ledger = LiveCleanupLedger.new(LiveCleanupLedger.path, host: ENV.fetch("FIVE_PM_HOST"))
+  stage = "ledger.pending_cleanup"
+  ledger.drain! { |service, id| remove.call(service.to_sym, id) }
   stage = "attachment.setup"
-  project_id = client.projects.create(name: prefix).fetch("data").fetch("id")
-  created << [:projects, project_id]
-  task_id = client.tasks.create(name: prefix, projectId: project_id).fetch("data").fetch("id")
-  created << [:tasks, task_id]
-  activity_id = client.activity.create(type: "msg", taskId: task_id, text: prefix).fetch("data").fetch("id")
-  created << [:activity, activity_id]
+  project_id = track.call(:projects, client.projects.create(name: prefix, notifyProjectTeam: false,
+                                                            notifyClient: false))
+  task_id = track.call(:tasks, client.tasks.create(name: prefix, projectId: project_id, notifyProjectTeam: false,
+                                                   notifyTaskTeam: false, notifyClient: false))
+  activity_id = track.call(:activity, client.activity.create(type: "msg", taskId: task_id, text: prefix,
+                                                             notifyProjectTeam: false, notifyTaskTeam: false,
+                                                             notifyClient: false))
+  checks << stage
   stage = "activity.attach_files"
   text = "SDK disposable attachment verification\n"
   client.activity.attach_files(activity_id: activity_id,
@@ -58,13 +62,18 @@ begin
   file_id = files.first.id
   checks << stage
   stage = "activity.download_file"
-  result = client.activity.download_file(file_id)
-  content = result.bytes
-  raise "download content mismatch" unless content == text
+  raise "download content mismatch" unless client.activity.download_file(file_id).bytes == text
 
   checks << stage
   stage = "activity.delete_file"
   LiveAttachmentChecks.remove!(client.activity, task_id: task_id, file_id: file_id)
+  checks << stage
+  stage = "attachment.teardown"
+  created.reverse.each do |service, id|
+    remove.call(service, id)
+    ledger.resolve(service, id)
+    created.delete([service, id])
+  end
   checks << stage
   puts JSON.pretty_generate(result: "passed", checks: checks)
 rescue StandardError => e
@@ -78,10 +87,11 @@ rescue StandardError => e
   exit 1
 ensure
   created.reverse_each do |service, id|
-    contract = FivePM::OPERATIONS.fetch(service.to_s).fetch("remove")
-    LiveRecordChecks.cleanup!(client.public_send(service), id: id, contract: contract, service: service)
+    remove.call(service, id)
+    ledger.resolve(service, id)
   rescue StandardError
-    warn JSON.generate(result: "cleanup_failed", service: service)
+    # The ledger entry stays so the next run finishes this cleanup first.
+    warn JSON.generate(result: "cleanup_failed", service: service, retained_in_ledger: true)
   end
   begin
     client.sign_out
