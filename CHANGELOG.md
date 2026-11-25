@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 — 2026-11-25
 
+- Allow `mcp` from 1.6.1 up to (not including) 1.12.0 in `5pm-mcp`, instead of
+  `~> 1.6.1`, so installed adapters can use current `mcp` releases. CI now also runs
+  the suite on Ruby 3.2 with `mcp` 1.6.1 to keep the lower bound tested. The core
+  `5pm` gem has no code changes; it is released at the same version as the adapter.
 - Split the opt-in live attachment checks from User management, and run the User
   suite only with `FIVE_PM_LIVE_USER_ADMIN=1` and a verified Administrator account.
   Without it, User write operations are reported as excluded, not missing.
