@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- `bin/package` and `bin/package-mcp` no longer put whole shared gem directories on
+  the smoke tests' gem path. They link only the bundle's dependencies, so a published
+  `5pm` or `5pm-mcp` installed on the machine can no longer be loaded in place of the
+  freshly built package (the cause of local "wrong load path" failures).
+
 ## 0.2.1 — 2026-11-25
 
 - Allow `mcp` from 1.6.1 up to (not including) 1.12.0 in `5pm-mcp`, instead of
