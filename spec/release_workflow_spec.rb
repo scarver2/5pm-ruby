@@ -122,7 +122,10 @@ RSpec.describe "trusted publishing preparation" do
 
   it "builds the adapter from its directory using the root locked bundle" do
     root = File.expand_path("..", __dir__)
-    environment = { "BUNDLE_GEMFILE" => File.join(root, "Gemfile") }
+    # Bundler 4 exports BUNDLE_LOCKFILE under bundle exec; pin both so this check
+    # uses the root bundle even when the suite runs under another Gemfile.
+    environment = { "BUNDLE_GEMFILE" => File.join(root, "Gemfile"),
+                    "BUNDLE_LOCKFILE" => File.join(root, "Gemfile.lock") }
     _, errors, status = Open3.capture3(environment, "bundle", "exec", "rake", "build", chdir: File.join(root, "mcp"))
     expect(status).to be_success, errors
     expect(File).to exist(File.join(root, "mcp/pkg/5pm-mcp-#{FivePM::VERSION}.gem"))

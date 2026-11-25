@@ -1,0 +1,19 @@
+# gemfiles/mcp_minimum.gemfile
+# Runs the suite against the lowest mcp release 5pm-mcp supports, so the
+# gemspec's lower bound stays tested as the main lockfile moves forward.
+# Mirrors ../Gemfile with explicit paths; eval_gemfile breaks frozen installs.
+source "https://rubygems.org"
+gemspec path: ".."
+# RuboCop uses parallel; the 2.x series requires Ruby 3.3.
+gem "parallel", "~> 1.28.0"
+gem "rake", "~> 13.0"
+gem "rbs", "~> 4.1.3"
+gem "rexml", "~> 3.4"
+gem "rspec", "~> 3.13"
+gem "rubocop", "~> 1.92"
+gem "simplecov", "~> 1.2"
+
+group :test do
+  gemspec path: "../mcp"
+  gem "mcp", "1.6.1"
+end

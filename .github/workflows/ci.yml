@@ -22,3 +22,23 @@ jobs:
       - run: bin/spec
       - run: bin/lint
       - run: bin/package-mcp
+  mcp-minimum:
+    # Oldest supported Ruby with the lowest mcp release the adapter declares.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/mcp_minimum.gemfile
+      # One install path for both bundles, so specs can switch to the root bundle.
+      BUNDLE_PATH: ${{ github.workspace }}/vendor/bundle
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+      # The packaging spec builds the adapter with the root locked bundle.
+      - name: Install the root bundle
+        env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/Gemfile
+        run: bundle install --jobs 4
+      - run: bin/spec
