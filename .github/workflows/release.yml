@@ -176,7 +176,7 @@ jobs:
             404) echo 'exists=false' >> "$GITHUB_OUTPUT" ;;
             *) echo "RubyGems lookup failed: HTTP $status" >&2; exit 1 ;;
           esac
-      - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
+      - uses: rubygems/release-gem@5c53f5308233b7c0f47411f0471b3faae6fa57b2 # v1
         if: steps.published.outputs.exists != 'true'
         with:
           # rubygems-await 0.5.4 is incompatible with current Bundler's compact index.
@@ -246,7 +246,7 @@ jobs:
             404) echo 'exists=false' >> "$GITHUB_OUTPUT" ;;
             *) echo "RubyGems lookup failed: HTTP $status" >&2; exit 1 ;;
           esac
-      - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1
+      - uses: rubygems/release-gem@5c53f5308233b7c0f47411f0471b3faae6fa57b2 # v1
         if: steps.published.outputs.exists != 'true'
         with:
           # rubygems-await 0.5.4 is incompatible with current Bundler's compact index.
